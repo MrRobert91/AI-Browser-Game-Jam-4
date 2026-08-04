@@ -10,6 +10,10 @@ Scaffold Vite + TypeScript estricto y shell offline.
 
 [Vídeo WebM de calibración, 30 s y 720p](./shell-calibration.webm)
 
+![PR #58 publicada contra dev](./pr-58-published.webp)
+
+![Project final con #2 en In review](./project-final.webp)
+
 La prueba desplegada se ejecutó en
 [`https://la-ultima-observacion-web.sliplane.app`](https://la-ultima-observacion-web.sliplane.app):
 
