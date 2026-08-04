@@ -16,4 +16,3 @@ El Project mostraba la issue #1 en **In progress**, sin PRs abiertas, y la issue
 ## Estado final
 
 Se añadirá aquí la captura de la PR y el estado final del Project cuando termine la publicación.
-

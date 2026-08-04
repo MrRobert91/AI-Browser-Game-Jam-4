@@ -46,4 +46,3 @@ Actualizado: 2026-08-04 (Europe/Madrid)
 - Navegador: Project #2 verificado en sesión autenticada; #1 figura In progress y #2 bloqueada. Aplicación local N/A.
 - Evidencia: [`docs/progress/issue-1-publish-agents/`](./progress/issue-1-publish-agents/).
 - Reversión: revertir el commit de la PR de #1; no existe migración, estado de runtime ni recurso de servicio que restaurar.
-

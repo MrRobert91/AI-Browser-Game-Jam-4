@@ -1,10 +1,15 @@
 # LA ÚLTIMA OBSERVACIÓN
 
-> Fuente de verdad de producto y guía normativa para agentes  
-> Versión de diseño: 1.0 — objetivo AI Browser Game Jam 4  
-> Duración objetivo: 10 minutos (rango admisible: 5–15)  
-> Plataforma: navegador de escritorio  
-> Stack objetivo: TypeScript + Three.js + Vite  
+> Fuente de verdad de producto y guía normativa para agentes
+>
+> Versión de diseño: 1.0 — objetivo AI Browser Game Jam 4
+>
+> Duración objetivo: 10 minutos (rango admisible: 5–15)
+>
+> Plataforma: navegador de escritorio
+>
+> Stack objetivo: TypeScript + Three.js + Vite
+>
 > Frase de diseño: **El mundo no existe hasta que lo miras.**
 
 ## 0. Autoridad, vocabulario y política de cambios
