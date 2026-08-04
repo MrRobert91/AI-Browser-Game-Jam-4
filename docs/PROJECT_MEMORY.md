@@ -34,15 +34,15 @@ Actualizado: 2026-08-04 (Europe/Madrid)
 
 ### 2026-08-04 — Issue #1 — Fuente normativa del producto
 
-- Issue / PR / commits: issue #1; PR y commits pendientes de publicación en esta iteración.
+- Issue / PR / commits: issue #1; PR #57 (`dev` ← `codex/issue-1-publish-agents`); `b204f4e6eed958b9e81b840bf1fbe3f877265ba9`, `421280dc0ec4452efd53d7faf0e4309adb709c94` y el commit documental final de esta entrada.
 - Objetivo: incorporar la especificación de diseño 1.0 completa y enlazarla desde el README como autoridad de implementación.
 - Decisiones: conservar íntegramente el documento preparado; `AGENTS.md` define DEBE/DEBERÍA/PUEDE, invariantes y proceso de cambios; `PROJECT_MEMORY.md` queda como registro histórico acumulativo.
 - Alternativas descartadas: resumir la especificación en el README, porque duplicaría y podría desalinear la fuente normativa.
 - Trade-off: un documento normativo extenso exige disciplina de actualización, pero reduce ambigüedad entre fases y agentes.
 - Impacto: desbloquea #2 y establece los contratos de coordinación para WP0–WP8.
 - Riesgos / deuda: todavía no existe aplicación, suite de pruebas, CI ni artefacto desplegable; se incorporarán en #2–#4.
-- Pruebas: comprobación UTF-8 de título, frase final, niveles normativos e invariantes; enlace relativo del README; `git diff --check`.
+- Pruebas: comprobación UTF-8 de título, frase final, niveles normativos e invariantes; enlace relativo del README; `git diff --check` en verde. No existe todavía `package.json`, por lo que `npm run check/build` es N/A hasta #2.
 - Deploy: proyecto preview Sliplane creado; servicio, dominio, logs y HTTP N/A por ausencia de artefacto web.
-- Navegador: Project #2 verificado en sesión autenticada; #1 figura In progress y #2 bloqueada. Aplicación local N/A.
+- Navegador: Project #2 verificado en sesión autenticada; #1 pasó de In progress a In review y #2 permanece bloqueada. PR #57 publicada contra `dev`, no draft, `MERGEABLE/CLEAN` y sin checks configurados. Aplicación local N/A.
 - Evidencia: [`docs/progress/issue-1-publish-agents/`](./progress/issue-1-publish-agents/).
 - Reversión: revertir el commit de la PR de #1; no existe migración, estado de runtime ni recurso de servicio que restaurar.

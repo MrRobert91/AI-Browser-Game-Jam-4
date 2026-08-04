@@ -15,4 +15,10 @@ El Project mostraba la issue #1 en **In progress**, sin PRs abiertas, y la issue
 
 ## Estado final
 
-Se añadirá aquí la captura de la PR y el estado final del Project cuando termine la publicación.
+La PR #57 quedó abierta, no draft, con base `dev`, head `codex/issue-1-publish-agents`, estado `MERGEABLE/CLEAN` y sin checks configurados.
+
+![PR #57 publicada](./pr-57-published.webp)
+
+La issue conserva `status:in-review` y el Project la muestra en **In review**. La PR de issue no se fusionó.
+
+![Project final](./project-final.webp)
