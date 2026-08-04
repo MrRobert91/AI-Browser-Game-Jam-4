@@ -8,7 +8,7 @@ Actualizado: 2026-08-04 (Europe/Madrid)
 
 | Fase | Issues | Estado | Gate o dependencia principal |
 |---|---:|---|---|
-| WP0 — Fundación y contratos | #1–#4 | En curso | #1 en implementación; #2 es la siguiente raíz |
+| WP0 — Fundación y contratos | #1–#4 | En curso | #1 cerrada; #2 publicada desde `dev`; #3/#4 dependen de #2 |
 | WP1 — Solver puro | #5–#11 | Bloqueada | Requiere WP0 |
 | WP2 — Render, cámara y física | #12–#14 | Bloqueada | Requiere WP0 |
 | WP3 — Gramática y tiles | #15–#22 | Bloqueada | Requiere contratos y solver base |
@@ -22,15 +22,30 @@ Actualizado: 2026-08-04 (Europe/Madrid)
 ### Estado operativo actual
 
 - Fase actual: WP0 — Fundación y contratos.
-- Issue actual: #1 — publicar `AGENTS.md` como fuente de verdad.
-- Siguiente issue desbloqueable: #2 — scaffold Vite + TypeScript estricto y shell offline, una vez integrada #1 en `dev`.
+- Issue actual: #2 — scaffold Vite + TypeScript estricto y shell offline.
+- Siguiente issue desbloqueable: #3 — contratos públicos y worker eco; #4 queda igualmente desbloqueada cuando #2 se integre y cierre.
 - Dependencias críticas: #1 → #2 → #3/#4; ninguna fase posterior puede promoverse antes de completar sus gates.
 - Arquitectura vigente: TypeScript estricto + Vite + Three.js; contratos públicos en `src/contracts/`; worker WFC separado del main thread; runtime offline tras la carga.
-- `dev`: `7190c837dcb1f4b4566273a785ea2948130e0d40` al iniciar esta ejecución.
+- `dev`: `fcd18f692ec464a905cd42927c88501081bfee94` al iniciar la ejecución de #2.
 - `main`: `7190c837dcb1f4b4566273a785ea2948130e0d40` al iniciar esta ejecución.
-- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`); servicio y URL N/A porque #1 no produce artefacto web.
+- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio `service_qi0aluudq024` y URL `https://la-ultima-observacion-web.sliplane.app`.
 
 ## Registro cronológico
+
+### 2026-08-04 — Issue #2 — Scaffold Vite y shell offline
+
+- Issue / PR / commits: issue #2; PR pendiente de publicación (`dev` ← `codex/issue-2-vite-shell`); `da6f3c50a33323b644195ae0644df350ae9d219d` más el commit documental final.
+- Objetivo: establecer una aplicación Vite + TypeScript estricta, reproducible, estática y sin dependencias de red en runtime.
+- Decisiones: `bootstrap.ts` posee estados de carga/error y composición de la shell; `game-loop.ts` aporta un RAF pausable sin conocer render ni solver; Three.js y Rapier se fijan en lockfile pero no se importan hasta sus issues propietarias; el mismo `dist/` se sirve localmente con Vite preview y en Sliplane con Nginx.
+- Alternativas descartadas: iniciar ya un renderer Three.js, porque invadiría WP2; usar fuentes/CDN o assets remotos, porque rompería el contrato offline; usar Vite preview como servidor de producción, porque Nginx ofrece un artefacto estático explícito y healthcheck real.
+- Trade-offs: la shell usa geometría CSS como identidad visual temporal; será sustituible sin alterar el contrato de bootstrap. Se añade Docker/Nginx ahora para poder validar el primer preview, aunque CI se configura en #4.
+- Impacto: desbloquea #3 y #4; establece `src/app/`, scripts reproducibles y el primer artefacto desplegable sin congelar aún contratos WFC.
+- Riesgos / deuda: Docker Desktop local no estaba disponible, por lo que el contenedor se validó mediante build y arranque remotos de Sliplane; lint, tests y CI pertenecen a #4.
+- Pruebas: Node 24.14.0 / npm 11.9.0; `npm run typecheck`, `npm run build`, `npm audit --omit=dev` y `git diff --check` en verde; build de 0,92 kB HTML + 7,09 kB CSS + 4,41 kB JS; servidor estático local HTTP 200; recursos del navegador limitados a los assets relativos generados por Vite; consola sin warnings/errores.
+- Deploy: Sliplane `project_3o4wtis2vnhk`, servidor existente `server_rlryp6tqmxz6`, servicio `service_qi0aluudq024`, rama `codex/issue-2-vite-shell`, commit `da6f3c5`; evento terminal “Service deployed successfully”; `/` y `/health` responden 200; Nginx 1.29.5 inicia sin errores.
+- Navegador: shell local y URL Sliplane verificadas; “Calibrar mirada” cambia el estado a `CALIBRADA`, deshabilita el botón y mantiene consola limpia. La captura del preview desplegado falló por timeout de la herramienta después de que la prueba funcional ya pasara; no se sustituyó por una evidencia engañosa.
+- Evidencia: [`docs/progress/issue-2-vite-shell/`](./progress/issue-2-vite-shell/).
+- Reversión: revertir los commits de #2 y retirar o pausar `service_qi0aluudq024`; no hay datos, volúmenes, migraciones ni secretos que restaurar.
 
 ### 2026-08-04 — Issue #1 — Fuente normativa del producto
 
