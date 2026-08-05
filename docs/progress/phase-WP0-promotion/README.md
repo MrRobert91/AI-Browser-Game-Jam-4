@@ -27,6 +27,8 @@ Evidencia reproducible del gate de fase ejecutado el 5 de agosto de 2026.
 
 ![Preview de dev verificado](./preview-dev-gate.webp)
 
-La captura de la PR de promoción se incorporará a esta misma carpeta antes de fusionarla. La evidencia post-merge y los SHAs finales se registrarán en la memoria acumulativa de la siguiente rama autorizada, porque el propio merge commit no puede formar parte de su contenido previo.
+![PR #61 lista para promoción](./pr-61-ready.webp)
+
+PR #61 se verificó no draft, `MERGEABLE/CLEAN`, con labels `codex`/`codex-automation` y CI terminal `SUCCESS`. La evidencia post-merge y los SHAs finales se registrarán en la memoria acumulativa de la siguiente rama autorizada, porque el propio merge commit no puede formar parte de su contenido previo.
 
 WebM es N/A: la promoción verifica un gate y no introduce un flujo temporal nuevo.

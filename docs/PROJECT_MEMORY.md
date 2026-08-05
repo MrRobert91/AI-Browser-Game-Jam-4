@@ -26,7 +26,7 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 - Siguiente trabajo desbloqueable: fusionar la promoción WP0 `dev` → `main`; después, #5 es la primera issue de WP1 por prioridad y orden.
 - Dependencias críticas: #1 → #2 → #3/#4; ninguna fase posterior puede promoverse antes de completar sus gates.
 - Arquitectura vigente: TypeScript estricto + Vite + Three.js; contratos públicos en `src/contracts/`; worker WFC separado del main thread; runtime offline tras la carga.
-- `dev`: `85a25857134d34fe0bea1d9f4e0c88def4c750f0`; contiene la PR #60 y el cierre íntegro de WP0 antes del commit documental de promoción.
+- `dev`: `26d07a7ec55d885e297e829709fd216df1a03cb0`; contiene la PR #60, el cierre íntegro de WP0 y el primer commit documental de promoción.
 - `main`: `7190c837dcb1f4b4566273a785ea2948130e0d40`; es ancestro de `dev` y espera la promoción formal.
 - Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio live `service_qi0aluudq024`, rama `dev`, commit `85a25857134d34fe0bea1d9f4e0c88def4c750f0`, evento `service_event_vqczlcrtcptd` y URL `https://la-ultima-observacion-web.sliplane.app`.
 
@@ -42,7 +42,8 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 - Impacto siguiente: una promoción `dev` → `main` mediante merge commit desbloquea WP1; #5 debe nacer de la igualdad exacta entre `main` y `dev` posterior a la promoción.
 - Riesgos / deuda: TypeScript 6 continúa solo como alias de API para ESLint mientras `tsc` usa TypeScript 7; el scaffold visual y el worker eco son temporales hasta WP2/WP1. No hay datos, migraciones ni volúmenes.
 - Reversión: revertir el merge commit de promoción en `main`; `dev` conserva el historial validado de WP0 y el preview puede apuntarse de nuevo al SHA anterior sin cambios de infraestructura.
-- Evidencia: [`docs/progress/phase-WP0-promotion/`](./progress/phase-WP0-promotion/). El número de PR, merge commit y SHAs finales se añaden tras ejecutar la promoción, sin reescribir esta entrada.
+- PR de promoción: #61 (`main` ← `dev`), no draft, `MERGEABLE/CLEAN`, labels `codex`/`codex-automation` y CI terminal `SUCCESS` sobre `26d07a7`. El merge commit y los SHAs finales se añaden tras ejecutar la promoción, sin reescribir esta entrada.
+- Evidencia: [`docs/progress/phase-WP0-promotion/`](./progress/phase-WP0-promotion/).
 
 ### 2026-08-05 — Issue #4 — Puerta reproducible de calidad y CI
 
