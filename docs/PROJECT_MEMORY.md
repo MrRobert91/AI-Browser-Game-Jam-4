@@ -4,11 +4,11 @@ Este documento conserva la historia de implementación de **La Última Observaci
 
 ## Vista de pájaro
 
-Actualizado: 2026-08-04 (Europe/Madrid)
+Actualizado: 2026-08-05 (Europe/Madrid)
 
 | Fase | Issues | Estado | Gate o dependencia principal |
 |---|---:|---|---|
-| WP0 — Fundación y contratos | #1–#4 | En curso | #1 cerrada; #2 publicada desde `dev`; #3/#4 dependen de #2 |
+| WP0 — Fundación y contratos | #1–#4 | En curso | #1/#2 cerradas; #3 en implementación; #4 desbloqueada |
 | WP1 — Solver puro | #5–#11 | Bloqueada | Requiere WP0 |
 | WP2 — Render, cámara y física | #12–#14 | Bloqueada | Requiere WP0 |
 | WP3 — Gramática y tiles | #15–#22 | Bloqueada | Requiere contratos y solver base |
@@ -22,15 +22,30 @@ Actualizado: 2026-08-04 (Europe/Madrid)
 ### Estado operativo actual
 
 - Fase actual: WP0 — Fundación y contratos.
-- Issue actual: #2 — scaffold Vite + TypeScript estricto y shell offline.
-- Siguiente issue desbloqueable: #3 — contratos públicos y worker eco; #4 queda igualmente desbloqueada cuando #2 se integre y cierre.
+- Issue actual: #3 — contratos públicos y worker eco numerado.
+- Siguiente issue desbloqueable: #4 — check, lint, format, tests y CI; no se selecciona mientras #3 siga activa.
 - Dependencias críticas: #1 → #2 → #3/#4; ninguna fase posterior puede promoverse antes de completar sus gates.
 - Arquitectura vigente: TypeScript estricto + Vite + Three.js; contratos públicos en `src/contracts/`; worker WFC separado del main thread; runtime offline tras la carga.
-- `dev`: `fcd18f692ec464a905cd42927c88501081bfee94` al iniciar la ejecución de #2.
-- `main`: `7190c837dcb1f4b4566273a785ea2948130e0d40` al iniciar esta ejecución.
-- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio `service_qi0aluudq024` y URL `https://la-ultima-observacion-web.sliplane.app`.
+- `dev`: `148a3f8b3751ff27c5b1d6bde829db6bef1eda1b` al iniciar la ejecución de #3.
+- `main`: `7190c837dcb1f4b4566273a785ea2948130e0d40`; está contenido en `dev` y WP0 aún no cumple gate de promoción.
+- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio live `service_qi0aluudq024` y URL `https://la-ultima-observacion-web.sliplane.app`; despliegue de #3 pendiente del primer commit.
 
 ## Registro cronológico
+
+### 2026-08-05 — Issue #3 — Contratos públicos y worker eco numerado
+
+- Issue / PR / commits: issue #3; rama `codex/issue-3-public-contracts-worker` desde `dev` `148a3f8b3751ff27c5b1d6bde829db6bef1eda1b`; PR y commits pendientes de publicación.
+- Objetivo: congelar la primera frontera pública entre main, solver, render y contenido, con mensajes verificables en runtime y un worker real que preserve el número de tick.
+- Decisiones: `src/contracts/` posee los tipos de mundo, tiles y mensajes definidos en `AGENTS.md`; `runtime-validation.ts` valida defensivamente ambos sentidos del canal; `worker-runtime.ts` devuelve un `SolverWarning` `ECHO_ONLY` con el mismo tick; `transferables.ts` centraliza la lista de buffers de `ChunkBoundaryEvent`; una prueba de arquitectura impide imports internos entre `wfc`, `world`, `render` y `content`.
+- Alternativas descartadas: añadir un evento `ECHO` a `WorkerOutput`, porque alteraría la unión normativa; fingir un `CollapseEvent` o `BoundaryUpdate` sin solver, porque mezclaría handshake y simulación; aceptar objetos tipados sin guardas de runtime, porque `postMessage` cruza una frontera no confiable.
+- Trade-offs: Vitest entra como dependencia fijada antes de #4 porque el criterio de #3 exige un test ejecutable; #4 seguirá siendo propietaria de la configuración global de check, lint, format y CI. `ECHO_ONLY` es scaffolding explícito y deberá desaparecer cuando #11 conecte `SolverCore`.
+- Impacto: desbloquea los contratos que consumirán #5, #6, #12 y #15 sin implementar todavía bitsets, PRNG, renderer, gramática, chunks ni colapsos.
+- Riesgos / deuda: la forma interna de `SolverWarning` queda mínima y podrá ampliarse de forma compatible; no se ha congelado aún `CollapseEvent` como evento de gameplay. El test de límites cubre imports estáticos y deberá integrarse en `npm run check` en #4.
+- Pruebas: `npm run typecheck`, `npm run test:contracts` (2 archivos, 4 tests), `npm run build`, `npm audit --omit=dev` y `git diff --check` en verde; build con worker separado de 1,68 kB.
+- Deploy: pendiente del primer commit de implementación; el servicio existente está live sobre la rama de #2 y se reutilizará sin crear recursos.
+- Navegador: dev server y build estática verificadas; tick `#000001` retorna `ECO`, estado `ready`, calibración funcional, worker local cargado como recurso separado y cero warnings/errores en una carga limpia. Un error aislado de la extensión durante un reload no se reprodujo en una pestaña nueva y no procede de la app.
+- Evidencia: [`docs/progress/issue-3-public-contracts-worker/`](./progress/issue-3-public-contracts-worker/). WebM N/A porque el handshake es instantáneo y no existe un flujo visual temporal nuevo.
+- Reversión: revertir los commits de #3 y devolver Sliplane a la rama anterior; no hay datos, volúmenes, migraciones ni cambios normativos que restaurar.
 
 ### 2026-08-04 — Issue #2 — Scaffold Vite y shell offline
 

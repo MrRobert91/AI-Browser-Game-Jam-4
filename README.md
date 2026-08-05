@@ -18,6 +18,7 @@ Comprobaciones disponibles en el scaffold inicial:
 
 ```powershell
 npm.cmd run typecheck
+npm.cmd run test:contracts
 npm.cmd run build
 npm.cmd run preview
 ```
