@@ -1,5 +1,8 @@
 import type { SolverWarning, WorkerOutput } from '../contracts/messages';
-import { isWorkerInput, readMessageTick } from '../contracts/runtime-validation';
+import {
+  isWorkerInput,
+  readMessageTick,
+} from '../contracts/runtime-validation';
 
 function warning(
   tick: number | null,
@@ -11,7 +14,11 @@ function warning(
 
 export function handleWorkerInput(value: unknown): WorkerOutput {
   if (!isWorkerInput(value)) {
-    return warning(readMessageTick(value), 'INVALID_INPUT', 'Rejected invalid worker input.');
+    return warning(
+      readMessageTick(value),
+      'INVALID_INPUT',
+      'Rejected invalid worker input.',
+    );
   }
 
   switch (value.type) {
@@ -22,8 +29,16 @@ export function handleWorkerInput(value: unknown): WorkerOutput {
         `Observation tick ${value.tick} acknowledged with ${value.visibleCells.length} visible cells.`,
       );
     case 'UNLOCK_PACK':
-      return warning(value.tick, 'ECHO_ONLY', `Unlock ${value.packId} acknowledged.`);
+      return warning(
+        value.tick,
+        'ECHO_ONLY',
+        `Unlock ${value.packId} acknowledged.`,
+      );
     case 'RESET':
-      return warning(value.tick, 'ECHO_ONLY', `Reset for seed ${value.worldSeed} acknowledged.`);
+      return warning(
+        value.tick,
+        'ECHO_ONLY',
+        `Reset for seed ${value.worldSeed} acknowledged.`,
+      );
   }
 }

@@ -8,7 +8,7 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 
 | Fase | Issues | Estado | Gate o dependencia principal |
 |---|---:|---|---|
-| WP0 — Fundación y contratos | #1–#4 | En curso | #1/#2 cerradas; #3 en implementación; #4 desbloqueada |
+| WP0 — Fundación y contratos | #1–#4 | En curso | #1–#3 cerradas; #4 publicada en PR #60 contra `dev` |
 | WP1 — Solver puro | #5–#11 | Bloqueada | Requiere WP0 |
 | WP2 — Render, cámara y física | #12–#14 | Bloqueada | Requiere WP0 |
 | WP3 — Gramática y tiles | #15–#22 | Bloqueada | Requiere contratos y solver base |
@@ -22,15 +22,31 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 ### Estado operativo actual
 
 - Fase actual: WP0 — Fundación y contratos.
-- Issue actual: #3 — contratos públicos y worker eco numerado.
-- Siguiente issue desbloqueable: #4 — check, lint, format, tests y CI; no se selecciona mientras #3 siga activa.
+- Issue actual: #4 — check, lint, format, tests y CI; PR #60 en validación.
+- Siguiente trabajo desbloqueable: reconciliar #4 tras su merge en `dev` y ejecutar la promoción formal de WP0; #5/#12 no se seleccionan antes de esa puerta.
 - Dependencias críticas: #1 → #2 → #3/#4; ninguna fase posterior puede promoverse antes de completar sus gates.
 - Arquitectura vigente: TypeScript estricto + Vite + Three.js; contratos públicos en `src/contracts/`; worker WFC separado del main thread; runtime offline tras la carga.
-- `dev`: `148a3f8b3751ff27c5b1d6bde829db6bef1eda1b` al iniciar la ejecución de #3.
+- `dev`: `9de883f12f64644a2a3b596d36372dc55aca32d1` al iniciar la ejecución de #4; contiene la PR #59 de #3.
 - `main`: `7190c837dcb1f4b4566273a785ea2948130e0d40`; está contenido en `dev` y WP0 aún no cumple gate de promoción.
-- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio live `service_qi0aluudq024`, rama `codex/issue-3-public-contracts-worker`, commit `dcc1812ff1ca526c76f002e3b11119aea0176d7c` y URL `https://la-ultima-observacion-web.sliplane.app`.
+- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio live `service_qi0aluudq024`, rama `codex/issue-4-quality-gate-ci`, commit `d412bca2aad8c25e56f91efa7b365d1903a8acea` y URL `https://la-ultima-observacion-web.sliplane.app`.
 
 ## Registro cronológico
+
+### 2026-08-05 — Issue #4 — Puerta reproducible de calidad y CI
+
+- Issue / PR / commits: issue #4; PR #60 (`dev` ← `codex/issue-4-quality-gate-ci`); rama desde `dev` `9de883f12f64644a2a3b596d36372dc55aca32d1`; commit de implementación `d412bca2aad8c25e56f91efa7b365d1903a8acea` y commit documental posterior de evidencia/publicación.
+- Objetivo: cerrar WP0 con un gate reproducible que bloquee cualquier cambio cuando fallen tipos, lint, tests, formato o build.
+- Decisiones: Node 24.14.0 se fija en `.nvmrc`; Actions usa `checkout@v7`/`setup-node@v7` para no depender del runtime Node 20 obsoleto de v4; ESLint usa flat config y `--max-warnings=0`; Prettier dispone de `format` y `format:check`; `npm run check` ejecuta TypeScript, ESLint y toda la suite Vitest; GitHub Actions usa un único job secuencial con `npm ci`; `.gitattributes` normaliza LF.
+- Compatibilidad TypeScript: el compilador nativo TypeScript 7.0.2 permanece detrás de `tsc`; el paquete `typescript` apunta mediante el alias oficial a TypeScript 6.0.3 solo para la API que `typescript-eslint` importa. La instalación aislada desde lockfile demostró que ambos conviven sin `--force`.
+- Alternativas descartadas: degradar todo el proyecto a TypeScript 6, porque perdería el compilador normativo ya fijado; omitir lint de TypeScript, porque dejaría el gate incompleto; separar check/build en jobs independientes, porque un único job expresa mejor la secuencia bloqueante de esta fase.
+- Trade-offs: la primera adopción de Prettier normaliza mecánicamente archivos existentes sin cambiar semántica; el alias TS6 es deuda temporal hasta que `typescript-eslint` soporte la API de TS7.
+- Impacto: integra las pruebas de contratos de #3 en el gate global y completa el alcance de implementación de WP0. WP1/WP2 siguen bloqueadas hasta que #4 se fusione en `dev` y la promoción WP0 `dev`→`main` supere sus gates.
+- Riesgos / deuda: vigilar la compatibilidad del alias cuando TypeScript 7.1 exponga API. No cambian contratos, runtime, assets de juego ni reglas normativas.
+- Pruebas: `npm run format:check`, `npm run check` (typecheck, ESLint, dos archivos/cuatro tests), `npm run build`, `npm ci --ignore-scripts` aislado, `npm audit --omit=dev` y `git diff --check` en verde.
+- Deploy: Sliplane `project_3o4wtis2vnhk` / `service_qi0aluudq024`, rama `codex/issue-4-quality-gate-ci`, commit `d412bca`; evento terminal `service_event_t1lsbe334b0c` (`Service deployed successfully`); build remoto con `npm ci`/TypeScript 7/Vite verde; `/` y `/health` responden 200, health `ok`.
+- Navegador: build estática local y preview Sliplane verificados; eco `#000001`, calibración, assets del mismo origen y cero warnings/errores. WebM N/A porque el cambio no añade una interacción temporal nueva. PR #60 quedó no draft, `MERGEABLE/CLEAN`, base `dev`, labels `codex`/`codex-automation` y CI verde; #4 pasó a **In review** en Project #2.
+- Evidencia: [`docs/progress/issue-4-quality-gate-ci/`](./progress/issue-4-quality-gate-ci/).
+- Reversión: revertir los commits de #4 y devolver Sliplane a la rama de #3; no hay datos, volúmenes, migraciones ni cambios normativos que restaurar.
 
 ### 2026-08-05 — Issue #3 — Contratos públicos y worker eco numerado
 

@@ -8,11 +8,7 @@ export interface CellCoordinates {
 }
 
 export type CellPhase =
-  | 'UNINITIALIZED'
-  | 'SUPERPOSED'
-  | 'DETERMINED'
-  | 'COLLAPSING'
-  | 'FIXED';
+  'UNINITIALIZED' | 'SUPERPOSED' | 'DETERMINED' | 'COLLAPSING' | 'FIXED';
 
 export interface DomainMask {
   readonly lo: number;
