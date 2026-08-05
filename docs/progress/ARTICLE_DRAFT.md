@@ -43,3 +43,15 @@ El primer cambio de WP1 no intenta colapsar una celda. Define cómo se guardará
 La suite cubre todos los tamaños de máscara entre 0 y 64, cada bit individual y las fronteras donde JavaScript cambia de palabra o signo: 31, 32 y 63. Esta base pequeña importa porque propagación y entropía ejecutarán estas funciones miles de veces por segundo; una representación correcta evita que decisiones posteriores tengan que compensar deuda de memoria.
 
 ![Issue #5 reclamada en WP1](./issue-5-bitset-domains/project-initial.webp)
+
+## El determinismo se diseña antes de observar
+
+Con los dominios ya representados, el siguiente paso no fue calcular entropía: fue eliminar cualquier dependencia implícita del reloj y de la aleatoriedad ambiental. Cada subsistema y chunk deriva su propia seed de 32 bits a partir de la seed del mundo. El PRNG avanza únicamente en ticks completos de 100 ms; por eso una ruta renderizada a 30, 60 o 144 FPS produce la misma secuencia.
+
+El hash final sigue una regla distinta a la generación: ordena las celdas fijadas por identidad y resume seed, terreno y feature. Así, el resultado describe el mundo final y no el orden accidental en el que sus celdas entraron en la colección. La versión del hash está etiquetada desde el inicio para que futuras ampliaciones no reinterpreten silenciosamente resultados antiguos.
+
+![La issue determinista entra en progreso](./issue-6-deterministic-rng/project-initial.webp)
+
+![El preview conserva el shell y el worker](./issue-6-deterministic-rng/sliplane-browser.webp)
+
+![El cambio determinista queda listo para revisión](./issue-6-deterministic-rng/pr-63-published.webp)
