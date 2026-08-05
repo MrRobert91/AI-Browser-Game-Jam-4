@@ -67,3 +67,17 @@ El benchmark con 64 variantes mantiene entropía y selección en centésimas de 
 ![La entropía entra en progreso](./issue-7-entropy-selection/project-initial.webp)
 
 ![Preview del núcleo matemático](./issue-7-entropy-selection/sliplane-browser.webp)
+
+## Las restricciones se propagan como una onda finita
+
+La cuarta pieza del solver convierte la compatibilidad de sockets en tablas de bits por dirección. La compilación ocurre una vez: valida referencias, exige reciprocidad y deja para el camino caliente solo máscaras de 64 bits. Cuando una celda pierde posibilidades, la propagación une lo permitido por sus variantes supervivientes, intersecta cada vecina y avanza en orden cardinal fijo.
+
+La cola no es una colección que crece con cada visita. Es un anillo preasignado con una marca por celda: si dos vecinas intentan encolar el mismo trabajo pendiente, la segunda petición se descarta. Tampoco se recalcula entropía cuando una intersección no cambia nada. En un tablero de prueba 64×64 completamente resuelto desde una sola esquina, la onda termina en menos de 1,5 ms en p99.
+
+La contradicción se mantiene separada de la reparación. Si una restricción vacía un dominio o contradice una celda ya fijada, esta capa devuelve el `cellId` y no modifica `FIXED`. La siguiente issue podrá probar candidatos y restaurar snapshots alrededor de esa señal sin esconder backtracking dentro de la propagación.
+
+![La propagación entra en progreso](./issue-8-cardinal-propagation/project-in-progress.webp)
+
+![Preview tras desplegar la propagación](./issue-8-cardinal-propagation/sliplane-browser.webp)
+
+![La propagación queda lista para revisión](./issue-8-cardinal-propagation/pr-65-published.webp)
