@@ -30,6 +30,25 @@ body {
   overflow: hidden;
 }
 
+.observation-reticle {
+  --observation-charge: 0;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%) rotate(-90deg);
+  z-index: 20;
+  pointer-events: none;
+  border-radius: 50%;
+  background: conic-gradient(
+    rgba(255, 240, 190, 0.95) calc(var(--observation-charge) * 1turn),
+    rgba(184, 231, 255, 0.28) 0
+  );
+  mask: radial-gradient(circle, transparent 42%, #000 47%);
+  filter: drop-shadow(0 0 4px rgba(157, 230, 255, 0.7));
+}
+
 button {
   font: inherit;
 }
