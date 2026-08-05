@@ -8,9 +8,9 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 
 | Fase | Issues | Estado | Gate o dependencia principal |
 |---|---:|---|---|
-| WP0 — Fundación y contratos | #1–#4 | Gate superado; promoción en curso | #1–#4 cerradas mediante PRs integradas en `dev`; preview y CI verdes |
-| WP1 — Solver puro | #5–#11 | Siguiente | Se desbloquea tras fusionar la promoción WP0 `dev` → `main` |
-| WP2 — Render, cámara y física | #12–#14 | Pendiente | Requiere la promoción de WP0; se prioriza WP1 por orden del plan |
+| WP0 — Fundación y contratos | #1–#4 | Completada y promovida | PR #61 fusionada; `main` y `dev` sincronizadas en `7be4649` |
+| WP1 — Solver puro | #5–#11 | En curso | #5 implementa la representación base de dominios; #6 sigue disponible |
+| WP2 — Render, cámara y física | #12–#14 | Pendiente | WP0 completada; se prioriza WP1 por orden del plan |
 | WP3 — Gramática y tiles | #15–#22 | Bloqueada | Requiere contratos y solver base |
 | WP4 — Mundo observable | #23–#29 | Bloqueada | Requiere WP1, WP2 y WP3; termina con vertical slice |
 | WP5 — Progresión y peligros | #30–#35 | Bloqueada | Requiere el gate del vertical slice |
@@ -21,16 +21,30 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 
 ### Estado operativo actual
 
-- Fase actual: cierre y promoción formal de WP0 — Fundación y contratos.
-- Issue actual: ninguna; #1–#4 están cerradas mediante PRs fusionadas en `dev`.
-- Siguiente trabajo desbloqueable: fusionar la promoción WP0 `dev` → `main`; después, #5 es la primera issue de WP1 por prioridad y orden.
-- Dependencias críticas: #1 → #2 → #3/#4; ninguna fase posterior puede promoverse antes de completar sus gates.
-- Arquitectura vigente: TypeScript estricto + Vite + Three.js; contratos públicos en `src/contracts/`; worker WFC separado del main thread; runtime offline tras la carga.
-- `dev`: `26d07a7ec55d885e297e829709fd216df1a03cb0`; contiene la PR #60, el cierre íntegro de WP0 y el primer commit documental de promoción.
-- `main`: `7190c837dcb1f4b4566273a785ea2948130e0d40`; es ancestro de `dev` y espera la promoción formal.
-- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio live `service_qi0aluudq024`, rama `dev`, commit `85a25857134d34fe0bea1d9f4e0c88def4c750f0`, evento `service_event_vqczlcrtcptd` y URL `https://la-ultima-observacion-web.sliplane.app`.
+- Fase actual: WP1 — Solver puro.
+- Issue actual: #5 — bitsets de 64 variantes; rama `codex/issue-5-bitset-domains` desde la base promovida `7be4649`.
+- Siguiente trabajo desbloqueable: #6 permanece disponible; #7 requiere que #5 y #6 estén cerradas mediante PRs integradas en `dev`.
+- Dependencias críticas: #5/#6 → #7; #5 también alimenta propagación (#8), transacciones (#9), chunks (#10) y la integración del worker (#11).
+- Arquitectura vigente: TypeScript estricto + Vite + Three.js; contratos públicos en `src/contracts/`; worker WFC separado; dominios internos mutables en dos palabras `uint32`; runtime offline tras la carga.
+- `dev` y `main`: `7be4649ece2a9a8f4bed40ff72653ef6cbf06478` tras la promoción WP0 y antes de la rama #5.
+- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio live `service_qi0aluudq024`, rama `codex/issue-5-bitset-domains`, commit `f2cbe674fc5b402331cb5e8a3124cb689945abfb`, evento `service_event_0p9k5b3x5bmu` y URL `https://la-ultima-observacion-web.sliplane.app`.
 
 ## Registro cronológico
+
+### 2026-08-05 — Issue #5 — Bitsets de 64 variantes y dominios sin asignaciones calientes
+
+- Issue / rama / commit: issue #5; `codex/issue-5-bitset-domains` desde `dev`/`main` `7be4649ece2a9a8f4bed40ff72653ef6cbf06478`; implementación `f2cbe674fc5b402331cb5e8a3124cb689945abfb` antes del commit documental.
+- Objetivo: representar cada dominio de terreno o feature con dos palabras de 32 bits y ofrecer las primitivas que necesitarán entropía, propagación, rollback y chunks.
+- Decisiones: `MutableDomainMask` extiende el contrato público de lectura `DomainMask`; los constructores son las únicas operaciones que asignan objetos; `setBit`, `clearBit`, `assignMask`, `intersectInto` y `unionInto` mutan en sitio; `nextSetBit` reemplaza un iterador/generador asignante por un cursor numérico; todos los resultados de palabras se normalizan con `>>> 0`.
+- Alternativas descartadas: `bigint`, porque no coincide con las dos palabras normativas ni con buffers futuros; `Set<number>`, por coste por celda; generadores y arrays de índices, porque asignarían en el camino caliente; cambiar `DomainMask` a mutable, porque expondría mutación a consumidores de contratos.
+- Trade-offs: las guardas de rango se ejecutan en cada acceso público y solo asignan si lanzan por entrada inválida; priorizan una frontera defensiva ahora y pueden dividirse en variantes internas unchecked si un perfil real lo exige.
+- Impacto: #7 puede consumir popcount/singleton/iteración cuando #6 complete determinismo; #8–#10 reciben operaciones in-place y detección de cambios sin adoptar todavía política de solver. No cambian mensajes, render, tiles ni comportamiento visible.
+- Riesgos / deuda: todavía no existe almacenamiento contiguo por chunk; `MutableDomainMask` es una unidad lógica y #10 decidirá el layout físico sin alterar estas semánticas. La suite no usa medición de heap frágil: demuestra identidad estable y el código no crea colecciones en operaciones calientes.
+- Pruebas: `npm run check` (3 archivos, 11 tests), `npm run build`, `npm audit --omit=dev` y `git diff --check` verdes. Se recorren exhaustivamente los 65 tamaños válidos y los 64 bits; 31, 32 y 63 tienen aserciones explícitas.
+- Deploy y navegador: Sliplane desplegó `f2cbe67` desde la rama de issue con `service_event_0p9k5b3x5bmu`; `/` y `/health` responden 200. Build local y preview remoto mantienen shell, calibración y eco `#000001` con consola limpia. WebM N/A: la issue no añade interacción visual.
+- Project: #5 reclamada con `status:in-progress` y movida manualmente a **In progress**; #6 permanece en Backlog y #7 sigue bloqueada.
+- Evidencia: [`docs/progress/issue-5-bitset-domains/`](./progress/issue-5-bitset-domains/).
+- Reversión: revertir los commits de #5 y devolver el preview a `dev`; no hay datos, migraciones, assets ni cambios normativos.
 
 ### 2026-08-05 — Gate de promoción WP0 — Fundación y contratos
 
@@ -42,7 +56,8 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 - Impacto siguiente: una promoción `dev` → `main` mediante merge commit desbloquea WP1; #5 debe nacer de la igualdad exacta entre `main` y `dev` posterior a la promoción.
 - Riesgos / deuda: TypeScript 6 continúa solo como alias de API para ESLint mientras `tsc` usa TypeScript 7; el scaffold visual y el worker eco son temporales hasta WP2/WP1. No hay datos, migraciones ni volúmenes.
 - Reversión: revertir el merge commit de promoción en `main`; `dev` conserva el historial validado de WP0 y el preview puede apuntarse de nuevo al SHA anterior sin cambios de infraestructura.
-- PR de promoción: #61 (`main` ← `dev`), no draft, `MERGEABLE/CLEAN`, labels `codex`/`codex-automation` y CI terminal `SUCCESS` sobre `26d07a7`. El merge commit y los SHAs finales se añaden tras ejecutar la promoción, sin reescribir esta entrada.
+- PR de promoción: #61 (`main` ← `dev`), no draft, `MERGEABLE/CLEAN`, labels `codex`/`codex-automation` y CI terminal `SUCCESS` sobre `aea5643` tras incorporar toda la evidencia previa al merge.
+- Cierre: fusionada exclusivamente mediante merge commit `7be4649ece2a9a8f4bed40ff72653ef6cbf06478`. El head promovido `aea564332565d686af9a6b7cb9f31fa1b2d05f91` es ancestro de `main`; después `dev` avanzó por fast-forward y se verificó `dev` local = `origin/dev` = `origin/main` = `7be4649`.
 - Evidencia: [`docs/progress/phase-WP0-promotion/`](./progress/phase-WP0-promotion/).
 
 ### 2026-08-05 — Issue #4 — Puerta reproducible de calidad y CI
