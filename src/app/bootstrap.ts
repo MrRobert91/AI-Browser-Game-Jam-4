@@ -1,6 +1,11 @@
 import { GameLoop } from './game-loop';
 import { SolverWorkerClient } from './solver-worker-client';
 import { createFirstPersonCamera } from '../player/camera';
+import { PlayerInput } from '../player/input';
+import {
+  createPlayerPhysicsRuntime,
+  type PlayerPhysicsRuntime,
+} from '../player/physics';
 import { GameRenderer } from '../render/renderer';
 
 const SHELL_MARKUP = `
@@ -107,8 +112,33 @@ export function bootstrap(root: HTMLElement): () => void {
     Math.max(1, viewport.clientHeight),
   );
   const gameRenderer = new GameRenderer({ container: viewport, camera });
-  const gameLoop = new GameLoop(({ elapsedSeconds }) => {
+  const playerInput = new PlayerInput(shell, {
+    onPauseChange: (paused) => {
+      shell.dataset.paused = String(paused);
+      if (shell.dataset.calibrated === 'true') {
+        systemState.textContent = paused ? 'PAUSA' : 'OBSERVANDO';
+      }
+    },
+  });
+  let playerPhysics: PlayerPhysicsRuntime | null = null;
+  let disposed = false;
+  void createPlayerPhysicsRuntime(camera, playerInput)
+    .then((runtime) => {
+      if (disposed) runtime.dispose();
+      else {
+        playerPhysics = runtime;
+        shell.dataset.physics = 'ready';
+      }
+    })
+    .catch((error: unknown) => {
+      shell.dataset.physics = 'error';
+      workerState.textContent = 'FÍSICA // ERROR';
+      workerState.dataset.contractState = 'error';
+      console.error('Rapier no pudo iniciar.', error);
+    });
+  const gameLoop = new GameLoop(({ deltaSeconds, elapsedSeconds }) => {
     shell.style.setProperty('--observation-phase', `${elapsedSeconds % 8}`);
+    playerPhysics?.controller.update(deltaSeconds);
     gameRenderer.render();
   });
   const solverWorker = new SolverWorkerClient({
@@ -146,6 +176,8 @@ export function bootstrap(root: HTMLElement): () => void {
       observationButton
         .querySelector('span')
         ?.replaceChildren('Mirada calibrada');
+      playerInput.setEnabled(true);
+      void playerInput.resume();
     },
     { signal: abortController.signal },
   );
@@ -165,9 +197,12 @@ export function bootstrap(root: HTMLElement): () => void {
   gameLoop.start();
 
   return () => {
+    disposed = true;
     abortController.abort();
     gameLoop.stop();
     solverWorker.dispose();
     gameRenderer.dispose();
+    playerInput.dispose();
+    playerPhysics?.dispose();
   };
 }
