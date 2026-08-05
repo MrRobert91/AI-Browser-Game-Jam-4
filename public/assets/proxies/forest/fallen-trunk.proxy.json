@@ -1,0 +1,1 @@
+{ "version": 1, "shape": "fallen-trunk", "color": "#574736", "accent": "#8a7552", "bounds": { "width": 1.9, "height": 0.75, "depth": 1.1 }, "pivot": "center-bottom", "lod": [{ "maxDistance": 24, "shape": "fallen-trunk" }, { "maxDistance": 42, "shape": "fallen-trunk-low" }] }

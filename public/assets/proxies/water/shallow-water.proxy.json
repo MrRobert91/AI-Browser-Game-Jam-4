@@ -1,0 +1,1 @@
+{ "version": 1, "shape": "water-shallow", "color": "#287e86", "accent": "#91e1cf", "bounds": { "width": 2, "height": 0.1, "depth": 2 }, "pivot": "center-bottom" }

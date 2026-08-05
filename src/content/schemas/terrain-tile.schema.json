@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "terrain-tile.schema.json",
+  "title": "TerrainTileDefinition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "numericId",
+    "packId",
+    "weight",
+    "mesh",
+    "rotationQuarterTurns",
+    "sockets",
+    "tags",
+    "walkable",
+    "lethal",
+    "heightClass",
+    "fallbackRank"
+  ],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "numericId": { "type": "integer", "minimum": 0, "maximum": 65535 },
+    "packId": { "enum": ["base", "water", "forest", "ruin", "storm"] },
+    "weight": { "type": "number", "exclusiveMinimum": 0 },
+    "mesh": { "type": "string", "pattern": "^/assets/" },
+    "rotationQuarterTurns": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": [0, 1, 2, 3] }
+    },
+    "sockets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["N", "E", "S", "W"],
+      "properties": {
+        "N": { "$ref": "#/$defs/socket" },
+        "E": { "$ref": "#/$defs/socket" },
+        "S": { "$ref": "#/$defs/socket" },
+        "W": { "$ref": "#/$defs/socket" }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "walkable": { "type": "boolean" },
+    "lethal": { "type": "boolean" },
+    "heightClass": { "enum": [0, 1] },
+    "fallbackRank": { "enum": [0, 1, 2] },
+    "distanceCurve": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "prefixItems": [
+          { "type": "number" },
+          { "type": "number", "exclusiveMinimum": 0 }
+        ],
+        "items": false
+      }
+    },
+    "neighborBias": {
+      "type": "object",
+      "additionalProperties": { "type": "number", "exclusiveMinimum": 0 }
+    }
+  },
+  "$defs": {
+    "socket": {
+      "enum": [
+        "OPEN_FLAT",
+        "WET_FLAT",
+        "BANK_IN",
+        "BANK_OUT",
+        "PATH",
+        "RUIN_FLOOR",
+        "CLIFF_LOW"
+      ]
+    }
+  }
+}

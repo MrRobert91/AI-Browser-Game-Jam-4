@@ -9,9 +9,9 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 | Fase | Issues | Estado | Gate o dependencia principal |
 |---|---:|---|---|
 | WP0 — Fundación y contratos | #1–#4 | Completada y promovida | PR #61 fusionada; `main` y `dev` sincronizadas en `7be4649` |
-| WP1 — Solver puro | #5–#11 | Implementada, en revisión | #5–#8 integradas en `dev`; #9–#11 completadas secuencialmente en PR #66 |
-| WP2 — Render, cámara y física | #12–#14 | Implementada, en revisión | #12–#14 completadas secuencialmente en la misma PR #66 |
-| WP3 — Gramática y tiles | #15–#22 | Bloqueada | Requiere contratos y solver base |
+| WP1 — Solver puro | #5–#11 | Integrada en `dev` | PR #66 fusionada; issues #5–#11 cerradas |
+| WP2 — Render, cámara y física | #12–#14 | Integrada en `dev` | PR #66 fusionada; issues #12–#14 cerradas |
+| WP3 — Gramática y tiles | #15–#22 | #15–#21 en revisión | PR #67 lista; #22 bloqueada por release #51 |
 | WP4 — Mundo observable | #23–#29 | Bloqueada | Requiere WP1, WP2 y WP3; termina con vertical slice |
 | WP5 — Progresión y peligros | #30–#35 | Bloqueada | Requiere el gate del vertical slice |
 | WP6 — Presentación | #36–#39 | Bloqueada | Requiere mundo observable estable |
@@ -21,15 +21,24 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 
 ### Estado operativo actual
 
-- Fase actual: WP1 y WP2 implementadas en una entrega acumulativa, pendientes de integración externa.
-- Trabajo en revisión: issues #9–#14; PR #66 (`dev` ← `codex/wp1-wp2-foundations`), no draft, `MERGEABLE/CLEAN`, CI terminal `SUCCESS` y head funcional `b23b22f776657a751bb7ff8b9e3da1e8278327e1`.
-- Siguiente trabajo desbloqueable: reconciliar #9–#14 solo después de que PR #66 se fusione en `dev`; entonces WP3 puede empezar por #15 sin depender de cambios no integrados.
-- Dependencias críticas: #5/#6 → #7 → #8 → #9 → #10 → #11; WP2 consume el renderer de #12 antes del controlador #13 y del streaming visual #14. La entrega acumulativa respeta ese orden mediante seis commits separados.
-- Arquitectura vigente: TypeScript estricto + Vite + Three.js/WebGL2 + Rapier; contratos públicos en `src/contracts/`; worker WFC separado; transacciones locales con rollback; chunks persistentes y bordes; `SolverCore` incremental a 10 Hz; cámara/controlador en primera persona; calidad adaptativa; instancing, pools y descarga visual sin borrar estado lógico. El runtime continúa offline tras la carga.
-- `dev`: `2ddb78d3023115173fa40f3686ec1b11866131a7`, ya contiene #5–#8; head funcional de la rama de revisión: `b23b22f776657a751bb7ff8b9e3da1e8278327e1`; `main`: `7be4649ece2a9a8f4bed40ff72653ef6cbf06478`, última promoción WP0 registrada.
-- Evidencia actual: build local de PR #66 verificado con canvas WebGL2, calibración de mirada/Pointer Lock y campo de 256 detalles instanciados. Capturas y vídeo reproducible en [`docs/progress/wp1-wp2-foundations/`](./progress/wp1-wp2-foundations/). El preview Sliplane no se movió a esta rama durante esta actualización; su último estado documentado sigue siendo #8 y no se presenta como evidencia de PR #66.
+- Fase actual: WP3 implementada secuencialmente para todas las issues desbloqueadas (#15–#21) en PR #67, lista para revisión contra `dev`.
+- Trabajo en revisión: schemas y compilación, gramática base, validadores, galería y packs Agua/Bosque/Ruina. Las siete issues conservan `status:in-review` hasta su integración real en `dev`.
+- Bloqueo explícito: #22 Tormenta no se inició porque depende de #51, todavía abierta, y exige la simulación posterior de 10.000 seeds. Tormenta no forma parte del inventario activo ni del MVP.
+- Arquitectura vigente: el contenido JSON compila a variantes y bitmasks públicos sin importar internals de `wfc`; `validate:tiles` aplica reciprocidad, dos salidas, adaptadores, seguridad, tags, IDs, assets y límite de 64; `validate:assets` comprueba proxies locales 2×2, pivote y LOD.
+- `dev` base de esta entrega: `e443a8ed70f977b1066327309c3dbf0e5d8979be`; rama: `codex/wp3-tile-grammar-pipeline`; PR #67 `MERGEABLE/CLEAN`, no draft y CI terminal `SUCCESS` antes de este cierre documental.
+- Evidencia actual: galería offline `?grammar=1` con 36 definiciones, 4 packs autorizados y cero errores de carga/asset. Capturas y detalle de QA en [`docs/progress/wp3-tile-grammar/`](./progress/wp3-tile-grammar/).
 
 ## Registro cronológico
+
+### 2026-08-05 — PR #67 — Pipeline acumulativo WP3
+
+- Issues implementadas en orden: #15 schemas/compilación; #16 gramática base; #17 `validate:tiles`; #18 galería/`validate:assets`; #19 Agua; #20 Bosque; #21 Ruina. Cada issue corresponde a un commit funcional separado publicado sobre la misma PR.
+- Contenido activo: 20 definiciones de terreno que compilan a 37 variantes rotadas y 16 features; Base, Agua, Bosque y Ruina permanecen por debajo del máximo de 64 por capa.
+- Seguridad y continuidad: Meadow A/B comparten sockets pero no visual; Quantum Meadow/Slab son fallbacks caminables; Agua conserva Deep→Shallow→Shore→Marsh→`OPEN_FLAT`; Bosque y Ruina incluyen adaptadores, soporte y exclusión de corredores.
+- Tooling: `npm run validate:tiles` y `npm run validate:assets` forman parte de CI; el visor offline filtra packs/capas, rota sockets y exporta un SVG determinista.
+- Pruebas: `npm run check` (19 archivos, 95 tests), ambos validadores, `npm run format:check`, `npm run build` y `git diff --check` verdes. La galería de producción mostró 36 cards y cero errores.
+- Alcance diferido: #22 sigue abierta/bloqueada por #51 y no se simula como completada; implementarla antes de la release violaría su propia dependencia y `AGENTS.md`.
+- Evidencia: [`docs/progress/wp3-tile-grammar/`](./progress/wp3-tile-grammar/).
 
 ### 2026-08-05 — PR #66 — Cierre acumulativo de WP1 y WP2
 

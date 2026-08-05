@@ -1,0 +1,1 @@
+{ "version": 1, "shape": "ruin-column", "color": "#74746f", "accent": "#d0c7ad", "bounds": { "width": 1, "height": 4.2, "depth": 1 }, "pivot": "center-bottom", "lod": [{ "maxDistance": 24, "shape": "ruin-column" }, { "maxDistance": 42, "shape": "ruin-column-low" }] }

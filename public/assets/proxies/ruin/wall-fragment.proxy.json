@@ -1,0 +1,1 @@
+{ "version": 1, "shape": "wall-fragment", "color": "#706f68", "accent": "#b9ad92", "bounds": { "width": 1.9, "height": 2.8, "depth": 0.7 }, "pivot": "center-bottom", "lod": [{ "maxDistance": 24, "shape": "wall-fragment" }, { "maxDistance": 42, "shape": "wall-fragment-low" }] }
