@@ -35,6 +35,9 @@ jobs:
       - name: Check types, lint, and tests
         run: npm run check
 
+      - name: Validate tile grammar
+        run: npm run validate:tiles
+
       - name: Check formatting
         run: npm run format:check
 
