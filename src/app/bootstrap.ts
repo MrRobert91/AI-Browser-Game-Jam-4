@@ -1,4 +1,5 @@
 import { GameLoop } from './game-loop';
+import { ObservableWorldBridge } from './observable-world-bridge';
 import { SolverWorkerClient } from './solver-worker-client';
 import {
   isGrammarViewerMode,
@@ -11,7 +12,10 @@ import {
   type PlayerPhysicsRuntime,
 } from '../player/physics';
 import { GameRenderer } from '../render/renderer';
+import { SuperpositionRenderer } from '../render/superposition';
+import { ObservationReticle } from '../ui/observation-reticle';
 import { createOriginDetailField } from '../world/origin-details';
+import { cellCenterToWorld } from '../world/world-state';
 
 const SHELL_MARKUP = `
   <main class="observation-shell" aria-labelledby="game-title">
@@ -119,6 +123,11 @@ export function bootstrap(root: HTMLElement): () => void {
   );
   const gameRenderer = new GameRenderer({ container: viewport, camera });
   const originDetails = createOriginDetailField(gameRenderer.scene);
+  const superposition = new SuperpositionRenderer(
+    gameRenderer.quality.preset === 'low' ? 'low' : 'medium',
+  );
+  gameRenderer.scene.add(superposition.root);
+  const reticle = new ObservationReticle(shell);
   const playerInput = new PlayerInput(shell, {
     onPauseChange: (paused) => {
       shell.dataset.paused = String(paused);
@@ -143,13 +152,10 @@ export function bootstrap(root: HTMLElement): () => void {
       workerState.dataset.contractState = 'error';
       console.error('Rapier no pudo iniciar.', error);
     });
-  const gameLoop = new GameLoop(({ deltaSeconds, elapsedSeconds }) => {
-    shell.style.setProperty('--observation-phase', `${elapsedSeconds % 8}`);
-    playerPhysics?.controller.update(deltaSeconds);
-    gameRenderer.render();
-  });
+  let observableWorld: ObservableWorldBridge | null = null;
   const solverWorker = new SolverWorkerClient({
     onOutput: (output) => {
+      observableWorld?.handleWorkerOutput(output, performance.now());
       if (
         output.type === 'SOLVER_WARNING' &&
         output.code === 'ECHO_ONLY' &&
@@ -165,12 +171,63 @@ export function bootstrap(root: HTMLElement): () => void {
       console.error(message);
     },
   });
-  const initialTick = solverWorker.sendObservation({
-    playerPosition: [64, 1.7, 64],
-    cameraForward: [0, 0, -1],
-    visibleCells: [],
+  observableWorld = new ObservableWorldBridge({
+    solver: solverWorker,
+    getPlayerPosition: () => [camera.position.x, camera.position.y, camera.position.z],
+    onWarning: (warning) => {
+      if (warning.code !== 'ECHO_ONLY') {
+        workerState.textContent = `SOLVER // ${warning.code}`;
+      }
+    },
   });
-  workerState.textContent = `CONTRATO #${String(initialTick).padStart(6, '0')} // ENVIADO`;
+  const resetTick = observableWorld.reset(0xa91f42c0);
+  workerState.textContent = `CONTRATO #${String(resetTick).padStart(6, '0')} // SEED`;
+
+  const gameLoop = new GameLoop(({ deltaSeconds, elapsedSeconds }) => {
+    shell.style.setProperty('--observation-phase', `${elapsedSeconds % 8}`);
+    playerPhysics?.controller.update(deltaSeconds);
+
+    const playerPosition = [
+      camera.position.x,
+      camera.position.y,
+      camera.position.z,
+    ] as const;
+    const forwardVector = camera.getWorldDirection(camera.up.clone());
+    const nearbyCellIds = observableWorld!.getNearbyCellIds(playerPosition);
+    let maximumCharge = 0;
+    if (shell.dataset.calibrated === 'true') {
+      observableWorld!.update(
+        {
+          deltaSeconds,
+          playerPosition,
+          cameraForward: [forwardVector.x, forwardVector.y, forwardVector.z],
+          nearbyCellIds,
+        },
+        elapsedSeconds * 1_000,
+      );
+    }
+
+    const superposedCells = nearbyCellIds.flatMap((cellId) => {
+      const cell = observableWorld!.worldState.getCell(cellId);
+      maximumCharge = Math.max(maximumCharge, cell.observationCharge);
+      if (cell.phase === 'FIXED' || cell.phase === 'COLLAPSING') return [];
+      return [
+        {
+          cellId,
+          center: cellCenterToWorld(cellId, 0),
+          observationCharge: cell.observationCharge,
+          candidates: [
+            { tileId: 0, family: 'ground' as const, weight: 14 },
+            { tileId: 1, family: 'organic' as const, weight: 9 },
+            { tileId: 2, family: 'mineral' as const, weight: 5 },
+          ],
+        },
+      ];
+    });
+    reticle.setCharge(maximumCharge);
+    superposition.update(superposedCells, elapsedSeconds * 1_000);
+    gameRenderer.render();
+  });
 
   observationButton.addEventListener(
     'click',
@@ -208,6 +265,8 @@ export function bootstrap(root: HTMLElement): () => void {
     abortController.abort();
     gameLoop.stop();
     solverWorker.dispose();
+    reticle.destroy();
+    superposition.dispose();
     originDetails.dispose();
     gameRenderer.dispose();
     playerInput.dispose();

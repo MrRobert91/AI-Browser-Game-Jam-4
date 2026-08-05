@@ -1,9 +1,12 @@
 import type {
   ObservationInput,
+  ResetInput,
+  UnlockPackInput,
   VisibleCellObservation,
   WorkerOutput,
 } from '../contracts/messages';
 import { isWorkerOutput } from '../contracts/runtime-validation';
+import type { UnlockablePackId } from '../contracts/tiles';
 import type { WorldVector3 } from '../contracts/world';
 
 export interface ObservationTickData {
@@ -45,6 +48,22 @@ export class SolverWorkerClient {
       visibleCells: data.visibleCells,
     };
 
+    this.#worker.postMessage(message);
+    return tick;
+  }
+
+  sendUnlockPack(packId: UnlockablePackId): number {
+    const tick = this.#nextTick;
+    this.#nextTick += 1;
+    const message: UnlockPackInput = { type: 'UNLOCK_PACK', packId, tick };
+    this.#worker.postMessage(message);
+    return tick;
+  }
+
+  reset(worldSeed: number): number {
+    const tick = this.#nextTick;
+    this.#nextTick += 1;
+    const message: ResetInput = { type: 'RESET', worldSeed, tick };
     this.#worker.postMessage(message);
     return tick;
   }

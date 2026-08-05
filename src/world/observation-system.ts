@@ -84,6 +84,7 @@ export class ObservationSystem {
   constructor(
     private readonly worldState: WorldState,
     private readonly hasLineOfSight: LineOfSightTest = () => true,
+    private readonly currentPaletteEpoch: () => number = () => 0,
   ) {}
 
   update(frame: ObservationFrame): readonly ObservationTickResult[] {
@@ -115,7 +116,7 @@ export class ObservationSystem {
       }
 
       if (this.worldState.getCell(cellId).phase === 'UNINITIALIZED') {
-        this.worldState.initializeCell(cellId);
+        this.worldState.initializeCell(cellId, this.currentPaletteEpoch());
       }
 
       if (distance <= CONTACT_RADIUS_METERS) {
