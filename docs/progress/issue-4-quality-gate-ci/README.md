@@ -10,7 +10,8 @@ aparecía en **Backlog**. No había PRs abiertas ni trabajo activo.
 
 ## Puerta de calidad
 
-- Node 24.14.0 queda fijado en `.nvmrc` y GitHub Actions usa ese mismo runtime.
+- Node 24.14.0 queda fijado en `.nvmrc`; `checkout@v7` y `setup-node@v7` evitan el runtime
+  obsoleto de las revisiones v4 y el job usa la misma versión de Node que el proyecto.
 - `npm run check` encadena TypeScript 7.0.2, ESLint 10.8.0 y toda la suite Vitest.
 - `npm run format:check` verifica Prettier 3.9.6 sin modificar archivos.
 - El workflow instala solo desde `package-lock.json` con `npm ci` y después ejecuta check, formato
