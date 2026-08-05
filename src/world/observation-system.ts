@@ -90,7 +90,10 @@ export class ObservationSystem {
   update(frame: ObservationFrame): readonly ObservationTickResult[] {
     this.accumulatorSeconds += Math.max(0, frame.deltaSeconds);
     const results: ObservationTickResult[] = [];
-    while (this.accumulatorSeconds + Number.EPSILON >= OBSERVATION_TICK_SECONDS) {
+    while (
+      this.accumulatorSeconds + Number.EPSILON >=
+      OBSERVATION_TICK_SECONDS
+    ) {
       this.accumulatorSeconds -= OBSERVATION_TICK_SECONDS;
       results.push(this.sample(frame));
     }
@@ -132,11 +135,7 @@ export class ObservationSystem {
       const focus = smoothstep(0, 1, alignment);
       const proximity =
         1 -
-        smoothstep(
-          CONTACT_RADIUS_METERS,
-          OBSERVATION_RADIUS_METERS,
-          distance,
-        );
+        smoothstep(CONTACT_RADIUS_METERS, OBSERVATION_RADIUS_METERS, distance);
       const attention = lineOfSight ? focus * proximity : 0;
       attentionByCell.set(cellId, attention);
 

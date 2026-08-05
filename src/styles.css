@@ -428,6 +428,128 @@ button {
   filter: drop-shadow(0 0 34px rgb(106 255 225 / 44%));
 }
 
+.intro-panel,
+.possibility-readout,
+.shell-footer,
+.field__horizon,
+.field__grid,
+.field__orb {
+  transition:
+    opacity 700ms ease,
+    visibility 700ms ease;
+}
+
+.observation-shell[data-calibrated="true"] .intro-panel,
+.observation-shell[data-calibrated="true"] .possibility-readout,
+.observation-shell[data-calibrated="true"] .shell-footer,
+.observation-shell[data-calibrated="true"] .field__horizon,
+.observation-shell[data-calibrated="true"] .field__grid,
+.observation-shell[data-calibrated="true"] .field__orb {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.slice-hud {
+  position: absolute;
+  z-index: 3;
+  top: 5.5rem;
+  right: clamp(1.5rem, 4vw, 4.5rem);
+  left: clamp(1.5rem, 4vw, 4.5rem);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  visibility: hidden;
+  color: #dffcf5;
+  font-family: "Courier New", monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms ease;
+}
+
+.slice-hud p {
+  margin: 0;
+}
+
+.slice-hud p:nth-child(2) {
+  max-width: 34rem;
+  color: #f3e7bb;
+  text-align: center;
+}
+
+.slice-hud span {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: #7ea9a2;
+  font-size: 0.55rem;
+}
+
+.slice-hud strong {
+  font-weight: 400;
+}
+
+.observation-shell[data-calibrated="true"] .slice-hud {
+  visibility: visible;
+  opacity: 1;
+}
+
+.observation-shell[data-player-state="death"]::before {
+  position: absolute;
+  z-index: 18;
+  inset: 0;
+  background: radial-gradient(circle, transparent 20%, rgb(255 93 118 / 48%));
+  content: "";
+  pointer-events: none;
+  animation: death-pulse 820ms ease-out both;
+}
+
+.slice-result {
+  position: absolute;
+  z-index: 25;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 1.5rem;
+  padding: 2rem;
+  color: #e7fff7;
+  text-align: center;
+  background: rgb(3 9 15 / 74%);
+  backdrop-filter: blur(8px);
+}
+
+.slice-result[hidden] {
+  display: none;
+}
+
+.slice-result p,
+.slice-result strong {
+  margin: 0;
+  font-family: "Courier New", monospace;
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  line-height: 1.8;
+}
+
+.slice-result h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 4vw, 4.8rem);
+  font-weight: 400;
+  line-height: 1.05;
+}
+
+@keyframes death-pulse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 .error-shell {
   color: #ffc1b5;
 }

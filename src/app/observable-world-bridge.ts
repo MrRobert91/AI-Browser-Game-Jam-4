@@ -35,6 +35,8 @@ export interface ObservableWorldBridgeOptions {
   readonly physics?: CollapsePhysicsAdapter;
   readonly safeTerrainTileId?: number;
   readonly onWarning?: (warning: SolverWarning) => void;
+  readonly onCollapseAccepted?: (cellId: CellId) => void;
+  readonly worldState?: WorldState;
 }
 
 function boundarySignature(event: ChunkBoundaryEvent): string {
@@ -47,7 +49,9 @@ function boundarySignature(event: ChunkBoundaryEvent): string {
   ].join(':');
 }
 
-function collapseSignature(output: Extract<WorkerOutput, { type: 'COLLAPSE' }>): string {
+function collapseSignature(
+  output: Extract<WorkerOutput, { type: 'COLLAPSE' }>,
+): string {
   return [
     output.cellId,
     output.terrainTileId,
@@ -58,7 +62,7 @@ function collapseSignature(output: Extract<WorkerOutput, { type: 'COLLAPSE' }>):
 
 /** Main-thread integration point; no worker internals cross this boundary. */
 export class ObservableWorldBridge {
-  readonly worldState = new WorldState();
+  readonly worldState: WorldState;
   readonly observation: ObservationSystem;
   readonly collapses: CollapseDirector;
 
@@ -69,6 +73,7 @@ export class ObservableWorldBridge {
   private readonly seenBoundaryEvents = new Set<string>();
 
   constructor(private readonly options: ObservableWorldBridgeOptions) {
+    this.worldState = options.worldState ?? new WorldState();
     this.observation = new ObservationSystem(
       this.worldState,
       options.lineOfSight,
@@ -132,6 +137,7 @@ export class ObservableWorldBridge {
     );
     if (accepted) {
       this.seenCollapseEvents.add(signature);
+      this.options.onCollapseAccepted?.(output.cellId);
     }
     return accepted;
   }
@@ -158,10 +164,7 @@ export class ObservableWorldBridge {
     return this.boundaries.get(chunkId) ?? null;
   }
 
-  getNearbyCellIds(
-    position: WorldVector3,
-    radiusCells = 6,
-  ): readonly CellId[] {
+  getNearbyCellIds(position: WorldVector3, radiusCells = 6): readonly CellId[] {
     const centerX = Math.floor(position[0] / 2);
     const centerZ = Math.floor(position[2] / 2);
     const ids: CellId[] = [];

@@ -1,6 +1,7 @@
 import { GameLoop } from './game-loop';
 import { ObservableWorldBridge } from './observable-world-bridge';
 import { SolverWorkerClient } from './solver-worker-client';
+import { VerticalSliceDirector } from '../gameplay/vertical-slice';
 import {
   isGrammarViewerMode,
   renderGrammarViewer,
@@ -14,8 +15,14 @@ import {
 import { GameRenderer } from '../render/renderer';
 import { SuperpositionRenderer } from '../render/superposition';
 import { ObservationReticle } from '../ui/observation-reticle';
+import { SliceCollapseVisuals } from '../world/collapse-visuals';
 import { createOriginDetailField } from '../world/origin-details';
-import { cellCenterToWorld } from '../world/world-state';
+import {
+  WorldState,
+  cellCenterToWorld,
+  cellCoordinatesToId,
+  worldPositionToCell,
+} from '../world/world-state';
 
 const SHELL_MARKUP = `
   <main class="observation-shell" aria-labelledby="game-title">
@@ -62,6 +69,19 @@ const SHELL_MARKUP = `
       <p data-worker-state>CONTRATO // INICIALIZANDO</p>
       <p>BUILD <span>LOCAL</span></p>
     </footer>
+
+    <section class="slice-hud" aria-live="polite">
+      <p><span>VENTANA</span><strong data-slice-time>01:30</strong></p>
+      <p data-slice-message>Mira para iniciar el registro.</p>
+      <p><span>SEED</span><strong>A91F-42C0</strong></p>
+    </section>
+
+    <section class="slice-result" data-slice-result hidden>
+      <p>REGISTRO DE ATENCIÓN</p>
+      <h2>No encontraste este mundo.<br />Lo separaste de todos los demás.</h2>
+      <p>Muchos caminos.<br />Solo aquel que miraste<br />recuerda tus pasos.</p>
+      <strong>SEED A91F-42C0</strong>
+    </section>
   </main>
 `;
 
@@ -104,6 +124,9 @@ export function bootstrap(root: HTMLElement): () => void {
   const shellStatus = root.querySelector<HTMLElement>('[data-shell-status]');
   const workerState = root.querySelector<HTMLElement>('[data-worker-state]');
   const viewport = root.querySelector<HTMLElement>('[data-game-viewport]');
+  const sliceTime = root.querySelector<HTMLElement>('[data-slice-time]');
+  const sliceMessage = root.querySelector<HTMLElement>('[data-slice-message]');
+  const sliceResult = root.querySelector<HTMLElement>('[data-slice-result]');
 
   if (
     !shell ||
@@ -111,7 +134,10 @@ export function bootstrap(root: HTMLElement): () => void {
     !systemState ||
     !shellStatus ||
     !workerState ||
-    !viewport
+    !viewport ||
+    !sliceTime ||
+    !sliceMessage ||
+    !sliceResult
   ) {
     throw new Error('La interfaz de observación está incompleta.');
   }
@@ -153,6 +179,7 @@ export function bootstrap(root: HTMLElement): () => void {
       console.error('Rapier no pudo iniciar.', error);
     });
   let observableWorld: ObservableWorldBridge | null = null;
+  let sliceDirector: VerticalSliceDirector | null = null;
   const solverWorker = new SolverWorkerClient({
     onOutput: (output) => {
       observableWorld?.handleWorkerOutput(output, performance.now());
@@ -171,9 +198,18 @@ export function bootstrap(root: HTMLElement): () => void {
       console.error(message);
     },
   });
+  const worldState = new WorldState();
+  const fixedVisuals = new SliceCollapseVisuals(gameRenderer.scene, worldState);
   observableWorld = new ObservableWorldBridge({
     solver: solverWorker,
-    getPlayerPosition: () => [camera.position.x, camera.position.y, camera.position.z],
+    getPlayerPosition: () => [
+      camera.position.x,
+      camera.position.y,
+      camera.position.z,
+    ],
+    worldState,
+    visuals: fixedVisuals,
+    onCollapseAccepted: () => sliceDirector?.notifyFirstCollapse(),
     onWarning: (warning) => {
       if (warning.code !== 'ECHO_ONLY') {
         workerState.textContent = `SOLVER // ${warning.code}`;
@@ -183,9 +219,78 @@ export function bootstrap(root: HTMLElement): () => void {
   const resetTick = observableWorld.reset(0xa91f42c0);
   workerState.textContent = `CONTRATO #${String(resetTick).padStart(6, '0')} // SEED`;
 
+  const search = new URLSearchParams(window.location.search);
+  const canonicalReplay = search.get('replay') === 'canonical';
+  const requestedSpeed = Number(search.get('speed') ?? '1');
+  const replaySpeed =
+    Number.isFinite(requestedSpeed) && requestedSpeed > 0
+      ? Math.min(8, requestedSpeed)
+      : 1;
+  const requestedStart = Number(search.get('start') ?? '0');
+  const startAtSeconds =
+    search.get('evidence') === '1' && Number.isFinite(requestedStart)
+      ? Math.min(89, Math.max(0, requestedStart))
+      : 0;
+  sliceDirector = new VerticalSliceDirector(
+    {
+      onWaterUnlock: () => {
+        observableWorld!.unlockPack('water');
+        sliceMessage.textContent =
+          'El agua no estaba ausente. Todavía no era posible.';
+        shell.dataset.waterUnlocked = 'true';
+      },
+      onDeath: () => {
+        shell.dataset.playerState = 'death';
+        sliceMessage.textContent = 'El mundo recuerda mejor que tú.';
+        playerInput.setEnabled(false);
+      },
+      onRespawn: () => {
+        playerPhysics?.controller.respawn();
+        shell.dataset.playerState = 'alive';
+        sliceMessage.textContent = 'El mundo observado permanece.';
+        if (!canonicalReplay) playerInput.setEnabled(true);
+      },
+      onEnding: () => {
+        playerInput.setEnabled(false);
+        shell.dataset.ending = 'true';
+        superposition.root.visible = false;
+        fixedVisuals.setEndingMode(true);
+        sliceMessage.textContent = 'No queda tiempo para verlo todo.';
+      },
+      onComplete: () => {
+        sliceResult.hidden = false;
+        shell.dataset.complete = 'true';
+      },
+    },
+    { canonicalReplay, startAtSeconds },
+  );
+
   const gameLoop = new GameLoop(({ deltaSeconds, elapsedSeconds }) => {
     shell.style.setProperty('--observation-phase', `${elapsedSeconds % 8}`);
-    playerPhysics?.controller.update(deltaSeconds);
+    const previousSlice = sliceDirector!.snapshot();
+    if (
+      !canonicalReplay &&
+      previousSlice.phase !== 'ENDING' &&
+      previousSlice.phase !== 'COMPLETE'
+    ) {
+      playerPhysics?.controller.update(deltaSeconds);
+    }
+
+    if (canonicalReplay && shell.dataset.calibrated === 'true') {
+      const replayTime = previousSlice.elapsedSeconds;
+      const radius = 3.5 + Math.min(9, replayTime * 0.11);
+      const angle = -Math.PI / 2 + replayTime * 0.16;
+      camera.position.set(
+        64 + Math.cos(angle) * radius,
+        1.7,
+        64 + Math.sin(angle) * radius,
+      );
+      camera.lookAt(
+        64 + Math.cos(angle + 0.4) * (radius + 4),
+        0,
+        64 + Math.sin(angle + 0.4) * (radius + 4),
+      );
+    }
 
     const playerPosition = [
       camera.position.x,
@@ -205,6 +310,16 @@ export function bootstrap(root: HTMLElement): () => void {
         },
         elapsedSeconds * 1_000,
       );
+      if (
+        sliceDirector!.snapshot().phase === 'READY' &&
+        nearbyCellIds.some(
+          (cellId) =>
+            observableWorld!.worldState.getCell(cellId).phase === 'FIXED',
+        )
+      ) {
+        sliceDirector!.notifyFirstCollapse();
+        sliceMessage.textContent = 'La mirada está fijando el mundo.';
+      }
     }
 
     const superposedCells = nearbyCellIds.flatMap((cellId) => {
@@ -226,6 +341,36 @@ export function bootstrap(root: HTMLElement): () => void {
     });
     reticle.setCharge(maximumCharge);
     superposition.update(superposedCells, elapsedSeconds * 1_000);
+    fixedVisuals.updateFrame(deltaSeconds);
+
+    const slice = sliceDirector!.update(
+      shell.dataset.calibrated === 'true' ? deltaSeconds * replaySpeed : 0,
+    );
+    const totalSeconds = Math.ceil(slice.remainingSeconds);
+    sliceTime.textContent = `${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:${String(totalSeconds % 60).padStart(2, '0')}`;
+    if (slice.phase === 'OBSERVING' && slice.remainingSeconds <= 30) {
+      sliceMessage.textContent =
+        'No queda tiempo para verlo todo. Elige qué merece terminar.';
+    }
+
+    if (
+      !canonicalReplay &&
+      slice.phase === 'OBSERVING' &&
+      slice.waterUnlocked
+    ) {
+      const coordinates = worldPositionToCell(playerPosition);
+      if (coordinates) {
+        const playerCellId = cellCoordinatesToId(coordinates);
+        if (fixedVisuals.isDeepWater(playerCellId)) {
+          sliceDirector!.triggerDeath();
+        }
+      }
+    }
+
+    if (slice.phase === 'ENDING') {
+      camera.position.y += deltaSeconds * 3.1;
+      camera.lookAt(64, 0, 64);
+    }
     gameRenderer.render();
   });
 
@@ -267,6 +412,7 @@ export function bootstrap(root: HTMLElement): () => void {
     solverWorker.dispose();
     reticle.destroy();
     superposition.dispose();
+    fixedVisuals.dispose();
     originDetails.dispose();
     gameRenderer.dispose();
     playerInput.dispose();

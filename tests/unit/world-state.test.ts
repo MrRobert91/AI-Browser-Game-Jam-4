@@ -40,12 +40,16 @@ describe('WorldState', () => {
     });
 
     const firstView = new ChunkView(2, 2, state);
-    firstView.rebuild((cell) => (cell.cellId === cellId ? new Object3D() : null));
+    firstView.rebuild((cell) =>
+      cell.cellId === cellId ? new Object3D() : null,
+    );
     expect(firstView.root.children[0]?.userData.cellId).toBe(cellId);
     firstView.releaseVisuals();
 
     const recreatedView = new ChunkView(2, 2, state);
-    const fixedCell = recreatedView.snapshot().find((cell) => cell.cellId === cellId);
+    const fixedCell = recreatedView
+      .snapshot()
+      .find((cell) => cell.cellId === cellId);
     expect(fixedCell).toMatchObject({
       terrainTileId: 17,
       featureTileId: 6,
@@ -65,8 +69,8 @@ describe('WorldState', () => {
     expect(() => state.setObservationCharge(cellId, 0.5)).toThrow(
       FixedCellMutationError,
     );
-    expect(() =>
-      state.commitFixed({ ...commit, terrainTileId: 5 }),
-    ).toThrow(FixedCellMutationError);
+    expect(() => state.commitFixed({ ...commit, terrainTileId: 5 })).toThrow(
+      FixedCellMutationError,
+    );
   });
 });

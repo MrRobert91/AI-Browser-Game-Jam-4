@@ -60,8 +60,7 @@ export function selectSuperpositionProxy(
   const ranked = [...cell.candidates]
     .filter((candidate) => candidate.weight > 0)
     .sort(
-      (left, right) =>
-        right.weight - left.weight || left.tileId - right.tileId,
+      (left, right) => right.weight - left.weight || left.tileId - right.tileId,
     )
     .slice(0, maximumCandidates);
   const charge = clamp01(cell.observationCharge);
@@ -79,8 +78,8 @@ export function selectSuperpositionProxy(
   const candidate =
     available.length === 0
       ? null
-      : available[(frame + (hash % available.length)) % available.length] ??
-        null;
+      : (available[(frame + (hash % available.length)) % available.length] ??
+        null);
 
   return {
     candidate,

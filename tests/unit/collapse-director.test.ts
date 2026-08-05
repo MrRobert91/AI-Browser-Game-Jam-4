@@ -49,7 +49,10 @@ describe('CollapseDirector', () => {
       enableFixedCollider: vi.fn(),
     };
     const director = new CollapseDirector(world, visuals, physics);
-    const position = cellCenterToWorld(cellCoordinatesToId({ x: 32, z: 32 }), 1.7);
+    const position = cellCenterToWorld(
+      cellCoordinatesToId({ x: 32, z: 32 }),
+      1.7,
+    );
 
     expect(director.accept(event(cellId), position, 100)).toBe(true);
     expect(world.getCell(cellId).phase).toBe('COLLAPSING');
@@ -79,7 +82,9 @@ describe('CollapseDirector', () => {
     const director = new CollapseDirector(world, undefined, physics);
     const contactId = cellCoordinatesToId({ x: 32, z: 32 });
 
-    expect(director.ensureSafeContactGround([contactId], 0)).toEqual([contactId]);
+    expect(director.ensureSafeContactGround([contactId], 0)).toEqual([
+      contactId,
+    ]);
     expect(world.getCell(contactId)).toMatchObject({
       phase: 'FIXED',
       terrainTileId: 0,

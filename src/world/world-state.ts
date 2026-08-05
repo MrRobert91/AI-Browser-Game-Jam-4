@@ -92,7 +92,9 @@ export function cellCenterToWorld(cellId: CellId, y = 0): WorldVector3 {
   ];
 }
 
-export function worldPositionToCell(position: WorldVector3): CellCoordinates | null {
+export function worldPositionToCell(
+  position: WorldVector3,
+): CellCoordinates | null {
   const coordinates = {
     x: Math.floor(position[0] / WORLD_CELL_SIZE_METERS),
     z: Math.floor(position[2] / WORLD_CELL_SIZE_METERS),
@@ -175,7 +177,10 @@ export class WorldState {
     return this.getCell(cellId);
   }
 
-  setPhase(cellId: CellId, phase: Exclude<CellPhase, 'FIXED'>): WorldCellSnapshot {
+  setPhase(
+    cellId: CellId,
+    phase: Exclude<CellPhase, 'FIXED'>,
+  ): WorldCellSnapshot {
     const cell = this.getMutableCell(cellId);
     this.assertMutable(cellId, cell);
     cell.phase = phase;
@@ -218,7 +223,9 @@ export class WorldState {
       chunkX >= WORLD_CELLS_PER_SIDE / WORLD_CHUNK_CELLS_PER_SIDE ||
       chunkZ >= WORLD_CELLS_PER_SIDE / WORLD_CHUNK_CELLS_PER_SIDE
     ) {
-      throw new RangeError(`Chunk (${chunkX}, ${chunkZ}) is outside the world.`);
+      throw new RangeError(
+        `Chunk (${chunkX}, ${chunkZ}) is outside the world.`,
+      );
     }
 
     const snapshots: WorldCellSnapshot[] = [];

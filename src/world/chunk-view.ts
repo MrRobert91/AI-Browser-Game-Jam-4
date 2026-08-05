@@ -26,7 +26,10 @@ export class ChunkView {
 
   rebuild(factory: ChunkCellVisualFactory): void {
     this.releaseVisuals();
-    for (const cell of this.worldState.getChunkCells(this.chunkX, this.chunkZ)) {
+    for (const cell of this.worldState.getChunkCells(
+      this.chunkX,
+      this.chunkZ,
+    )) {
       const visual = factory(cell);
       if (visual) {
         visual.userData.cellId = cell.cellId;

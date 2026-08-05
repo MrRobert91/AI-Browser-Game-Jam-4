@@ -30,10 +30,7 @@ interface ActiveCollapse {
   colliderEnabled: boolean;
 }
 
-function horizontalDistance(
-  left: WorldVector3,
-  right: WorldVector3,
-): number {
+function horizontalDistance(left: WorldVector3, right: WorldVector3): number {
   return Math.hypot(left[0] - right[0], left[2] - right[2]);
 }
 
@@ -137,6 +134,20 @@ export class CollapseDirector {
         featureTileId: null,
         terrainRotationQuarterTurns: 0,
       };
+      const center = cellCenterToWorld(cellId, 0);
+      this.visuals.begin(
+        {
+          type: 'COLLAPSE',
+          cellId,
+          terrainTileId: safeTerrainTileId,
+          featureTileId: null,
+          entropyBefore: 0,
+          durationMs: MIN_COLLAPSE_DURATION_MS,
+          worldSeed: 0,
+        },
+        center,
+        MIN_COLLAPSE_DURATION_MS,
+      );
       this.worldState.commitFixed(commit);
       this.physics.enableFixedCollider(commit);
       this.visuals.emitBoundaryWave(cellId);
