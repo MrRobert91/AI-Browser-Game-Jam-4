@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "feature-tile.schema.json",
+  "title": "FeatureTileDefinition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "numericId",
+    "packId",
+    "weight",
+    "mesh",
+    "tags",
+    "allowedTerrainTags",
+    "forbiddenWithinMetersOf",
+    "minDistanceFromOrigin",
+    "maxSlopeDegrees",
+    "blocksMovement",
+    "lethal"
+  ],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "numericId": { "type": "integer", "minimum": 0, "maximum": 65535 },
+    "packId": { "enum": ["base", "water", "forest", "ruin", "storm"] },
+    "weight": { "type": "number", "exclusiveMinimum": 0 },
+    "mesh": { "type": ["string", "null"] },
+    "tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "allowedTerrainTags": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "forbiddenWithinMetersOf": {
+      "type": "object",
+      "additionalProperties": { "type": "number", "minimum": 0 }
+    },
+    "minDistanceFromOrigin": { "type": "number", "minimum": 0 },
+    "maxSlopeDegrees": { "type": "number", "minimum": 0, "maximum": 90 },
+    "blocksMovement": { "type": "boolean" },
+    "lethal": { "type": "boolean" },
+    "uniquePerChunk": { "type": "boolean" },
+    "neighborBias": {
+      "type": "object",
+      "additionalProperties": { "type": "number", "exclusiveMinimum": 0 }
+    }
+  }
+}

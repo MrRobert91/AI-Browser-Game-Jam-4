@@ -12,6 +12,13 @@ export type SocketId =
 export type TilePackId = 'base' | 'water' | 'forest' | 'ruin' | 'storm';
 export type UnlockablePackId = Exclude<TilePackId, 'base'>;
 
+export const CARDINAL_DIRECTIONS = ['N', 'E', 'S', 'W'] as const;
+
+export interface SocketCompatibilityDocument {
+  readonly version: 1;
+  readonly sockets: Readonly<Record<SocketId, readonly SocketId[]>>;
+}
+
 export interface TerrainTileDefinition {
   readonly id: string;
   readonly numericId: number;
@@ -44,4 +51,43 @@ export interface FeatureTileDefinition {
   readonly lethal: boolean;
   readonly uniquePerChunk?: boolean;
   readonly neighborBias?: Readonly<Record<string, number>>;
+}
+
+export interface CompiledTerrainVariant {
+  readonly variantId: number;
+  readonly definitionNumericId: number;
+  readonly id: string;
+  readonly packId: string;
+  readonly rotationQuarterTurns: 0 | 1 | 2 | 3;
+  readonly weight: number;
+  readonly mesh: string;
+  readonly sockets: Readonly<Record<Direction, SocketId>>;
+  readonly tags: readonly string[];
+  readonly walkable: boolean;
+  readonly lethal: boolean;
+  readonly heightClass: 0 | 1;
+  readonly fallbackRank: 0 | 1 | 2;
+}
+
+export interface CompiledFeatureVariant {
+  readonly variantId: number;
+  readonly definitionNumericId: number;
+  readonly id: string;
+  readonly packId: string;
+  readonly weight: number;
+  readonly mesh: string | null;
+  readonly tags: readonly string[];
+  readonly allowedTerrainTags: readonly string[];
+  readonly minDistanceFromOrigin: number;
+  readonly maxSlopeDegrees: number;
+  readonly blocksMovement: boolean;
+  readonly lethal: boolean;
+}
+
+export interface CompiledGrammar {
+  readonly terrain: readonly CompiledTerrainVariant[];
+  readonly features: readonly CompiledFeatureVariant[];
+  readonly terrainCompatibility: Readonly<
+    Record<Direction, readonly Readonly<{ lo: number; hi: number }>[]>
+  >;
 }
