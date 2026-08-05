@@ -1,5 +1,9 @@
 import { GameLoop } from './game-loop';
 import { SolverWorkerClient } from './solver-worker-client';
+import {
+  isGrammarViewerMode,
+  renderGrammarViewer,
+} from '../dev/grammar-viewer';
 import { createFirstPersonCamera } from '../player/camera';
 import { PlayerInput } from '../player/input';
 import {
@@ -85,6 +89,7 @@ export function renderBootstrapError(root: HTMLElement, error: unknown): void {
 }
 
 export function bootstrap(root: HTMLElement): () => void {
+  if (isGrammarViewerMode()) return renderGrammarViewer(root);
   root.innerHTML = SHELL_MARKUP;
 
   const shell = root.querySelector<HTMLElement>('.observation-shell');

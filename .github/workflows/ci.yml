@@ -38,6 +38,9 @@ jobs:
       - name: Validate tile grammar
         run: npm run validate:tiles
 
+      - name: Validate local tile assets
+        run: npm run validate:assets
+
       - name: Check formatting
         run: npm run format:check
 

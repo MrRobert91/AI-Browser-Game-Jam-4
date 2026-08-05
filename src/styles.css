@@ -502,3 +502,205 @@ noscript {
     transition-duration: 0.01ms !important;
   }
 }
+
+.grammar-viewer {
+  min-height: 100%;
+  overflow: auto;
+  padding: clamp(1rem, 3vw, 3rem);
+  color: #dff9f2;
+  background: #071018;
+}
+
+.grammar-viewer__header,
+.grammar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.grammar-viewer__header p,
+.grammar-card__meta > p:first-child {
+  color: #7eb4aa;
+  font-family: "Courier New", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+}
+
+.grammar-viewer__header h1 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: clamp(2.2rem, 5vw, 4.5rem);
+  font-weight: 400;
+}
+
+.grammar-viewer__header a,
+.grammar-toolbar button,
+.grammar-card button {
+  border: 1px solid #4b7f75;
+  color: #cafff3;
+  background: #102b30;
+  padding: 0.7rem 0.9rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.grammar-toolbar {
+  position: sticky;
+  z-index: 3;
+  top: 0;
+  flex-wrap: wrap;
+  margin: 2rem 0;
+  padding: 1rem;
+  border: 1px solid #24434a;
+  background: rgb(7 16 24 / 94%);
+}
+
+.grammar-toolbar label {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  color: #8cb7b0;
+  font-family: "Courier New", monospace;
+  font-size: 0.75rem;
+}
+
+.grammar-toolbar select {
+  padding: 0.5rem;
+  border: 1px solid #315861;
+  color: #eafff8;
+  background: #0c1c25;
+}
+
+.grammar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 1rem;
+}
+
+.grammar-card {
+  overflow: hidden;
+  border: 1px solid #24434a;
+  border-radius: 4px;
+  background: #0c1b22;
+}
+
+.grammar-proxy {
+  position: relative;
+  display: grid;
+  height: 170px;
+  place-items: center;
+  overflow: hidden;
+  background:
+    linear-gradient(rgb(122 234 213 / 8%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(122 234 213 / 8%) 1px, transparent 1px),
+    radial-gradient(circle at 50% 70%, #17343b, #081219 70%);
+  background-size:
+    24px 24px,
+    24px 24px,
+    auto;
+  perspective: 480px;
+}
+
+.grammar-proxy__shape {
+  --tile-rotation: 0deg;
+  --proxy-color: #2d6f69;
+  --proxy-accent: #a4fff0;
+  --proxy-height: 0.25;
+  width: 112px;
+  height: calc(28px + 72px * var(--proxy-height));
+  border: 2px solid var(--proxy-accent);
+  border-radius: 48% 38% 16% 22%;
+  background: linear-gradient(
+    135deg,
+    var(--proxy-accent),
+    var(--proxy-color) 32% 72%,
+    #10242b
+  );
+  box-shadow: 0 18px 44px
+    color-mix(in srgb, var(--proxy-accent) 24%, transparent);
+  transform: rotateX(58deg) rotateZ(var(--tile-rotation));
+  transition: transform 240ms ease;
+}
+
+.grammar-proxy__shape[data-shape="monolith"] {
+  width: 42px;
+  height: 110px;
+  border-radius: 3px 8px 2px 4px;
+  transform: rotateY(var(--tile-rotation));
+}
+
+.grammar-proxy__shape[data-shape="empty"] {
+  border-style: dashed;
+  background: transparent;
+  opacity: 0.35;
+}
+
+.grammar-proxy span {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.6rem;
+  color: #6e9d95;
+  font-family: "Courier New", monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+}
+
+.grammar-card__meta {
+  padding: 1rem;
+}
+
+.grammar-card h2 {
+  margin: 0.35rem 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.grammar-card__tags {
+  min-height: 2.4em;
+  color: #7fa199;
+  font-size: 0.72rem;
+}
+
+.grammar-card dl {
+  display: grid;
+  grid-template-columns: repeat(3, auto 1fr);
+  gap: 0.3rem 0.5rem;
+  font-family: "Courier New", monospace;
+  font-size: 0.65rem;
+}
+
+.grammar-card dt {
+  color: #688f88;
+}
+.grammar-card dd {
+  margin: 0;
+  color: #c9f5eb;
+}
+.grammar-card pre {
+  min-height: 5.6em;
+  color: #9fc6be;
+  font-size: 0.65rem;
+  white-space: pre-wrap;
+}
+.grammar-card button {
+  width: 100%;
+  font-size: 0.68rem;
+}
+.grammar-card button:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+.grammar-card[data-asset-error="true"] {
+  border-color: #c96f62;
+}
+
+@media (max-width: 700px) {
+  .grammar-viewer__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .grammar-card dl {
+    grid-template-columns: auto 1fr;
+  }
+}

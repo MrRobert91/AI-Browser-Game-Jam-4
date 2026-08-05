@@ -91,3 +91,16 @@ export interface CompiledGrammar {
     Record<Direction, readonly Readonly<{ lo: number; hi: number }>[]>
   >;
 }
+
+export interface ProxyAssetDescriptor {
+  readonly version: 1;
+  readonly shape: string;
+  readonly color: `#${string}`;
+  readonly accent: `#${string}`;
+  readonly bounds: Readonly<{
+    width: number;
+    height: number;
+    depth: number;
+  }>;
+  readonly pivot: 'center-bottom';
+}
