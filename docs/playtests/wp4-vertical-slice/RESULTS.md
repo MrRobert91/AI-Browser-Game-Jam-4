@@ -14,6 +14,9 @@ Estado: **NO EVALUADO — 0/5 sesiones reales**.
 
 - Resultado actual: **NO-GO administrativo**; faltan cinco testers humanos.
 - #29 permanece abierta.
+- La implementación técnica de #30–#35 existe únicamente detrás de
+  `?wp5=preview`; no cuenta como sesión, no modifica este 0/5 y no autoriza
+  activar WP5 en el vertical slice normal.
 - No se desbloquean #30, #33 ni #36.
 - No se implementan enemigos ni packs adicionales.
 

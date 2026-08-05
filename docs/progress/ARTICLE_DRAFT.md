@@ -149,3 +149,21 @@ El gate técnico termina en un slice reproducible con seed `A91F-42C0`. El reloj
 [Ver evidencia del vertical slice (WebM, 18 s)](./wp4-observable-world/wp4-vertical-slice.webm)
 
 La evidencia técnica no responde todavía la pregunta más importante: si cinco personas entienden la mecánica sin que nadie se la explique. Por eso #29 conserva un protocolo ciego y sigue en 0/5. No hay enemigo ni packs posteriores hasta obtener 5/5 en aparición y permanencia y una relación reconocible entre mirada y posibilidades. El código puede estar verde; la comprensión del producto aún debe probarse con humanos.
+
+## WP5 ensaya la aventura sin saltarse el gate humano
+
+La siguiente capa ya puede construirse técnicamente sin confundirla con una promoción de producto. Un planificador determinista separa cuatro ángulos al menos 55 grados y coloca Agua, Bosque, Ruina y Tormenta en anillos crecientes. Cada ancla reserva una zona caminable 3×3 y un corredor de dos celdas que nunca se convierte en agua profunda ni pinchos. Cien seeds de prueba conservan alcance, orden y reproducibilidad.
+
+Recoger una Semilla pausa el reloj 1,5 segundos, muestra tres siluetas, incrementa el `paletteEpoch` y abre solo el siguiente pack. Los chunks ya propagados no reciben vocabulario nuevo. La rareza crece de 0,65 a 1,8 con la distancia y el peligro recorre bandas de 0, 3, 7, 11 y 14 por ciento, pero esas curvas solo cambian pesos: nunca reescriben compatibilidades.
+
+![Agua recogida y Bosque disponible](./wp5-gameplay/02-progression.webp)
+
+Los peligros comparten una frontera de seguridad común. No nacen bajo el cuerpo; los pinchos respetan cuatro metros; el cristal pulsa cada 2,5 segundos; el suelo frágil cede tras 0,8; y el agua profunda conserva una salida transitable. La Incertidumbre solo avanza fuera de la mirada, se detiene al ser observada y necesita 1,2 segundos continuos para volverse estatua y devolver tres segundos una sola vez.
+
+![Peligros y La Incertidumbre en el preview](./wp5-gameplay/03-hazards-enemy.webp)
+
+La muerte congela, disuelve y devuelve al monolito con 1,5 segundos de invulnerabilidad. El mundo fijado, las Semillas y el reloj pertenecen a la partida, no al cuerpo, así que sobreviven al respawn. La evidencia automatizada recorre esta secuencia con la seed `A91F-42C0` y conserva las cuatro Semillas al final.
+
+[Ver montaje del preview WP5 (WebM, 17 s)](./wp5-gameplay/wp5-gameplay-preview.webm)
+
+Nada de lo anterior cambia el resultado del gate. El preview requiere `?wp5=preview`, muestra `#29 NO-GO` en pantalla y permanece desactivado en el recorrido normal. Hasta completar cinco sesiones humanas, WP5 es una implementación revisable, no una mecánica promovida.
