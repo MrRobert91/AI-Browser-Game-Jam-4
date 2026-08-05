@@ -7,6 +7,7 @@ import {
   type PlayerPhysicsRuntime,
 } from '../player/physics';
 import { GameRenderer } from '../render/renderer';
+import { createOriginDetailField } from '../world/origin-details';
 
 const SHELL_MARKUP = `
   <main class="observation-shell" aria-labelledby="game-title">
@@ -112,6 +113,7 @@ export function bootstrap(root: HTMLElement): () => void {
     Math.max(1, viewport.clientHeight),
   );
   const gameRenderer = new GameRenderer({ container: viewport, camera });
+  const originDetails = createOriginDetailField(gameRenderer.scene);
   const playerInput = new PlayerInput(shell, {
     onPauseChange: (paused) => {
       shell.dataset.paused = String(paused);
@@ -201,6 +203,7 @@ export function bootstrap(root: HTMLElement): () => void {
     abortController.abort();
     gameLoop.stop();
     solverWorker.dispose();
+    originDetails.dispose();
     gameRenderer.dispose();
     playerInput.dispose();
     playerPhysics?.dispose();
