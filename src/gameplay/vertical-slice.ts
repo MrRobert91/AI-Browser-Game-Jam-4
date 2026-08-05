@@ -121,6 +121,17 @@ export class VerticalSliceDirector {
     return true;
   }
 
+  addTime(seconds: number): VerticalSliceSnapshot {
+    if (
+      Number.isFinite(seconds) &&
+      seconds > 0 &&
+      (this.phase === 'OBSERVING' || this.phase === 'RESPAWNING')
+    ) {
+      this.elapsedSeconds = Math.max(0, this.elapsedSeconds - seconds);
+    }
+    return this.snapshot();
+  }
+
   snapshot(): VerticalSliceSnapshot {
     return {
       phase: this.phase,

@@ -239,6 +239,14 @@ export class WorldState {
     return snapshots;
   }
 
+  countFixedCells(): number {
+    let count = 0;
+    for (const cell of this.cells) {
+      if (cell.phase === 'FIXED') count += 1;
+    }
+    return count;
+  }
+
   private getMutableCell(cellId: CellId): MutableWorldCell {
     cellIdToCoordinates(cellId);
     return this.cells[cellId]!;

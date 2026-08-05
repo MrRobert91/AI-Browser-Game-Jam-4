@@ -495,6 +495,99 @@ button {
   opacity: 1;
 }
 
+.wp5-gate-status {
+  position: absolute;
+  z-index: 6;
+  right: clamp(1.5rem, 4vw, 4.5rem);
+  bottom: 2rem;
+  display: none;
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgb(255 211 122 / 45%);
+  color: #ffe3a6;
+  background: rgb(28 20 18 / 78%);
+  font-family: "Courier New", monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  pointer-events: none;
+}
+
+.observation-shell[data-wp5-preview="true"] .wp5-gate-status {
+  display: block;
+}
+
+.progression-hud {
+  position: absolute;
+  z-index: 6;
+  top: 8.5rem;
+  right: clamp(1.5rem, 4vw, 4.5rem);
+  pointer-events: none;
+}
+
+.progression-hud ol {
+  display: flex;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.progression-hud li {
+  display: grid;
+  justify-items: center;
+  gap: 0.3rem;
+  color: #78908c;
+  font-family: "Courier New", monospace;
+  font-size: 0.48rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.progression-hud li span {
+  width: 1.05rem;
+  height: 1.05rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: rgb(3 12 18 / 72%);
+  transform: rotate(45deg);
+}
+
+.progression-hud li[data-state="AVAILABLE"] {
+  color: #e8f8cf;
+}
+
+.progression-hud li[data-state="COLLECTED"] {
+  color: #aaffec;
+}
+
+.progression-hud li[data-state="COLLECTED"] span {
+  background: currentColor;
+  box-shadow: 0 0 14px currentColor;
+}
+
+.observation-shell[data-respawn-phase="FROZEN"]::before,
+.observation-shell[data-respawn-phase="DISSOLVING"]::before,
+.observation-shell[data-respawn-phase="FADING"]::before {
+  position: absolute;
+  z-index: 18;
+  inset: 0;
+  background: radial-gradient(circle, transparent 15%, rgb(255 85 120 / 55%));
+  content: "";
+  pointer-events: none;
+}
+
+.observation-shell[data-respawn-phase="DISSOLVING"]::before {
+  background: repeating-radial-gradient(
+    circle,
+    transparent 0 12px,
+    rgb(255 96 128 / 20%) 13px 15px
+  );
+}
+
+.observation-shell[data-respawn-phase="FADING"]::before {
+  background: rgb(3 7 12 / 82%);
+}
+
 .observation-shell[data-player-state="death"]::before {
   position: absolute;
   z-index: 18;

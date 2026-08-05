@@ -1,6 +1,8 @@
 import { GameLoop } from './game-loop';
 import { ObservableWorldBridge } from './observable-world-bridge';
 import { SolverWorkerClient } from './solver-worker-client';
+import { Wp5PreviewRuntime } from './wp5-preview-runtime';
+import { planSeedAnchors } from '../gameplay/anchors';
 import { VerticalSliceDirector } from '../gameplay/vertical-slice';
 import {
   isGrammarViewerMode,
@@ -14,7 +16,9 @@ import {
 } from '../player/physics';
 import { GameRenderer } from '../render/renderer';
 import { SuperpositionRenderer } from '../render/superposition';
+import { Wp5PreviewVisuals } from '../render/wp5-preview-visuals';
 import { ObservationReticle } from '../ui/observation-reticle';
+import { ProgressionHud } from '../ui/progression-hud';
 import { SliceCollapseVisuals } from '../world/collapse-visuals';
 import { createOriginDetailField } from '../world/origin-details';
 import {
@@ -76,6 +80,10 @@ const SHELL_MARKUP = `
       <p><span>SEED</span><strong>A91F-42C0</strong></p>
     </section>
 
+    <p class="wp5-gate-status" data-wp5-gate-status>
+      WP5 PREVIEW · #29 NO-GO · 0/5 TESTERS
+    </p>
+
     <section class="slice-result" data-slice-result hidden>
       <p>REGISTRO DE ATENCIÓN</p>
       <h2>No encontraste este mundo.<br />Lo separaste de todos los demás.</h2>
@@ -127,6 +135,9 @@ export function bootstrap(root: HTMLElement): () => void {
   const sliceTime = root.querySelector<HTMLElement>('[data-slice-time]');
   const sliceMessage = root.querySelector<HTMLElement>('[data-slice-message]');
   const sliceResult = root.querySelector<HTMLElement>('[data-slice-result]');
+  const wp5GateStatus = root.querySelector<HTMLElement>(
+    '[data-wp5-gate-status]',
+  );
 
   if (
     !shell ||
@@ -137,7 +148,8 @@ export function bootstrap(root: HTMLElement): () => void {
     !viewport ||
     !sliceTime ||
     !sliceMessage ||
-    !sliceResult
+    !sliceResult ||
+    !wp5GateStatus
   ) {
     throw new Error('La interfaz de observación está incompleta.');
   }
@@ -220,7 +232,10 @@ export function bootstrap(root: HTMLElement): () => void {
   workerState.textContent = `CONTRATO #${String(resetTick).padStart(6, '0')} // SEED`;
 
   const search = new URLSearchParams(window.location.search);
-  const canonicalReplay = search.get('replay') === 'canonical';
+  const replayMode = search.get('replay');
+  const wp5PreviewEnabled = search.get('wp5') === 'preview';
+  const wp5Replay = wp5PreviewEnabled && replayMode === 'wp5';
+  const canonicalReplay = replayMode === 'canonical' || wp5Replay;
   const requestedSpeed = Number(search.get('speed') ?? '1');
   const replaySpeed =
     Number.isFinite(requestedSpeed) && requestedSpeed > 0
@@ -265,11 +280,46 @@ export function bootstrap(root: HTMLElement): () => void {
     { canonicalReplay, startAtSeconds },
   );
 
+  let wp5Preview: Wp5PreviewRuntime | null = null;
+  let wp5Visuals: Wp5PreviewVisuals | null = null;
+  let progressionHud: ProgressionHud | null = null;
+  if (wp5PreviewEnabled) {
+    const plan = planSeedAnchors(0xa91f42c0);
+    wp5Visuals = new Wp5PreviewVisuals(gameRenderer.scene, plan);
+    progressionHud = new ProgressionHud(shell);
+    shell.dataset.wp5Preview = 'true';
+    wp5Preview = new Wp5PreviewRuntime({
+      worldSeed: 0xa91f42c0,
+      plan,
+      unlockPack: (packId) => observableWorld!.unlockPack(packId),
+      visuals: wp5Visuals,
+      canonicalAutomation: wp5Replay,
+      reducedFlashes: true,
+      ensureRespawnGround: () => {
+        observableWorld!.collapses.ensureSafeContactGround([2_080], 0);
+      },
+      isRespawnWalkable: () =>
+        observableWorld!.worldState.getCell(2_080).phase === 'FIXED',
+      teleportPlayer: () => {
+        if (playerPhysics) playerPhysics.controller.respawn();
+        else camera.position.set(64, 1.7, 64);
+      },
+      onMessage: (message) => {
+        sliceMessage.textContent = message;
+      },
+      onClockReward: (seconds) => {
+        sliceDirector!.addTime(seconds);
+      },
+    });
+    progressionHud.update(wp5Preview.progression.snapshot());
+  }
+
   const gameLoop = new GameLoop(({ deltaSeconds, elapsedSeconds }) => {
     shell.style.setProperty('--observation-phase', `${elapsedSeconds % 8}`);
     const previousSlice = sliceDirector!.snapshot();
     if (
       !canonicalReplay &&
+      wp5Preview?.respawn.snapshot().inputLocked !== true &&
       previousSlice.phase !== 'ENDING' &&
       previousSlice.phase !== 'COMPLETE'
     ) {
@@ -343,8 +393,31 @@ export function bootstrap(root: HTMLElement): () => void {
     superposition.update(superposedCells, elapsedSeconds * 1_000);
     fixedVisuals.updateFrame(deltaSeconds);
 
+    const playerCoordinates = worldPositionToCell(playerPosition);
+    const playerCellId = playerCoordinates
+      ? cellCoordinatesToId(playerCoordinates)
+      : 2_080;
+    const wp5Snapshot = wp5Preview?.update({
+      deltaSeconds:
+        shell.dataset.calibrated === 'true' ? deltaSeconds * replaySpeed : 0,
+      playerPosition,
+      cameraForward: [forwardVector.x, forwardVector.y, forwardVector.z],
+      playerCellId,
+      fixedCells: wp5Replay
+        ? Math.max(60, worldState.countFixedCells())
+        : worldState.countFixedCells(),
+    });
+    if (wp5Snapshot && progressionHud) {
+      progressionHud.update(wp5Snapshot.progression);
+      wp5GateStatus.textContent = `WP5 PREVIEW · #29 NO-GO · ${wp5Snapshot.progression.collectedPacks.length}/4 SEMILLAS · ${wp5Snapshot.uncertainty?.state ?? 'SIN ENEMIGO'}`;
+      shell.dataset.respawnPhase = wp5Snapshot.respawn.phase;
+    }
+
     const slice = sliceDirector!.update(
-      shell.dataset.calibrated === 'true' ? deltaSeconds * replaySpeed : 0,
+      shell.dataset.calibrated === 'true' &&
+        !(wp5Preview?.progression.isClockPaused() ?? false)
+        ? deltaSeconds * replaySpeed
+        : 0,
     );
     const totalSeconds = Math.ceil(slice.remainingSeconds);
     sliceTime.textContent = `${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:${String(totalSeconds % 60).padStart(2, '0')}`;
@@ -355,6 +428,7 @@ export function bootstrap(root: HTMLElement): () => void {
 
     if (
       !canonicalReplay &&
+      !wp5PreviewEnabled &&
       slice.phase === 'OBSERVING' &&
       slice.waterUnlocked
     ) {
@@ -413,6 +487,8 @@ export function bootstrap(root: HTMLElement): () => void {
     reticle.destroy();
     superposition.dispose();
     fixedVisuals.dispose();
+    wp5Visuals?.dispose();
+    progressionHud?.destroy();
     originDetails.dispose();
     gameRenderer.dispose();
     playerInput.dispose();
