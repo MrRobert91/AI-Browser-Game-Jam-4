@@ -6,22 +6,26 @@ La especificación completa y las reglas normativas de implementación se mantie
 
 ## Desarrollo
 
-Requiere Node.js 22.12 o posterior. Las versiones de runtime y tooling están fijadas en
+Requiere Node.js 24.14.0, fijado en `.nvmrc`. Las versiones de runtime y tooling están fijadas en
 `package-lock.json`.
 
 ```powershell
-npm.cmd install
+npm.cmd ci
 npm.cmd run dev
 ```
 
-Comprobaciones disponibles en el scaffold inicial:
+La puerta de calidad local reproduce el job obligatorio de CI:
 
 ```powershell
-npm.cmd run typecheck
-npm.cmd run test:contracts
+npm.cmd run check
+npm.cmd run format:check
 npm.cmd run build
-npm.cmd run preview
 ```
+
+`npm run check` ejecuta typecheck con TypeScript 7, ESLint y toda la suite Vitest. TypeScript 6 se
+instala en paralelo únicamente como API compatible para `typescript-eslint`; el ejecutable `tsc`
+sigue apuntando al compilador nativo 7.0. Para aplicar formato usa `npm.cmd run format` y para
+servir la build localmente, `npm.cmd run preview`.
 
 La build se genera en `dist/` y funciona como sitio estático. El contenedor de preview sirve
 ese mismo directorio con Nginx en el puerto `8080`; el navegador no usa CDN ni realiza llamadas

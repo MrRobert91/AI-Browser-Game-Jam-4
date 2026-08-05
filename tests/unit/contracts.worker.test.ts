@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ChunkBoundaryEvent, ObservationInput } from '../../src/contracts/messages';
-import { isWorkerInput, isWorkerOutput } from '../../src/contracts/runtime-validation';
+import type {
+  ChunkBoundaryEvent,
+  ObservationInput,
+} from '../../src/contracts/messages';
+import {
+  isWorkerInput,
+  isWorkerOutput,
+} from '../../src/contracts/runtime-validation';
 import { getWorkerOutputTransferables } from '../../src/contracts/transferables';
 import { handleWorkerInput } from '../../src/wfc/worker-runtime';
 
@@ -22,7 +28,11 @@ describe('public worker contracts', () => {
     const output = handleWorkerInput(structuredClone(input));
 
     expect(isWorkerOutput(output)).toBe(true);
-    expect(output).toMatchObject({ type: 'SOLVER_WARNING', code: 'ECHO_ONLY', tick: 37 });
+    expect(output).toMatchObject({
+      type: 'SOLVER_WARNING',
+      code: 'ECHO_ONLY',
+      tick: 37,
+    });
   });
 
   it('rejects invalid messages without trusting their payload', () => {
@@ -61,8 +71,11 @@ describe('public worker contracts', () => {
     expect(event.east.byteLength).toBe(0);
     expect(event.south.byteLength).toBe(0);
     expect(event.west.byteLength).toBe(0);
-    expect([...clone.north, ...clone.east, ...clone.south, ...clone.west]).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8,
-    ]);
+    expect([
+      ...clone.north,
+      ...clone.east,
+      ...clone.south,
+      ...clone.west,
+    ]).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 });

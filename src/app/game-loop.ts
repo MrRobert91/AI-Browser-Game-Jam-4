@@ -41,8 +41,13 @@ export class GameLoop {
     if (this.#animationFrameId === null) return;
 
     const rawDeltaSeconds =
-      this.#lastTimestamp === null ? 0 : (timestamp - this.#lastTimestamp) / 1_000;
-    const deltaSeconds = Math.min(Math.max(rawDeltaSeconds, 0), MAX_DELTA_SECONDS);
+      this.#lastTimestamp === null
+        ? 0
+        : (timestamp - this.#lastTimestamp) / 1_000;
+    const deltaSeconds = Math.min(
+      Math.max(rawDeltaSeconds, 0),
+      MAX_DELTA_SECONDS,
+    );
 
     this.#lastTimestamp = timestamp;
     this.#elapsedSeconds += deltaSeconds;

@@ -57,7 +57,9 @@ export class SolverWorkerClient {
 
   readonly #handleMessage = (event: MessageEvent<unknown>): void => {
     if (!isWorkerOutput(event.data)) {
-      this.#handlers.onProtocolError('El worker devolvió un mensaje fuera de contrato.');
+      this.#handlers.onProtocolError(
+        'El worker devolvió un mensaje fuera de contrato.',
+      );
       return;
     }
 
@@ -65,6 +67,8 @@ export class SolverWorkerClient {
   };
 
   readonly #handleError = (event: ErrorEvent): void => {
-    this.#handlers.onProtocolError(event.message || 'El worker no pudo iniciar.');
+    this.#handlers.onProtocolError(
+      event.message || 'El worker no pudo iniciar.',
+    );
   };
 }

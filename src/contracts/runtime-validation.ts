@@ -14,8 +14,16 @@ import type { WorldVector3 } from './world';
 
 type UnknownRecord = Record<string, unknown>;
 
-const PACK_IDS: readonly UnlockablePackId[] = ['water', 'forest', 'ruin', 'storm'];
-const WARNING_CODES: readonly SolverWarning['code'][] = ['ECHO_ONLY', 'INVALID_INPUT'];
+const PACK_IDS: readonly UnlockablePackId[] = [
+  'water',
+  'forest',
+  'ruin',
+  'storm',
+];
+const WARNING_CODES: readonly SolverWarning['code'][] = [
+  'ECHO_ONLY',
+  'INVALID_INPUT',
+];
 
 function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === 'object' && value !== null;
@@ -41,7 +49,9 @@ function isWorldVector3(value: unknown): value is WorldVector3 {
   );
 }
 
-function isVisibleCellObservation(value: unknown): value is VisibleCellObservation {
+function isVisibleCellObservation(
+  value: unknown,
+): value is VisibleCellObservation {
   if (!isRecord(value)) return false;
 
   return (
@@ -55,7 +65,9 @@ function isVisibleCellObservation(value: unknown): value is VisibleCellObservati
   );
 }
 
-function isObservationInput(value: UnknownRecord): value is UnknownRecord & ObservationInput {
+function isObservationInput(
+  value: UnknownRecord,
+): value is UnknownRecord & ObservationInput {
   return (
     value.type === 'OBSERVATION_TICK' &&
     isNonNegativeInteger(value.tick) &&
@@ -66,7 +78,9 @@ function isObservationInput(value: UnknownRecord): value is UnknownRecord & Obse
   );
 }
 
-function isUnlockPackInput(value: UnknownRecord): value is UnknownRecord & UnlockPackInput {
+function isUnlockPackInput(
+  value: UnknownRecord,
+): value is UnknownRecord & UnlockPackInput {
   return (
     value.type === 'UNLOCK_PACK' &&
     isNonNegativeInteger(value.tick) &&
@@ -74,22 +88,33 @@ function isUnlockPackInput(value: UnknownRecord): value is UnknownRecord & Unloc
   );
 }
 
-function isResetInput(value: UnknownRecord): value is UnknownRecord & ResetInput {
-  return value.type === 'RESET' && isNonNegativeInteger(value.tick) && isUint32(value.worldSeed);
+function isResetInput(
+  value: UnknownRecord,
+): value is UnknownRecord & ResetInput {
+  return (
+    value.type === 'RESET' &&
+    isNonNegativeInteger(value.tick) &&
+    isUint32(value.worldSeed)
+  );
 }
 
 export function isWorkerInput(value: unknown): value is WorkerInput {
   if (!isRecord(value)) return false;
 
-  return isObservationInput(value) || isUnlockPackInput(value) || isResetInput(value);
+  return (
+    isObservationInput(value) || isUnlockPackInput(value) || isResetInput(value)
+  );
 }
 
-function isCollapseEvent(value: UnknownRecord): value is UnknownRecord & CollapseEvent {
+function isCollapseEvent(
+  value: UnknownRecord,
+): value is UnknownRecord & CollapseEvent {
   return (
     value.type === 'COLLAPSE' &&
     isNonNegativeInteger(value.cellId) &&
     isNonNegativeInteger(value.terrainTileId) &&
-    (value.featureTileId === null || isNonNegativeInteger(value.featureTileId)) &&
+    (value.featureTileId === null ||
+      isNonNegativeInteger(value.featureTileId)) &&
     isFiniteNumber(value.entropyBefore) &&
     value.entropyBefore >= 0 &&
     isFiniteNumber(value.durationMs) &&
@@ -98,7 +123,9 @@ function isCollapseEvent(value: UnknownRecord): value is UnknownRecord & Collaps
   );
 }
 
-function isChunkBoundaryEvent(value: UnknownRecord): value is UnknownRecord & ChunkBoundaryEvent {
+function isChunkBoundaryEvent(
+  value: UnknownRecord,
+): value is UnknownRecord & ChunkBoundaryEvent {
   return (
     value.type === 'BOUNDARY_UPDATE' &&
     isNonNegativeInteger(value.chunkId) &&
@@ -109,7 +136,9 @@ function isChunkBoundaryEvent(value: UnknownRecord): value is UnknownRecord & Ch
   );
 }
 
-function isSolverWarning(value: UnknownRecord): value is UnknownRecord & SolverWarning {
+function isSolverWarning(
+  value: UnknownRecord,
+): value is UnknownRecord & SolverWarning {
   return (
     value.type === 'SOLVER_WARNING' &&
     (value.tick === null || isNonNegativeInteger(value.tick)) &&
@@ -122,7 +151,11 @@ function isSolverWarning(value: UnknownRecord): value is UnknownRecord & SolverW
 export function isWorkerOutput(value: unknown): value is WorkerOutput {
   if (!isRecord(value)) return false;
 
-  return isCollapseEvent(value) || isChunkBoundaryEvent(value) || isSolverWarning(value);
+  return (
+    isCollapseEvent(value) ||
+    isChunkBoundaryEvent(value) ||
+    isSolverWarning(value)
+  );
 }
 
 export function readMessageTick(value: unknown): number | null {

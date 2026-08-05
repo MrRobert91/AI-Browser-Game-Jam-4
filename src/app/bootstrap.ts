@@ -49,7 +49,8 @@ const SHELL_MARKUP = `
 `;
 
 function toErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message.trim().length > 0) return error.message;
+  if (error instanceof Error && error.message.trim().length > 0)
+    return error.message;
   return 'Error desconocido durante el arranque.';
 }
 
@@ -67,21 +68,31 @@ export function renderBootstrapError(root: HTMLElement, error: unknown): void {
   const errorMessage = root.querySelector<HTMLElement>('[data-error-message]');
   if (errorMessage) errorMessage.textContent = message;
 
-  root.querySelector<HTMLButtonElement>('[data-retry-button]')?.addEventListener('click', () => {
-    window.location.reload();
-  });
+  root
+    .querySelector<HTMLButtonElement>('[data-retry-button]')
+    ?.addEventListener('click', () => {
+      window.location.reload();
+    });
 }
 
 export function bootstrap(root: HTMLElement): () => void {
   root.innerHTML = SHELL_MARKUP;
 
   const shell = root.querySelector<HTMLElement>('.observation-shell');
-  const observationButton = root.querySelector<HTMLButtonElement>('[data-observation-button]');
+  const observationButton = root.querySelector<HTMLButtonElement>(
+    '[data-observation-button]',
+  );
   const systemState = root.querySelector<HTMLElement>('[data-system-state]');
   const shellStatus = root.querySelector<HTMLElement>('[data-shell-status]');
   const workerState = root.querySelector<HTMLElement>('[data-worker-state]');
 
-  if (!shell || !observationButton || !systemState || !shellStatus || !workerState) {
+  if (
+    !shell ||
+    !observationButton ||
+    !systemState ||
+    !shellStatus ||
+    !workerState
+  ) {
     throw new Error('La interfaz de observación está incompleta.');
   }
 
@@ -118,9 +129,12 @@ export function bootstrap(root: HTMLElement): () => void {
     () => {
       shell.dataset.calibrated = 'true';
       systemState.textContent = 'CALIBRADA';
-      shellStatus.textContent = 'Shell lista · el primer colapso iniciará el reloj';
+      shellStatus.textContent =
+        'Shell lista · el primer colapso iniciará el reloj';
       observationButton.disabled = true;
-      observationButton.querySelector('span')?.replaceChildren('Mirada calibrada');
+      observationButton
+        .querySelector('span')
+        ?.replaceChildren('Mirada calibrada');
     },
     { signal: abortController.signal },
   );
