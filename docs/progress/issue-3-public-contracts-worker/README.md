@@ -31,4 +31,15 @@ numerado. La calibración existente sigue funcionando y no inicia el reloj.
 
 ## Preview y publicación
 
-Se completará en esta misma rama después del primer commit y despliegue de Sliplane.
+- Sliplane: `project_3o4wtis2vnhk` / `service_qi0aluudq024`.
+- Rama y commit: `codex/issue-3-public-contracts-worker` / `dcc1812ff1ca526c76f002e3b11119aea0176d7c`.
+- Evento terminal: `service_event_0sz5q0lycu8l`, `Service deployed successfully`.
+- URL: <https://la-ultima-observacion-web.sliplane.app/?rev=dcc1812>.
+- HTTP: `/` 200 y `/health` 200 (`ok`).
+- Logs: build Vite y typecheck verdes; cero líneas con error/fallo/excepción desde el despliegue.
+- Navegador: eco `#000001`, calibración y assets main/CSS/worker del mismo origen; consola limpia.
+
+![Eco del worker en Sliplane](./worker-echo-sliplane.webp)
+
+La query `rev=dcc1812` evita reutilizar el HTML anterior almacenado por el navegador; no cambia el
+artefacto servido ni introduce una petición externa.

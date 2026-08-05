@@ -28,13 +28,13 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 - Arquitectura vigente: TypeScript estricto + Vite + Three.js; contratos públicos en `src/contracts/`; worker WFC separado del main thread; runtime offline tras la carga.
 - `dev`: `148a3f8b3751ff27c5b1d6bde829db6bef1eda1b` al iniciar la ejecución de #3.
 - `main`: `7190c837dcb1f4b4566273a785ea2948130e0d40`; está contenido en `dev` y WP0 aún no cumple gate de promoción.
-- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio live `service_qi0aluudq024` y URL `https://la-ultima-observacion-web.sliplane.app`; despliegue de #3 pendiente del primer commit.
+- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio live `service_qi0aluudq024`, rama `codex/issue-3-public-contracts-worker`, commit `dcc1812ff1ca526c76f002e3b11119aea0176d7c` y URL `https://la-ultima-observacion-web.sliplane.app`.
 
 ## Registro cronológico
 
 ### 2026-08-05 — Issue #3 — Contratos públicos y worker eco numerado
 
-- Issue / PR / commits: issue #3; rama `codex/issue-3-public-contracts-worker` desde `dev` `148a3f8b3751ff27c5b1d6bde829db6bef1eda1b`; PR y commits pendientes de publicación.
+- Issue / PR / commits: issue #3; rama `codex/issue-3-public-contracts-worker` desde `dev` `148a3f8b3751ff27c5b1d6bde829db6bef1eda1b`; commit de implementación `dcc1812ff1ca526c76f002e3b11119aea0176d7c`; PR pendiente de publicación.
 - Objetivo: congelar la primera frontera pública entre main, solver, render y contenido, con mensajes verificables en runtime y un worker real que preserve el número de tick.
 - Decisiones: `src/contracts/` posee los tipos de mundo, tiles y mensajes definidos en `AGENTS.md`; `runtime-validation.ts` valida defensivamente ambos sentidos del canal; `worker-runtime.ts` devuelve un `SolverWarning` `ECHO_ONLY` con el mismo tick; `transferables.ts` centraliza la lista de buffers de `ChunkBoundaryEvent`; una prueba de arquitectura impide imports internos entre `wfc`, `world`, `render` y `content`.
 - Alternativas descartadas: añadir un evento `ECHO` a `WorkerOutput`, porque alteraría la unión normativa; fingir un `CollapseEvent` o `BoundaryUpdate` sin solver, porque mezclaría handshake y simulación; aceptar objetos tipados sin guardas de runtime, porque `postMessage` cruza una frontera no confiable.
@@ -42,8 +42,8 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 - Impacto: desbloquea los contratos que consumirán #5, #6, #12 y #15 sin implementar todavía bitsets, PRNG, renderer, gramática, chunks ni colapsos.
 - Riesgos / deuda: la forma interna de `SolverWarning` queda mínima y podrá ampliarse de forma compatible; no se ha congelado aún `CollapseEvent` como evento de gameplay. El test de límites cubre imports estáticos y deberá integrarse en `npm run check` en #4.
 - Pruebas: `npm run typecheck`, `npm run test:contracts` (2 archivos, 4 tests), `npm run build`, `npm audit --omit=dev` y `git diff --check` en verde; build con worker separado de 1,68 kB.
-- Deploy: pendiente del primer commit de implementación; el servicio existente está live sobre la rama de #2 y se reutilizará sin crear recursos.
-- Navegador: dev server y build estática verificadas; tick `#000001` retorna `ECO`, estado `ready`, calibración funcional, worker local cargado como recurso separado y cero warnings/errores en una carga limpia. Un error aislado de la extensión durante un reload no se reprodujo en una pestaña nueva y no procede de la app.
+- Deploy: Sliplane `project_3o4wtis2vnhk` / `service_qi0aluudq024`, rama `codex/issue-3-public-contracts-worker`, commit `dcc1812`; evento terminal `service_event_0sz5q0lycu8l` (`Service deployed successfully`); `/` y `/health` responden 200, health `ok`, y los logs desde el deploy no contienen errores. No se creó ningún recurso nuevo.
+- Navegador: dev server, build estática y Sliplane verificados; tick `#000001` retorna `ECO`, estado `ready`, calibración funcional, worker local cargado como recurso separado y cero warnings/errores en cargas limpias. El primer acceso remoto reutilizó HTML cacheado de #2; `?rev=dcc1812` confirmó los hashes nuevos y el worker sin alterar el artefacto. Un error aislado de la extensión durante un reload local no se reprodujo en una pestaña nueva y no procede de la app.
 - Evidencia: [`docs/progress/issue-3-public-contracts-worker/`](./progress/issue-3-public-contracts-worker/). WebM N/A porque el handshake es instantáneo y no existe un flujo visual temporal nuevo.
 - Reversión: revertir los commits de #3 y devolver Sliplane a la rama anterior; no hay datos, volúmenes, migraciones ni cambios normativos que restaurar.
 
