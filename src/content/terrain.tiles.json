@@ -328,5 +328,72 @@
     "heightClass": 0,
     "fallbackRank": 0,
     "neighborBias": { "forest": 1.25, "root_ground": 1.35, "meadow": 1.2 }
+  },
+  {
+    "id": "terrain.ruin.floor",
+    "numericId": 17,
+    "packId": "ruin",
+    "weight": 6,
+    "mesh": "/assets/proxies/ruin/ruin-floor.proxy.json",
+    "rotationQuarterTurns": [0],
+    "sockets": {
+      "N": "RUIN_FLOOR",
+      "E": "RUIN_FLOOR",
+      "S": "RUIN_FLOOR",
+      "W": "RUIN_FLOOR"
+    },
+    "tags": ["ruin", "ruin_floor", "structural_support", "walkable"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "neighborBias": { "ruin": 1.7, "ruin_floor": 1.8 }
+  },
+  {
+    "id": "terrain.ruin.broken-path",
+    "numericId": 18,
+    "packId": "ruin",
+    "weight": 5,
+    "mesh": "/assets/proxies/ruin/broken-path.proxy.json",
+    "rotationQuarterTurns": [0, 1, 2, 3],
+    "sockets": {
+      "N": "RUIN_FLOOR",
+      "E": "PATH",
+      "S": "PATH",
+      "W": "RUIN_FLOOR"
+    },
+    "tags": ["ruin", "broken_path", "path", "structural_support", "walkable"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "neighborBias": { "ruin": 1.5, "path": 1.4, "ruin_floor": 1.5 }
+  },
+  {
+    "id": "terrain.ruin.broken-threshold",
+    "numericId": 19,
+    "packId": "ruin",
+    "weight": 4,
+    "mesh": "/assets/proxies/ruin/broken-threshold.proxy.json",
+    "rotationQuarterTurns": [0, 1, 2, 3],
+    "sockets": {
+      "N": "RUIN_FLOOR",
+      "E": "PATH",
+      "S": "OPEN_FLAT",
+      "W": "PATH"
+    },
+    "tags": [
+      "ruin",
+      "threshold",
+      "adapter",
+      "open",
+      "structural_support",
+      "walkable"
+    ],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "neighborBias": { "ruin": 1.35, "path": 1.3, "meadow": 1.15 }
   }
 ]

@@ -187,5 +187,82 @@
     "blocksMovement": false,
     "lethal": false,
     "neighborBias": { "mushrooms": 1.45, "old": 1.15 }
+  },
+  {
+    "id": "feature.ruin.arch",
+    "numericId": 12,
+    "packId": "ruin",
+    "weight": 3,
+    "mesh": "/assets/proxies/ruin/arch.proxy.json",
+    "tags": ["ruin", "arch", "monument", "vertical"],
+    "allowedTerrainTags": ["ruin_floor", "structural_support"],
+    "forbiddenWithinMetersOf": {
+      "origin": 20,
+      "corridor": 3,
+      "seed_anchor": 2.5
+    },
+    "minDistanceFromOrigin": 30,
+    "maxSlopeDegrees": 8,
+    "blocksMovement": true,
+    "lethal": false,
+    "neighborBias": { "ruin": 1.7, "column": 1.2 }
+  },
+  {
+    "id": "feature.ruin.column",
+    "numericId": 13,
+    "packId": "ruin",
+    "weight": 5,
+    "mesh": "/assets/proxies/ruin/column.proxy.json",
+    "tags": ["ruin", "column", "structural", "vertical"],
+    "allowedTerrainTags": ["ruin_floor", "structural_support"],
+    "forbiddenWithinMetersOf": {
+      "origin": 20,
+      "corridor": 2.5,
+      "seed_anchor": 2
+    },
+    "minDistanceFromOrigin": 28,
+    "maxSlopeDegrees": 8,
+    "blocksMovement": true,
+    "lethal": false,
+    "neighborBias": { "column": 1.5, "ruin": 1.4 }
+  },
+  {
+    "id": "feature.ruin.wall-fragment",
+    "numericId": 14,
+    "packId": "ruin",
+    "weight": 5,
+    "mesh": "/assets/proxies/ruin/wall-fragment.proxy.json",
+    "tags": ["ruin", "wall", "structural"],
+    "allowedTerrainTags": ["ruin_floor", "structural_support"],
+    "forbiddenWithinMetersOf": {
+      "origin": 20,
+      "corridor": 3,
+      "seed_anchor": 2
+    },
+    "minDistanceFromOrigin": 28,
+    "maxSlopeDegrees": 8,
+    "blocksMovement": true,
+    "lethal": false,
+    "neighborBias": { "wall": 1.5, "ruin": 1.35 }
+  },
+  {
+    "id": "feature.ruin.statue",
+    "numericId": 15,
+    "packId": "ruin",
+    "weight": 2,
+    "mesh": "/assets/proxies/ruin/statue.proxy.json",
+    "tags": ["ruin", "statue", "monument", "unique"],
+    "allowedTerrainTags": ["ruin_floor", "structural_support"],
+    "forbiddenWithinMetersOf": {
+      "origin": 24,
+      "corridor": 2.5,
+      "seed_anchor": 2
+    },
+    "minDistanceFromOrigin": 32,
+    "maxSlopeDegrees": 6,
+    "blocksMovement": true,
+    "lethal": false,
+    "uniquePerChunk": true,
+    "neighborBias": { "ruin": 1.6, "column": 1.2 }
   }
 ]

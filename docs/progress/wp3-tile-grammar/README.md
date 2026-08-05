@@ -14,5 +14,13 @@ Verified on 2026-08-05:
   passed.
 
 The viewer can also download a deterministic SVG inventory for the selected
-pack. A final all-pack capture replaces or complements this base record after
-the remaining WP3 content commits.
+pack. `grammar-authorized-packs.png` records the final authorized inventory:
+
+- Base: 14 definitions;
+- Water: 7 definitions;
+- Forest: 8 definitions;
+- Ruin: 7 definitions;
+- Total: 36 definitions across 4 packs, with zero loading or asset errors.
+
+Storm is intentionally absent. Issue #22 remains blocked by release candidate
+issue #51 and additionally requires the later 10,000-seed simulation gate.
