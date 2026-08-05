@@ -9,8 +9,8 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 | Fase | Issues | Estado | Gate o dependencia principal |
 |---|---:|---|---|
 | WP0 — Fundación y contratos | #1–#4 | Completada y promovida | PR #61 fusionada; `main` y `dev` sincronizadas en `7be4649` |
-| WP1 — Solver puro | #5–#11 | En curso | #5–#7 integradas en `dev`; #8 implementa propagación y desbloqueará #9 al integrarse |
-| WP2 — Render, cámara y física | #12–#14 | Pendiente | WP0 completada; se prioriza WP1 por orden del plan |
+| WP1 — Solver puro | #5–#11 | Implementada, en revisión | #5–#8 integradas en `dev`; #9–#11 completadas secuencialmente en PR #66 |
+| WP2 — Render, cámara y física | #12–#14 | Implementada, en revisión | #12–#14 completadas secuencialmente en la misma PR #66 |
 | WP3 — Gramática y tiles | #15–#22 | Bloqueada | Requiere contratos y solver base |
 | WP4 — Mundo observable | #23–#29 | Bloqueada | Requiere WP1, WP2 y WP3; termina con vertical slice |
 | WP5 — Progresión y peligros | #30–#35 | Bloqueada | Requiere el gate del vertical slice |
@@ -21,15 +21,30 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 
 ### Estado operativo actual
 
-- Fase actual: WP1 — Solver puro.
-- Issue actual: #8 — compatibilidad cardinal y propagación FIFO; rama `codex/issue-8-cardinal-propagation` desde `dev` `4dd07958e6364e363ae611f2561b4a0deb4dbe9e`.
-- Siguiente trabajo desbloqueable: #9 solo cuando #8 esté cerrada mediante una PR integrada en `dev`; #10–#11 continúan bloqueadas por sus relaciones nativas.
-- Dependencias críticas: #5/#6 → #7 → #8 → #9; propagación consume bitsets y entropía, reduce dominios de forma monotónica y devuelve contradicción antes de tocar una celda `FIXED`.
-- Arquitectura vigente: TypeScript estricto + Vite + Three.js; contratos públicos en `src/contracts/`; worker WFC separado; dominios internos en dos palabras `uint32`; PRNG/tick/hash explícitos; pesos y entropía deterministas; compatibilidad cardinal compilada y cola FIFO reutilizable en `src/wfc/`; runtime offline tras la carga.
-- `dev`: `4dd07958e6364e363ae611f2561b4a0deb4dbe9e`, merge de #7; `main`: `7be4649ece2a9a8f4bed40ff72653ef6cbf06478`, última promoción WP0.
-- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio live `service_qi0aluudq024`, rama `codex/issue-8-cardinal-propagation`, commit `2eb97c7688bd09218a390146dc3223b0adf1a622`, evento `service_event_hhp2wsor9pql` y URL `https://la-ultima-observacion-web.sliplane.app`.
+- Fase actual: WP1 y WP2 implementadas en una entrega acumulativa, pendientes de integración externa.
+- Trabajo en revisión: issues #9–#14; PR #66 (`dev` ← `codex/wp1-wp2-foundations`), no draft, `MERGEABLE/CLEAN`, CI terminal `SUCCESS` y head funcional `b23b22f776657a751bb7ff8b9e3da1e8278327e1`.
+- Siguiente trabajo desbloqueable: reconciliar #9–#14 solo después de que PR #66 se fusione en `dev`; entonces WP3 puede empezar por #15 sin depender de cambios no integrados.
+- Dependencias críticas: #5/#6 → #7 → #8 → #9 → #10 → #11; WP2 consume el renderer de #12 antes del controlador #13 y del streaming visual #14. La entrega acumulativa respeta ese orden mediante seis commits separados.
+- Arquitectura vigente: TypeScript estricto + Vite + Three.js/WebGL2 + Rapier; contratos públicos en `src/contracts/`; worker WFC separado; transacciones locales con rollback; chunks persistentes y bordes; `SolverCore` incremental a 10 Hz; cámara/controlador en primera persona; calidad adaptativa; instancing, pools y descarga visual sin borrar estado lógico. El runtime continúa offline tras la carga.
+- `dev`: `2ddb78d3023115173fa40f3686ec1b11866131a7`, ya contiene #5–#8; head funcional de la rama de revisión: `b23b22f776657a751bb7ff8b9e3da1e8278327e1`; `main`: `7be4649ece2a9a8f4bed40ff72653ef6cbf06478`, última promoción WP0 registrada.
+- Evidencia actual: build local de PR #66 verificado con canvas WebGL2, calibración de mirada/Pointer Lock y campo de 256 detalles instanciados. Capturas y vídeo reproducible en [`docs/progress/wp1-wp2-foundations/`](./progress/wp1-wp2-foundations/). El preview Sliplane no se movió a esta rama durante esta actualización; su último estado documentado sigue siendo #8 y no se presenta como evidencia de PR #66.
 
 ## Registro cronológico
+
+### 2026-08-05 — PR #66 — Cierre acumulativo de WP1 y WP2
+
+- Alcance y secuencia: la rama `codex/wp1-wp2-foundations` nació de `origin/dev` `2ddb78d3023115173fa40f3686ec1b11866131a7`, que ya contenía #5–#8. Implementó en orden #9 (`d81837c`), #10 (`3bf658d`), #11 (`28e2930`), #12 (`ec9a0ab`), #13 (`725a9ac`) y #14 (`b23b22f`), actualizando una única PR #66 contra `dev` después de cada corte.
+- #9 — transacciones: snapshots de la región mutable de radio tres que excluyen `FIXED`, hasta ocho candidatos ponderados, restauración exacta entre intentos, commit solo tras propagación válida y fallback compatible sin revelar candidatos deshechos.
+- #10 — chunks: mapa lógico 64×64 dividido en chunks 16×16, activación a 18 m, descarga visual a más de 42 m sin borrar estado, `paletteEpoch` congelado al inicializar y restricciones cardinales serializadas para vecinos activos o futuros.
+- #11 — solver incremental: `SolverCore` puro dentro del worker, entrada cuantizada a 10 Hz, máximo un commit principal cada 90 ms, elegibilidad validada contra la posición real a ≤10,01 m y trabajo pendiente reanudable con presupuesto de 4 ms. La simulación headless de 100 seeds no produce dominios vacíos ni `quantum_void_debug`.
+- #12 — render: contexto WebGL2 explícito, cámara normativa a 70°/1,70 m, ACES, sombras, atmósfera, presets bajo/medio/alto/automático y DPR dinámico entre 0,7 y 1,0 sin alterar resultados del solver.
+- #13 — jugador: WASD/flechas, correr, salto, sensibilidad/inversión Y, Pointer Lock, pausa y recuperación; cápsula Rapier, pendiente máxima de 38°, velocidades normativas y prueba de colisión real contra muro.
+- #14 — visuales: `InstancedMesh` por familia con geometría/material compartidos, buffers marcados para actualización, pools reutilizables, leases de GLB local, streaming visual desacoplado del estado lógico y límite estable de 120 proxies. El shell usa 256 detalles de hierba deterministas en una familia instanciada.
+- Validación acumulativa: `npm run check` (12 archivos, 71 tests), `npm run build`, `npm run format:check`, `npm audit --omit=dev` (0 vulnerabilidades) y `git diff --check` correctos. El benchmark de #14 actualiza 1.000 matrices en un único `InstancedMesh` con media de 0,3111 ms; la CI `Check and build` de PR #66 terminó `SUCCESS` en 24 s.
+- Navegador y evidencia: build local cargado a 1280×720, campo instanciado visible, transición `EN ESPERA` → `CALIBRADA`, Pointer Lock adquirido y consola sin errores de aplicación. El vídeo VP9 dura 6 s a 1280×720; las dos capturas WebP conservan los estados anterior y posterior. Véase [`docs/progress/wp1-wp2-foundations/`](./progress/wp1-wp2-foundations/).
+- Estado remoto: PR #66 abierta, no draft, base `dev`, `MERGEABLE/CLEAN`, head local/remoto idéntico. Las issues #9–#14 permanecen abiertas y enlazadas con `Closes`; se cerrarán al integrar la PR, no manualmente.
+- Riesgos / deuda: el bundle de producción avisa de chunks superiores a 500 kB por Three.js/Rapier; el build es válido, pero WP8 deberá perfilar y dividir carga si compromete el tiempo hasta jugar. La escena visual sigue siendo una fundación: gramática, proxies de superposición y mundo observable pertenecen a WP3/WP4.
+- Reversión: revertir los seis commits de PR #66 en orden inverso. No hay migraciones, datos persistentes ni infraestructura que restaurar; los artefactos de evidencia son documentación eliminable de forma independiente.
 
 ### 2026-08-05 — Issue #8 — Compatibilidad cardinal y propagación FIFO
 

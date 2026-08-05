@@ -47,7 +47,12 @@ export interface ChunkBoundaryEvent {
   readonly west: Uint16Array;
 }
 
-export type SolverWarningCode = 'ECHO_ONLY' | 'INVALID_INPUT';
+export type SolverWarningCode =
+  | 'ECHO_ONLY'
+  | 'INVALID_INPUT'
+  | 'QUANTUM_FALLBACK'
+  | 'QUANTUM_VOID_DEBUG'
+  | 'BUDGET_EXHAUSTED';
 
 export interface SolverWarning {
   readonly type: 'SOLVER_WARNING';

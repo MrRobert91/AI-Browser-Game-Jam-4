@@ -81,3 +81,41 @@ La contradicción se mantiene separada de la reparación. Si una restricción va
 ![Preview tras desplegar la propagación](./issue-8-cardinal-propagation/sliplane-browser.webp)
 
 ![La propagación queda lista para revisión](./issue-8-cardinal-propagation/pr-65-published.webp)
+
+## El colapso deja de ser una apuesta y se convierte en transacción
+
+La propagación podía detectar una contradicción, pero todavía faltaba una frontera que impidiera mostrar un resultado destinado a desaparecer. #9 introduce esa frontera: cada observación toma un snapshot de la región mutable de radio tres, prueba hasta ocho candidatos ponderados y restaura exactamente el estado antes del siguiente intento. Solo una propagación válida produce commit y evento visual. Las celdas `FIXED` ni siquiera entran en el snapshot, por lo que el rollback no tiene una ruta accidental para reescribir lo ya observado.
+
+El fallback tampoco es un borrado silencioso. Primero intenta tiles puente de la gramática base y después las superficies universales caminables; `quantum_void_debug` permanece como telemetría de último recurso y su aparición sigue siendo fallo de QA. Con ello, la contradicción se convierte en un resultado local recuperable, no en corrupción global ni en un parpadeo visible.
+
+## Los chunks conservan memoria aunque su vista desaparezca
+
+#10 separa por fin mundo lógico y presencia visual. El mapa de 64×64 se divide en chunks de 16×16; cada uno captura su `paletteEpoch` al inicializarse y conserva dominios, fases y bordes aunque su representación 3D se descargue a más de 42 metros. Las restricciones cardinales pueden llegar antes que el vecino: se guardan y se aplican cuando ese chunk nace, evitando costuras incoherentes sin mantener todo el render vivo.
+
+Esta separación prepara el streaming sin convertirlo en regeneración. Alejarse puede liberar geometría, materiales y proxies, pero no cambia qué celdas fueron fijadas ni qué posibilidades sobrevivieron. La frase de diseño también se vuelve una propiedad del almacenamiento: mirar fija el mundo; dejar de verlo no lo deshace.
+
+## El solver entra en el worker con un reloj propio
+
+#11 integra las piezas anteriores en `SolverCore`. El worker consume observación cuantizada a 10 Hz, activa chunks a 18 metros, asegura suelo corporal, actualiza carga y elige como máximo un commit principal cada 90 ms. La distancia se revalida contra la posición real en el instante del commit y nunca se fija una celda más allá de 10,01 metros.
+
+El presupuesto de cuatro milisegundos no cancela el trabajo: la cola y la transacción conservan su estado y continúan en el tick siguiente. Esta decisión hace que bajar calidad visual o variar el framerate no cambie el mundo producido. Cien seeds con una ruta headless común terminaron sin dominios vacíos, sin `quantum_void_debug` y con el mismo hash al repetir la simulación.
+
+## WP2: el núcleo matemático gana cámara, cuerpo y atmósfera
+
+El primer corte de WP2 crea un renderer WebGL2 explícito con cámara a 70°, altura de 1,70 metros, tone mapping ACES, niebla, sombras y presets de calidad. La resolución dinámica recorre 0,7–1,0 del DPR, pero la calidad solo cambia coste visual: no toca ticks, pesos ni decisiones del solver.
+
+Sobre esa escena, #13 añade el controlador en primera persona y una cápsula Rapier real. WASD y flechas comparten entrada; Shift corre, Espacio salta, el ratón controla la mirada y Escape libera Pointer Lock/pausa. Velocidades, pendiente máxima, sensibilidad, inversión Y y cabeceo reducido viven como parámetros explícitos y las pruebas incluyen una cápsula bloqueada por un muro, no solo aritmética aislada.
+
+![Estado actual del juego con renderer e instancing](./wp1-wp2-foundations/game-current.webp)
+
+## Mil transformaciones, una familia visual
+
+#14 completa la fundación 3D agrupando geometría y material por familia. `InstancedMesh` mantiene slots densos, compacta al retirar una instancia y marca `instanceMatrix` para upload; los pools reciclan objetos y los GLB locales se cargan mediante leases con liberación de recursos al perder la última referencia. Un selector estable limita la superposición a 120 proxies.
+
+La escena actual usa esa infraestructura para dibujar 256 detalles de hierba deterministas alrededor del origen. El benchmark prepara 1.000 matrices en un único `InstancedMesh` en 0,3111 ms de media. Es una prueba pequeña pero concreta de que la arquitectura prevista para reducir draw calls ya participa en el build, en vez de existir solo como utilidad futura.
+
+![Mirada calibrada y Pointer Lock activo](./wp1-wp2-foundations/game-calibrated.webp)
+
+[Ver vídeo de la calibración y el estado actual del juego (WebM, 6 s)](./wp1-wp2-foundations/game-calibration.webm)
+
+La PR acumulativa #66 conserva un commit por issue, de #9 a #14, y apunta a `dev`. El gate final suma 71 tests, build, formato, auditoría sin vulnerabilidades, benchmark y navegador sin errores de aplicación; GitHub la marca `MERGEABLE/CLEAN` con CI verde. Las issues permanecen abiertas hasta que esa PR se integre: la documentación registra un estado en revisión, no una fase ya promocionada.
