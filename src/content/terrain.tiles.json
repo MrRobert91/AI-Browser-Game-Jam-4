@@ -253,5 +253,80 @@
       "meadow": 1.2,
       "wild_grass": 1.2
     }
+  },
+  {
+    "id": "terrain.forest.moss",
+    "numericId": 13,
+    "packId": "forest",
+    "weight": 9,
+    "mesh": "/assets/proxies/forest/moss.proxy.json",
+    "rotationQuarterTurns": [0],
+    "sockets": {
+      "N": "OPEN_FLAT",
+      "E": "OPEN_FLAT",
+      "S": "OPEN_FLAT",
+      "W": "OPEN_FLAT"
+    },
+    "tags": ["forest", "moss", "open", "walkable"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "neighborBias": { "forest": 1.5, "moss": 1.7, "root_ground": 1.25 }
+  },
+  {
+    "id": "terrain.forest.root-ground",
+    "numericId": 14,
+    "packId": "forest",
+    "weight": 7,
+    "mesh": "/assets/proxies/forest/root-ground.proxy.json",
+    "rotationQuarterTurns": [0, 1],
+    "sockets": { "N": "PATH", "E": "OPEN_FLAT", "S": "PATH", "W": "OPEN_FLAT" },
+    "tags": ["forest", "root_ground", "path", "walkable"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "neighborBias": { "forest": 1.45, "root_ground": 1.8, "path": 1.2 }
+  },
+  {
+    "id": "terrain.forest.clearing",
+    "numericId": 15,
+    "packId": "forest",
+    "weight": 5,
+    "mesh": "/assets/proxies/forest/clearing.proxy.json",
+    "rotationQuarterTurns": [0],
+    "sockets": {
+      "N": "OPEN_FLAT",
+      "E": "OPEN_FLAT",
+      "S": "OPEN_FLAT",
+      "W": "OPEN_FLAT"
+    },
+    "tags": ["forest", "clearing", "meadow", "open", "walkable", "corridor"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "neighborBias": { "forest": 1.2, "meadow": 1.2, "clearing": 1.6 }
+  },
+  {
+    "id": "terrain.forest.root-meadow",
+    "numericId": 16,
+    "packId": "forest",
+    "weight": 5,
+    "mesh": "/assets/proxies/forest/root-meadow.proxy.json",
+    "rotationQuarterTurns": [0],
+    "sockets": {
+      "N": "OPEN_FLAT",
+      "E": "OPEN_FLAT",
+      "S": "OPEN_FLAT",
+      "W": "OPEN_FLAT"
+    },
+    "tags": ["forest", "root_ground", "meadow", "open", "walkable", "adapter"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "neighborBias": { "forest": 1.25, "root_ground": 1.35, "meadow": 1.2 }
   }
 ]

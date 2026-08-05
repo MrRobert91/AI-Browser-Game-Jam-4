@@ -115,5 +115,77 @@
     "blocksMovement": false,
     "lethal": false,
     "uniquePerChunk": true
+  },
+  {
+    "id": "feature.forest.young-tree",
+    "numericId": 8,
+    "packId": "forest",
+    "weight": 7,
+    "mesh": "/assets/proxies/forest/young-tree.proxy.json",
+    "tags": ["forest", "tree", "young", "vertical"],
+    "allowedTerrainTags": ["forest", "moss", "root_ground"],
+    "forbiddenWithinMetersOf": {
+      "origin": 8,
+      "corridor": 2.5,
+      "seed_anchor": 2
+    },
+    "minDistanceFromOrigin": 18,
+    "maxSlopeDegrees": 30,
+    "blocksMovement": true,
+    "lethal": false,
+    "neighborBias": { "tree": 1.45, "forest": 1.35 }
+  },
+  {
+    "id": "feature.forest.old-tree",
+    "numericId": 9,
+    "packId": "forest",
+    "weight": 4,
+    "mesh": "/assets/proxies/forest/old-tree.proxy.json",
+    "tags": ["forest", "tree", "old", "vertical"],
+    "allowedTerrainTags": ["forest", "moss", "root_ground"],
+    "forbiddenWithinMetersOf": {
+      "origin": 10,
+      "corridor": 3,
+      "seed_anchor": 2
+    },
+    "minDistanceFromOrigin": 20,
+    "maxSlopeDegrees": 28,
+    "blocksMovement": true,
+    "lethal": false,
+    "neighborBias": { "tree": 1.65, "forest": 1.45 }
+  },
+  {
+    "id": "feature.forest.fallen-trunk",
+    "numericId": 10,
+    "packId": "forest",
+    "weight": 4,
+    "mesh": "/assets/proxies/forest/fallen-trunk.proxy.json",
+    "tags": ["forest", "trunk", "fallen"],
+    "allowedTerrainTags": ["forest", "moss", "root_ground"],
+    "forbiddenWithinMetersOf": {
+      "origin": 8,
+      "corridor": 2.5,
+      "seed_anchor": 2
+    },
+    "minDistanceFromOrigin": 18,
+    "maxSlopeDegrees": 24,
+    "blocksMovement": true,
+    "lethal": false,
+    "neighborBias": { "tree": 1.25, "moss": 1.25 }
+  },
+  {
+    "id": "feature.forest.mushrooms",
+    "numericId": 11,
+    "packId": "forest",
+    "weight": 6,
+    "mesh": "/assets/proxies/forest/mushrooms.proxy.json",
+    "tags": ["forest", "mushrooms", "detail"],
+    "allowedTerrainTags": ["forest", "moss", "root_ground"],
+    "forbiddenWithinMetersOf": { "origin": 6 },
+    "minDistanceFromOrigin": 16,
+    "maxSlopeDegrees": 32,
+    "blocksMovement": false,
+    "lethal": false,
+    "neighborBias": { "mushrooms": 1.45, "old": 1.15 }
   }
 ]

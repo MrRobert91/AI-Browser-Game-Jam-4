@@ -103,4 +103,8 @@ export interface ProxyAssetDescriptor {
     depth: number;
   }>;
   readonly pivot: 'center-bottom';
+  readonly lod?: readonly Readonly<{
+    maxDistance: number;
+    shape: string;
+  }>[];
 }

@@ -39,6 +39,32 @@ export function validateProxyAsset(
   if (value.pivot !== 'center-bottom') {
     issues.push({ path, message: 'Pivot must be center-bottom.' });
   }
+  if (value.lod !== undefined) {
+    if (!Array.isArray(value.lod) || value.lod.length < 2) {
+      issues.push({
+        path,
+        message: 'LOD metadata must contain at least two levels.',
+      });
+    } else {
+      let previousDistance = 0;
+      for (const level of value.lod) {
+        if (
+          !isRecord(level) ||
+          typeof level.shape !== 'string' ||
+          !isPositiveFinite(level.maxDistance) ||
+          level.maxDistance <= previousDistance
+        ) {
+          issues.push({
+            path,
+            message:
+              'LOD levels require shapes and increasing positive distances.',
+          });
+          break;
+        }
+        previousDistance = level.maxDistance;
+      }
+    }
+  }
   if (!isRecord(value.bounds)) {
     issues.push({ path, message: 'Bounds must be an object.' });
   } else {
