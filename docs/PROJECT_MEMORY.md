@@ -33,7 +33,7 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 
 ### 2026-08-05 — Issue #5 — Bitsets de 64 variantes y dominios sin asignaciones calientes
 
-- Issue / rama / commit: issue #5; `codex/issue-5-bitset-domains` desde `dev`/`main` `7be4649ece2a9a8f4bed40ff72653ef6cbf06478`; implementación `f2cbe674fc5b402331cb5e8a3124cb689945abfb` antes del commit documental.
+- Issue / PR / commits: issue #5; PR #62 (`dev` ← `codex/issue-5-bitset-domains`) desde `dev`/`main` `7be4649ece2a9a8f4bed40ff72653ef6cbf06478`; implementación `f2cbe674fc5b402331cb5e8a3124cb689945abfb`, documentación/evidencia `f00ae442b68721d0ae349e7e8d4d35cfe6291590` y commit final de publicación.
 - Objetivo: representar cada dominio de terreno o feature con dos palabras de 32 bits y ofrecer las primitivas que necesitarán entropía, propagación, rollback y chunks.
 - Decisiones: `MutableDomainMask` extiende el contrato público de lectura `DomainMask`; los constructores son las únicas operaciones que asignan objetos; `setBit`, `clearBit`, `assignMask`, `intersectInto` y `unionInto` mutan en sitio; `nextSetBit` reemplaza un iterador/generador asignante por un cursor numérico; todos los resultados de palabras se normalizan con `>>> 0`.
 - Alternativas descartadas: `bigint`, porque no coincide con las dos palabras normativas ni con buffers futuros; `Set<number>`, por coste por celda; generadores y arrays de índices, porque asignarían en el camino caliente; cambiar `DomainMask` a mutable, porque expondría mutación a consumidores de contratos.
@@ -42,7 +42,7 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 - Riesgos / deuda: todavía no existe almacenamiento contiguo por chunk; `MutableDomainMask` es una unidad lógica y #10 decidirá el layout físico sin alterar estas semánticas. La suite no usa medición de heap frágil: demuestra identidad estable y el código no crea colecciones en operaciones calientes.
 - Pruebas: `npm run check` (3 archivos, 11 tests), `npm run build`, `npm audit --omit=dev` y `git diff --check` verdes. Se recorren exhaustivamente los 65 tamaños válidos y los 64 bits; 31, 32 y 63 tienen aserciones explícitas.
 - Deploy y navegador: Sliplane desplegó `f2cbe67` desde la rama de issue con `service_event_0p9k5b3x5bmu`; `/` y `/health` responden 200. Build local y preview remoto mantienen shell, calibración y eco `#000001` con consola limpia. WebM N/A: la issue no añade interacción visual.
-- Project: #5 reclamada con `status:in-progress` y movida manualmente a **In progress**; #6 permanece en Backlog y #7 sigue bloqueada.
+- Publicación y Project: PR #62 no draft, base `dev`, `MERGEABLE/CLEAN`, labels `codex`/`codex-automation` y CI `Check and build` terminal `SUCCESS`. Los cuatro criterios de #5 se marcaron completados; la issue quedó abierta con `status:in-review` y su tarjeta se movió manualmente a **In review**. #6 permanece en Backlog y #7 sigue bloqueada.
 - Evidencia: [`docs/progress/issue-5-bitset-domains/`](./progress/issue-5-bitset-domains/).
 - Reversión: revertir los commits de #5 y devolver el preview a `dev`; no hay datos, migraciones, assets ni cambios normativos.
 

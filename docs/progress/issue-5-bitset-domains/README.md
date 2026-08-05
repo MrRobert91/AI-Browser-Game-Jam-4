@@ -44,7 +44,13 @@
 
 ![Preview Sliplane de la rama](./sliplane-browser.webp)
 
+![PR #62 publicada contra dev](./pr-62-published.webp)
+
+![Project con #5 en In review](./project-final.webp)
+
 WebM es N/A: la implementación es una primitiva pura del solver y no añade un flujo visual temporal.
+
+PR #62 quedó no draft, base `dev`, `MERGEABLE/CLEAN`, con labels `codex`/`codex-automation` y CI terminal `SUCCESS`. La issue permanece abierta hasta que esa PR sea fusionada externamente en `dev` y una ejecución posterior reconcilie el merge.
 
 ## Reversión
 
