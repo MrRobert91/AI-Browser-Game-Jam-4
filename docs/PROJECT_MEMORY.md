@@ -11,9 +11,9 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 | WP0 — Fundación y contratos | #1–#4 | Completada y promovida | PR #61 fusionada; `main` y `dev` sincronizadas en `7be4649` |
 | WP1 — Solver puro | #5–#11 | Integrada en `dev` | PR #66 fusionada; issues #5–#11 cerradas |
 | WP2 — Render, cámara y física | #12–#14 | Integrada en `dev` | PR #66 fusionada; issues #12–#14 cerradas |
-| WP3 — Gramática y tiles | #15–#22 | #15–#21 en revisión | PR #67 lista; #22 bloqueada por release #51 |
-| WP4 — Mundo observable | #23–#29 | Bloqueada | Requiere WP1, WP2 y WP3; termina con vertical slice |
-| WP5 — Progresión y peligros | #30–#35 | Bloqueada | Requiere el gate del vertical slice |
+| WP3 — Gramática y tiles | #15–#22 | Integrada en `dev` salvo #22 | PR #67 fusionada; #22 bloqueada por release #51 |
+| WP4 — Mundo observable | #23–#29 | #23–#28 en revisión; #29 pendiente | Slice técnico listo; gate humano 0/5 |
+| WP5 — Progresión y peligros | #30–#35 | Implementada en preview; promoción bloqueada | Requiere que #29 pase de NO-GO a GO |
 | WP6 — Presentación | #36–#39 | Bloqueada | Requiere mundo observable estable |
 | WP7 — Final | #40–#43 | Bloqueada | Requiere progresión y presentación |
 | WP8 — QA y entrega | #44–#51 | Bloqueada | Requiere juego completo; termina en release candidate |
@@ -21,14 +21,30 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 
 ### Estado operativo actual
 
-- Fase actual: WP3 implementada secuencialmente para todas las issues desbloqueadas (#15–#21) en PR #67, lista para revisión contra `dev`.
-- Trabajo en revisión: schemas y compilación, gramática base, validadores, galería y packs Agua/Bosque/Ruina. Las siete issues conservan `status:in-review` hasta su integración real en `dev`.
-- Bloqueo explícito: #22 Tormenta no se inició porque depende de #51, todavía abierta, y exige la simulación posterior de 10.000 seeds. Tormenta no forma parte del inventario activo ni del MVP.
-- Arquitectura vigente: el contenido JSON compila a variantes y bitmasks públicos sin importar internals de `wfc`; `validate:tiles` aplica reciprocidad, dos salidas, adaptadores, seguridad, tags, IDs, assets y límite de 64; `validate:assets` comprueba proxies locales 2×2, pivote y LOD.
-- `dev` base de esta entrega: `e443a8ed70f977b1066327309c3dbf0e5d8979be`; rama: `codex/wp3-tile-grammar-pipeline`; PR #67 `MERGEABLE/CLEAN`, no draft y CI terminal `SUCCESS` antes de este cierre documental.
-- Evidencia actual: galería offline `?grammar=1` con 36 definiciones, 4 packs autorizados y cero errores de carga/asset. Capturas y detalle de QA en [`docs/progress/wp3-tile-grammar/`](./progress/wp3-tile-grammar/).
+- Fase actual: WP4 y la implementación técnica de WP5 están acumuladas sobre una rama nacida de `dev` actualizado (`0cd7cd1cabbb97be1d89c4614c748dd6153605d9`).
+- Trabajo en revisión: mundo observable, vertical slice, plan macro de Semillas, progresión, curvas de distancia, peligros, La Incertidumbre y respawn persistente.
+- Gate humano: #29 no se declara completada. Hay protocolo, plantilla y matriz, pero siguen faltando cinco sesiones reales. WP5 está desactivada por defecto y solo puede inspeccionarse con `?wp5=preview`; enemigos y packs no entran en el slice normal.
+- Arquitectura vigente: `WorldState` conserva identidad/rotación de `FIXED`; el renderer alterna top-3/top-2 sin cargar GLB por posibilidad; `CollapseDirector` valida 10,01 m y habilita física al 70 %; `ObservableWorldBridge` deduplica eventos, copia bordes y limita epochs a mundo futuro.
+- `dev` base de esta entrega: `0cd7cd1cabbb97be1d89c4614c748dd6153605d9`; rama: `codex/wp4-observable-world-vertical-slice`.
+- Evidencia actual: replay WP4 en [`docs/progress/wp4-observable-world/`](./progress/wp4-observable-world/), preview WP5 en [`docs/progress/wp5-gameplay/`](./progress/wp5-gameplay/) y playtest pendiente en [`docs/playtests/wp4-vertical-slice/`](./playtests/wp4-vertical-slice/).
 
 ## Registro cronológico
+
+### 2026-08-05 — Implementación técnica WP5 detrás del gate #29
+
+- Secuencia: #30 plan macro y corredores; #31 Semillas, HUD y epochs; #32 curvas de rareza/peligro; #33 peligros estáticos seguros; #34 La Incertidumbre; #35 muerte y respawn persistente.
+- Integración: `Wp5PreviewRuntime` coordina los seis sistemas y `Wp5PreviewVisuals` los representa sin importar internals del solver/render. El recorrido normal no cambia; el preview exige `?wp5=preview` y mantiene visible `#29 NO-GO`.
+- Verificación: 100 seeds del plan macro, unitarias e integración dedicadas, typecheck, lint, build de producción y navegador local sin errores ni warnings.
+- Estado del gate: #30–#35 están implementadas para revisión técnica, pero #29 sigue en 0/5. No se afirma GO, no se fabrican sesiones y no se activa WP5 por defecto.
+- Evidencia: cuatro capturas WebP y vídeo VP9 de 17 s en [`docs/progress/wp5-gameplay/`](./progress/wp5-gameplay/).
+
+### 2026-08-05 — Entrega acumulativa WP4
+
+- Secuencia: #23 estado/celdas/chunk views; #24 visibilidad/carga; #25 proxies; #26 commit físico; #27 integración worker/bordes/unlocks; #28 vertical slice; #29 instrumentación de playtest sin fabricar sesiones.
+- Slice: 90 s desde la primera fijación, seed `A91F-42C0`, Agua futura, muerte/respawn persistente, ascenso de ocho segundos, cierre y haiku local.
+- Verificación: typecheck, tests focalizados, build de producción, navegador a 1280×720 sin errores y WebM verificado con `ffprobe`.
+- Estado del gate: #23–#28 listas para revisión; #29 permanece abierta en 0/5 y bloquea el avance dependiente.
+- Evidencia: [`docs/progress/wp4-observable-world/`](./progress/wp4-observable-world/) y [`docs/playtests/wp4-vertical-slice/`](./playtests/wp4-vertical-slice/).
 
 ### 2026-08-05 — PR #67 — Pipeline acumulativo WP3
 

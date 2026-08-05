@@ -144,6 +144,20 @@ export class PlayerController {
     this.#syncCamera(delta);
   }
 
+  respawn(
+    position = { x: 64, y: PLAYER_CAPSULE_CENTER_HEIGHT_METERS, z: 64 },
+  ): void {
+    this.#velocity = { x: 0, z: 0 };
+    this.#verticalVelocity = 0;
+    this.#body.setTranslation(position, true);
+    this.#body.setNextKinematicTranslation(position);
+    this.#camera.position.set(
+      position.x,
+      position.y + PLAYER_HEIGHT_METERS - PLAYER_CAPSULE_CENTER_HEIGHT_METERS,
+      position.z,
+    );
+  }
+
   dispose(): void {
     this.#world.removeCharacterController(this.#characterController);
     this.#world.removeRigidBody(this.#body);

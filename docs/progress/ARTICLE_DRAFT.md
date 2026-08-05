@@ -119,3 +119,51 @@ La escena actual usa esa infraestructura para dibujar 256 detalles de hierba det
 [Ver vídeo de la calibración y el estado actual del juego (WebM, 6 s)](./wp1-wp2-foundations/game-calibration.webm)
 
 La PR acumulativa #66 conserva un commit por issue, de #9 a #14, y apunta a `dev`. El gate final suma 71 tests, build, formato, auditoría sin vulnerabilidades, benchmark y navegador sin errores de aplicación; GitHub la marca `MERGEABLE/CLEAN` con CI verde. Las issues permanecen abiertas hasta que esa PR se integre: la documentación registra un estado en revisión, no una fase ya promocionada.
+
+## WP3 convierte vocabulario artístico en una gramática verificable
+
+El mundo observable necesitaba algo más preciso que una colección de modelos. WP3 formaliza sockets, rotaciones, pesos, tags, seguridad y adaptadores como contenido validable. Meadow A y B comparten encaje pero no apariencia; Agua conserva la cadena Deep–Shallow–Shore–Marsh hasta volver a `OPEN_FLAT`; Bosque y Ruina amplían el lenguaje sin romper el terreno base. El visor offline permite inspeccionar las 36 definiciones autorizadas sin ejecutar una partida completa.
+
+Tormenta queda fuera de esta entrega de forma deliberada. Su issue depende del gate de 10.000 seeds de la release candidate; activarla antes convertiría una dependencia explícita en deuda invisible. La gramática que sí entra en `dev` pasa reciprocidad, dos salidas, seguridad, assets locales y el límite de 64 variantes por capa.
+
+## WP4 hace visible el acto de decidir
+
+La infraestructura del solver ya podía colapsar, pero el jugador todavía no veía una relación clara entre atención y permanencia. WP4 añade un `WorldState` de 64×64 celdas que sobrevive a la descarga de vistas, una observación muestreada a 10 Hz y una retícula de diez píxeles que se cierra con la carga. Girar la cámara hace decaer la atención; una oclusión la vuelve cero; entrar en contacto fija suelo seguro sin introducir peligro.
+
+Antes del commit, hasta tres proxies low-poly alternan entre 160 y 260 ms. Conforme crece la carga quedan menos alternativas y baja su opacidad. El preset bajo usa dos candidatos y todos comparten pools instanciados con un límite global de 120, de modo que mostrar posibilidades no equivale a cargar tres GLB completos por celda.
+
+![Superposición antes de calibrar](./wp4-observable-world/01-calibration.webp)
+
+El `CollapseDirector` solo acepta el resultado confirmado por el worker y vuelve a validar que la celda esté a 10,01 m o menos. La geometría aparece durante 450–700 ms, el collider entra al 70 % y la onda de borde se emite cuando tile y rotación ya son inmutables. Bordes duplicados se descartan, los arrays transferibles se copian y un unlock cambia el `paletteEpoch` del mundo futuro, nunca el pasado propagado.
+
+## Noventa segundos para demostrar la idea central
+
+El gate técnico termina en un slice reproducible con seed `A91F-42C0`. El reloj empieza en la primera fijación, Agua se vuelve posible para celdas futuras, una muerte devuelve al origen sin borrar el recorrido y el final eleva la cámara: la superposición desaparece, lo observado conserva color y el registro cierra con un haiku local.
+
+![Agua disponible para celdas futuras](./wp4-observable-world/04-water-unlock.webp)
+
+![El mundo persiste tras el respawn](./wp4-observable-world/06-respawn-persistence.webp)
+
+![Ascenso sobre lo observado](./wp4-observable-world/07-ending-ascent.webp)
+
+[Ver evidencia del vertical slice (WebM, 18 s)](./wp4-observable-world/wp4-vertical-slice.webm)
+
+La evidencia técnica no responde todavía la pregunta más importante: si cinco personas entienden la mecánica sin que nadie se la explique. Por eso #29 conserva un protocolo ciego y sigue en 0/5. No hay enemigo ni packs posteriores hasta obtener 5/5 en aparición y permanencia y una relación reconocible entre mirada y posibilidades. El código puede estar verde; la comprensión del producto aún debe probarse con humanos.
+
+## WP5 ensaya la aventura sin saltarse el gate humano
+
+La siguiente capa ya puede construirse técnicamente sin confundirla con una promoción de producto. Un planificador determinista separa cuatro ángulos al menos 55 grados y coloca Agua, Bosque, Ruina y Tormenta en anillos crecientes. Cada ancla reserva una zona caminable 3×3 y un corredor de dos celdas que nunca se convierte en agua profunda ni pinchos. Cien seeds de prueba conservan alcance, orden y reproducibilidad.
+
+Recoger una Semilla pausa el reloj 1,5 segundos, muestra tres siluetas, incrementa el `paletteEpoch` y abre solo el siguiente pack. Los chunks ya propagados no reciben vocabulario nuevo. La rareza crece de 0,65 a 1,8 con la distancia y el peligro recorre bandas de 0, 3, 7, 11 y 14 por ciento, pero esas curvas solo cambian pesos: nunca reescriben compatibilidades.
+
+![Agua recogida y Bosque disponible](./wp5-gameplay/02-progression.webp)
+
+Los peligros comparten una frontera de seguridad común. No nacen bajo el cuerpo; los pinchos respetan cuatro metros; el cristal pulsa cada 2,5 segundos; el suelo frágil cede tras 0,8; y el agua profunda conserva una salida transitable. La Incertidumbre solo avanza fuera de la mirada, se detiene al ser observada y necesita 1,2 segundos continuos para volverse estatua y devolver tres segundos una sola vez.
+
+![Peligros y La Incertidumbre en el preview](./wp5-gameplay/03-hazards-enemy.webp)
+
+La muerte congela, disuelve y devuelve al monolito con 1,5 segundos de invulnerabilidad. El mundo fijado, las Semillas y el reloj pertenecen a la partida, no al cuerpo, así que sobreviven al respawn. La evidencia automatizada recorre esta secuencia con la seed `A91F-42C0` y conserva las cuatro Semillas al final.
+
+[Ver montaje del preview WP5 (WebM, 17 s)](./wp5-gameplay/wp5-gameplay-preview.webm)
+
+Nada de lo anterior cambia el resultado del gate. El preview requiere `?wp5=preview`, muestra `#29 NO-GO` en pantalla y permanece desactivado en el recorrido normal. Hasta completar cinco sesiones humanas, WP5 es una implementación revisable, no una mecánica promovida.
