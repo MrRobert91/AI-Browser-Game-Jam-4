@@ -17,6 +17,7 @@ Registro reproducible de implementación y evidencias de la issue #8.
 - `tests/benchmarks/propagation.bench.ts`: tablero alterno 64×64.
 
 Commit de código: `2eb97c7688bd09218a390146dc3223b0adf1a622`.
+Commit de memoria/evidencia inicial: `39abaa6ca5da26a8ca6d8df1ef67fa3d68c90edb`.
 
 ## Validación
 
@@ -27,6 +28,7 @@ Commit de código: `2eb97c7688bd09218a390146dc3223b0adf1a622`.
 - `git diff --check`: verde.
 - Benchmark Node 24: 1.094,92 ops/s; media 0,9133 ms; p99 1,4249 ms.
 - Seed/hash: `0xA91F42C0` / `3069527348`, sin cambios.
+- GitHub Actions: `Check and build` `SUCCESS`, run `31001657952`.
 
 ## Sliplane y navegador
 
@@ -40,5 +42,15 @@ Commit de código: `2eb97c7688bd09218a390146dc3223b0adf1a622`.
 ## Evidencias visuales
 
 - [`project-in-progress.webp`](./project-in-progress.webp): tarjeta #8 filtrada en In progress. La captura previa al movimiento agotó dos veces el timeout del navegador y no se sustituyó por una imagen posterior mal etiquetada.
+- [`project-final.webp`](./project-final.webp): tarjeta #8 filtrada en In review.
+- [`pr-65-published.webp`](./pr-65-published.webp): PR #65 publicada contra `dev`.
 - [`local-browser.webp`](./local-browser.webp): build local tras calibrar.
 - [`sliplane-browser.webp`](./sliplane-browser.webp): preview desplegada tras calibrar.
+
+## Publicación
+
+- PR #65: `dev` ← `codex/issue-8-cardinal-propagation`, no draft.
+- Estado comprobado: `MERGEABLE/CLEAN`.
+- Labels: `codex`, `codex-automation`.
+- Issue: cuatro criterios marcados, `status:in-review`.
+- Project #2: In review.

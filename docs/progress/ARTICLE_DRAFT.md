@@ -79,3 +79,5 @@ La contradicción se mantiene separada de la reparación. Si una restricción va
 ![La propagación entra en progreso](./issue-8-cardinal-propagation/project-in-progress.webp)
 
 ![Preview tras desplegar la propagación](./issue-8-cardinal-propagation/sliplane-browser.webp)
+
+![La propagación queda lista para revisión](./issue-8-cardinal-propagation/pr-65-published.webp)
