@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "sockets": {
+    "OPEN_FLAT": ["OPEN_FLAT", "PATH", "BANK_OUT", "RUIN_FLOOR", "CLIFF_LOW"],
+    "WET_FLAT": ["WET_FLAT"],
+    "BANK_IN": ["BANK_OUT"],
+    "BANK_OUT": ["BANK_IN", "OPEN_FLAT"],
+    "PATH": ["PATH", "OPEN_FLAT", "RUIN_FLOOR"],
+    "RUIN_FLOOR": ["RUIN_FLOOR", "PATH", "OPEN_FLAT"],
+    "CLIFF_LOW": ["CLIFF_LOW", "OPEN_FLAT"]
+  }
+}

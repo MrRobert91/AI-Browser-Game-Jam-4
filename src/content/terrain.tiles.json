@@ -1,0 +1,167 @@
+[
+  {
+    "id": "terrain.meadow.a",
+    "numericId": 0,
+    "packId": "base",
+    "weight": 14,
+    "mesh": "/assets/proxies/base/meadow-a.proxy.json",
+    "rotationQuarterTurns": [0],
+    "sockets": {
+      "N": "OPEN_FLAT",
+      "E": "OPEN_FLAT",
+      "S": "OPEN_FLAT",
+      "W": "OPEN_FLAT"
+    },
+    "tags": ["meadow", "open", "walkable", "safe"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "neighborBias": { "meadow": 1.35, "wild_grass": 1.12 }
+  },
+  {
+    "id": "terrain.meadow.b",
+    "numericId": 1,
+    "packId": "base",
+    "weight": 9,
+    "mesh": "/assets/proxies/base/meadow-b.proxy.json",
+    "rotationQuarterTurns": [0],
+    "sockets": {
+      "N": "OPEN_FLAT",
+      "E": "OPEN_FLAT",
+      "S": "OPEN_FLAT",
+      "W": "OPEN_FLAT"
+    },
+    "tags": ["meadow", "open", "walkable", "safe"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "neighborBias": { "meadow": 1.25, "flowers": 1.15 }
+  },
+  {
+    "id": "terrain.wild-grass",
+    "numericId": 2,
+    "packId": "base",
+    "weight": 10,
+    "mesh": "/assets/proxies/base/wild-grass.proxy.json",
+    "rotationQuarterTurns": [0],
+    "sockets": {
+      "N": "OPEN_FLAT",
+      "E": "OPEN_FLAT",
+      "S": "OPEN_FLAT",
+      "W": "OPEN_FLAT"
+    },
+    "tags": ["wild_grass", "open", "walkable", "safe"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0
+  },
+  {
+    "id": "terrain.dry-soil",
+    "numericId": 3,
+    "packId": "base",
+    "weight": 7,
+    "mesh": "/assets/proxies/base/dry-soil.proxy.json",
+    "rotationQuarterTurns": [0],
+    "sockets": {
+      "N": "OPEN_FLAT",
+      "E": "OPEN_FLAT",
+      "S": "OPEN_FLAT",
+      "W": "OPEN_FLAT"
+    },
+    "tags": ["dry", "open", "walkable", "safe"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0
+  },
+  {
+    "id": "terrain.stone-flat",
+    "numericId": 4,
+    "packId": "base",
+    "weight": 5,
+    "mesh": "/assets/proxies/base/stone-flat.proxy.json",
+    "rotationQuarterTurns": [0],
+    "sockets": {
+      "N": "OPEN_FLAT",
+      "E": "OPEN_FLAT",
+      "S": "OPEN_FLAT",
+      "W": "OPEN_FLAT"
+    },
+    "tags": ["stone", "open", "walkable", "safe"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0
+  },
+  {
+    "id": "terrain.path.straight",
+    "numericId": 5,
+    "packId": "base",
+    "weight": 4,
+    "mesh": "/assets/proxies/base/path.proxy.json",
+    "rotationQuarterTurns": [0, 1],
+    "sockets": { "N": "PATH", "E": "OPEN_FLAT", "S": "PATH", "W": "OPEN_FLAT" },
+    "tags": ["path", "open", "walkable", "safe"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "neighborBias": { "path": 1.8, "meadow": 1.1 }
+  },
+  {
+    "id": "terrain.path.turn",
+    "numericId": 6,
+    "packId": "base",
+    "weight": 4,
+    "mesh": "/assets/proxies/base/path.proxy.json",
+    "rotationQuarterTurns": [0, 1, 2, 3],
+    "sockets": { "N": "PATH", "E": "PATH", "S": "OPEN_FLAT", "W": "OPEN_FLAT" },
+    "tags": ["path", "open", "walkable", "safe"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "neighborBias": { "path": 1.8, "meadow": 1.1 }
+  },
+  {
+    "id": "terrain.quantum-meadow",
+    "numericId": 7,
+    "packId": "base",
+    "weight": 0.5,
+    "mesh": "/assets/proxies/base/quantum-meadow.proxy.json",
+    "rotationQuarterTurns": [0],
+    "sockets": {
+      "N": "OPEN_FLAT",
+      "E": "OPEN_FLAT",
+      "S": "OPEN_FLAT",
+      "W": "OPEN_FLAT"
+    },
+    "tags": ["meadow", "open", "walkable", "safe", "fallback", "quantum"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 1
+  },
+  {
+    "id": "terrain.quantum-slab",
+    "numericId": 8,
+    "packId": "base",
+    "weight": 0.25,
+    "mesh": "/assets/proxies/base/quantum-slab.proxy.json",
+    "rotationQuarterTurns": [0],
+    "sockets": {
+      "N": "OPEN_FLAT",
+      "E": "OPEN_FLAT",
+      "S": "OPEN_FLAT",
+      "W": "OPEN_FLAT"
+    },
+    "tags": ["stone", "open", "walkable", "safe", "fallback", "quantum"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 2
+  }
+]
