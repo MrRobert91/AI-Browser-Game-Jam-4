@@ -43,3 +43,16 @@ numerado. La calibración existente sigue funcionando y no inicia el reloj.
 
 La query `rev=dcc1812` evita reutilizar el HTML anterior almacenado por el navegador; no cambia el
 artefacto servido ni introduce una petición externa.
+
+## PR y Project final
+
+- PR #59: <https://github.com/MrRobert91/AI-Browser-Game-Jam-4/pull/59>.
+- Base/head: `dev` ← `codex/issue-3-public-contracts-worker`.
+- Publicación observada: no draft, `MERGEABLE/CLEAN`, sin checks configurados, labels `codex` y
+  `codex-automation`.
+- Issue #3: `status:in-review`; cuatro criterios de aceptación marcados.
+- Project #2: #3 en **In review**; #1/#2 en **Done**; #4 permanece en Backlog.
+
+![Project final](./project-final.webp)
+
+![PR 59 publicada](./pr-59-published.webp)
