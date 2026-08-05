@@ -345,6 +345,14 @@ button {
   color: #aaffec;
 }
 
+.shell-footer [data-contract-state="ready"] {
+  color: #aaffec;
+}
+
+.shell-footer [data-contract-state="error"] {
+  color: #ff8f82;
+}
+
 .observation-shell[data-calibrated="true"] .field__orb--one {
   border-color: #e4fff8;
   filter: drop-shadow(0 0 34px rgb(106 255 225 / 44%));

@@ -1,4 +1,5 @@
 import { GameLoop } from './game-loop';
+import { SolverWorkerClient } from './solver-worker-client';
 
 const SHELL_MARKUP = `
   <main class="observation-shell" aria-labelledby="game-title">
@@ -41,6 +42,7 @@ const SHELL_MARKUP = `
 
     <footer class="shell-footer">
       <p>WP0 // SYSTEM SHELL</p>
+      <p data-worker-state>CONTRATO // INICIALIZANDO</p>
       <p>BUILD <span>LOCAL</span></p>
     </footer>
   </main>
@@ -77,8 +79,9 @@ export function bootstrap(root: HTMLElement): () => void {
   const observationButton = root.querySelector<HTMLButtonElement>('[data-observation-button]');
   const systemState = root.querySelector<HTMLElement>('[data-system-state]');
   const shellStatus = root.querySelector<HTMLElement>('[data-shell-status]');
+  const workerState = root.querySelector<HTMLElement>('[data-worker-state]');
 
-  if (!shell || !observationButton || !systemState || !shellStatus) {
+  if (!shell || !observationButton || !systemState || !shellStatus || !workerState) {
     throw new Error('La interfaz de observación está incompleta.');
   }
 
@@ -86,6 +89,29 @@ export function bootstrap(root: HTMLElement): () => void {
   const gameLoop = new GameLoop(({ elapsedSeconds }) => {
     shell.style.setProperty('--observation-phase', `${elapsedSeconds % 8}`);
   });
+  const solverWorker = new SolverWorkerClient({
+    onOutput: (output) => {
+      if (
+        output.type === 'SOLVER_WARNING' &&
+        output.code === 'ECHO_ONLY' &&
+        output.tick !== null
+      ) {
+        workerState.textContent = `CONTRATO #${String(output.tick).padStart(6, '0')} // ECO`;
+        workerState.dataset.contractState = 'ready';
+      }
+    },
+    onProtocolError: (message) => {
+      workerState.textContent = 'CONTRATO // ERROR';
+      workerState.dataset.contractState = 'error';
+      console.error(message);
+    },
+  });
+  const initialTick = solverWorker.sendObservation({
+    playerPosition: [64, 1.7, 64],
+    cameraForward: [0, 0, -1],
+    visibleCells: [],
+  });
+  workerState.textContent = `CONTRATO #${String(initialTick).padStart(6, '0')} // ENVIADO`;
 
   observationButton.addEventListener(
     'click',
@@ -113,5 +139,6 @@ export function bootstrap(root: HTMLElement): () => void {
   return () => {
     abortController.abort();
     gameLoop.stop();
+    solverWorker.dispose();
   };
 }
