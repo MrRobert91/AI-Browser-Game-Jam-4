@@ -41,10 +41,10 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 - Alternativas descartadas: degradar todo el proyecto a TypeScript 6, porque perdería el compilador normativo ya fijado; omitir lint de TypeScript, porque dejaría el gate incompleto; separar check/build en jobs independientes, porque un único job expresa mejor la secuencia bloqueante de esta fase.
 - Trade-offs: la primera adopción de Prettier normaliza mecánicamente archivos existentes sin cambiar semántica; el alias TS6 es deuda temporal hasta que `typescript-eslint` soporte la API de TS7.
 - Impacto: integra las pruebas de contratos de #3 en el gate global y completa el alcance de implementación de WP0. WP1/WP2 siguen bloqueadas hasta que #4 se fusione en `dev` y la promoción WP0 `dev`→`main` supere sus gates.
-- Riesgos / deuda: vigilar la compatibilidad del alias cuando TypeScript 7.1 exponga API; Actions debe observarse en estado terminal tras publicar la PR. No cambian contratos, runtime, assets de juego ni reglas normativas.
+- Riesgos / deuda: vigilar la compatibilidad del alias cuando TypeScript 7.1 exponga API. No cambian contratos, runtime, assets de juego ni reglas normativas.
 - Pruebas: `npm run format:check`, `npm run check` (typecheck, ESLint, dos archivos/cuatro tests), `npm run build`, `npm ci --ignore-scripts` aislado, `npm audit --omit=dev` y `git diff --check` en verde.
 - Deploy: Sliplane `project_3o4wtis2vnhk` / `service_qi0aluudq024`, rama `codex/issue-4-quality-gate-ci`, commit `d412bca`; evento terminal `service_event_t1lsbe334b0c` (`Service deployed successfully`); build remoto con `npm ci`/TypeScript 7/Vite verde; `/` y `/health` responden 200, health `ok`.
-- Navegador: build estática local y preview Sliplane verificados; eco `#000001`, calibración, assets del mismo origen y cero warnings/errores. WebM N/A porque el cambio no añade una interacción temporal nueva. PR #60 quedó inicialmente no draft, `MERGEABLE/CLEAN`, base `dev` y labels `codex`/`codex-automation`.
+- Navegador: build estática local y preview Sliplane verificados; eco `#000001`, calibración, assets del mismo origen y cero warnings/errores. WebM N/A porque el cambio no añade una interacción temporal nueva. PR #60 quedó no draft, `MERGEABLE/CLEAN`, base `dev`, labels `codex`/`codex-automation` y CI verde; #4 pasó a **In review** en Project #2.
 - Evidencia: [`docs/progress/issue-4-quality-gate-ci/`](./progress/issue-4-quality-gate-ci/).
 - Reversión: revertir los commits de #4 y devolver Sliplane a la rama de #3; no hay datos, volúmenes, migraciones ni cambios normativos que restaurar.
 

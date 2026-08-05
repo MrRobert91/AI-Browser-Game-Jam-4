@@ -54,9 +54,11 @@ consola no registra warnings ni errores.
 - PR #60: <https://github.com/MrRobert91/AI-Browser-Game-Jam-4/pull/60>.
 - Base/head: `dev` ← `codex/issue-4-quality-gate-ci`.
 - Commit de implementación: `d412bca2aad8c25e56f91efa7b365d1903a8acea`.
-- Estado inicial de publicación: no draft, `MERGEABLE/CLEAN`, labels `codex` y
-  `codex-automation`; checks de la nueva CI pendientes de estado terminal.
+- Estado de publicación: no draft, `MERGEABLE/CLEAN`, labels `codex` y
+  `codex-automation`; el job `Check and build` terminó en verde.
+- Project #2: #4 quedó en **In review**; #1–#3 permanecen en **Done**.
 - WebM: N/A; el cambio introduce tooling y un gate CI, no un flujo visual temporal nuevo.
 
-Las capturas finales de PR y Project se añaden en esta misma rama después de observar los checks
-y mover #4 a **In review**.
+![PR #60 publicada y CI verde](./pr-60-published.webp)
+
+![Project final con issue #4 en revisión](./project-final.webp)
