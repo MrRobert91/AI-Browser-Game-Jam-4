@@ -9,7 +9,7 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 | Fase | Issues | Estado | Gate o dependencia principal |
 |---|---:|---|---|
 | WP0 — Fundación y contratos | #1–#4 | Completada y promovida | PR #61 fusionada; `main` y `dev` sincronizadas en `7be4649` |
-| WP1 — Solver puro | #5–#11 | En curso | #5 y #6 integradas en `dev`; #7 implementa entropía y desbloqueará #8 al integrarse |
+| WP1 — Solver puro | #5–#11 | En curso | #5–#7 integradas en `dev`; #8 implementa propagación y desbloqueará #9 al integrarse |
 | WP2 — Render, cámara y física | #12–#14 | Pendiente | WP0 completada; se prioriza WP1 por orden del plan |
 | WP3 — Gramática y tiles | #15–#22 | Bloqueada | Requiere contratos y solver base |
 | WP4 — Mundo observable | #23–#29 | Bloqueada | Requiere WP1, WP2 y WP3; termina con vertical slice |
@@ -22,14 +22,30 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 ### Estado operativo actual
 
 - Fase actual: WP1 — Solver puro.
-- Issue actual: #7 — entropía, pesos efectivos y selección determinista; rama `codex/issue-7-entropy-selection` desde `dev` `b6788e3da536ede060d7e680090be5707a217067`.
-- Siguiente trabajo desbloqueable: #8 solo cuando #7 esté cerrada mediante una PR integrada en `dev`; #9–#11 continúan bloqueadas por sus relaciones nativas.
-- Dependencias críticas: #5/#6 → #7 → #8; entropía y selección consumen bitsets y streams explícitos sin recuperar posibilidades incompatibles ni cambiar contratos públicos.
-- Arquitectura vigente: TypeScript estricto + Vite + Three.js; contratos públicos en `src/contracts/`; worker WFC separado; dominios internos en dos palabras `uint32`; PRNG Mulberry32 explícito, tick fijo a 10 Hz, hash final canónico y pesos/entropía deterministas en `src/wfc/`; runtime offline tras la carga.
-- `dev`: `b6788e3da536ede060d7e680090be5707a217067`, merge de #6; `main`: `7be4649ece2a9a8f4bed40ff72653ef6cbf06478`, última promoción WP0.
-- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio live `service_qi0aluudq024`, rama `codex/issue-7-entropy-selection`, commit `3215de13a02477cf09bc32f6c0f815ecfd06884a`, evento `service_event_gx0qh2t04i6x` y URL `https://la-ultima-observacion-web.sliplane.app`.
+- Issue actual: #8 — compatibilidad cardinal y propagación FIFO; rama `codex/issue-8-cardinal-propagation` desde `dev` `4dd07958e6364e363ae611f2561b4a0deb4dbe9e`.
+- Siguiente trabajo desbloqueable: #9 solo cuando #8 esté cerrada mediante una PR integrada en `dev`; #10–#11 continúan bloqueadas por sus relaciones nativas.
+- Dependencias críticas: #5/#6 → #7 → #8 → #9; propagación consume bitsets y entropía, reduce dominios de forma monotónica y devuelve contradicción antes de tocar una celda `FIXED`.
+- Arquitectura vigente: TypeScript estricto + Vite + Three.js; contratos públicos en `src/contracts/`; worker WFC separado; dominios internos en dos palabras `uint32`; PRNG/tick/hash explícitos; pesos y entropía deterministas; compatibilidad cardinal compilada y cola FIFO reutilizable en `src/wfc/`; runtime offline tras la carga.
+- `dev`: `4dd07958e6364e363ae611f2561b4a0deb4dbe9e`, merge de #7; `main`: `7be4649ece2a9a8f4bed40ff72653ef6cbf06478`, última promoción WP0.
+- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio live `service_qi0aluudq024`, rama `codex/issue-8-cardinal-propagation`, commit `2eb97c7688bd09218a390146dc3223b0adf1a622`, evento `service_event_hhp2wsor9pql` y URL `https://la-ultima-observacion-web.sliplane.app`.
 
 ## Registro cronológico
+
+### 2026-08-05 — Issue #8 — Compatibilidad cardinal y propagación FIFO
+
+- Issue / PR / commits: issue #8; PR pendiente de publicación (`dev` ← `codex/issue-8-cardinal-propagation`) desde `dev` exacta `4dd07958e6364e363ae611f2561b4a0deb4dbe9e`; implementación `2eb97c7688bd09218a390146dc3223b0adf1a622`.
+- Objetivo: compilar restricciones de sockets para las cuatro direcciones y propagarlas por una cola FIFO reutilizable, detectando contradicciones sin recalcular entropía ni encolar trabajo cuando el dominio no cambia.
+- Decisiones: `compatibility.ts` valida ids/sockets y reciprocidad antes de producir una máscara por variante/dirección; `ReusableCellQueue` usa `Int32Array` y marcas `Uint8Array` con capacidad fija; `propagateCardinalConstraints` recorre N/E/S/W, une compatibilidades del emisor, intersecta el vecino y solo recalcula/encola al reducirlo; `ascii.ts` representa `!`, `?` o una variante singleton en orden row-major.
+- Alternativas descartadas: `Set<number>` o arrays crecientes para la cola, por asignaciones calientes; encolar duplicados y filtrarlos al extraer, porque aumenta latencia sin aportar información; recalcular toda la cuadrícula tras cada reducción, porque rompe el presupuesto incremental; y reparar una incompatibilidad sobrescribiendo `FIXED`, porque viola la inmutabilidad normativa.
+- Trade-offs: la compilación usa `Map`/`Set` una sola vez para detectar reglas recíprocas y referencias desconocidas; el camino caliente conserva dos máscaras mutables y buffers fijos. La cola se limpia entre transacciones; #10 podrá ajustar su capacidad a la región/chunk sin cambiar esta semántica.
+- Impacto: #9 puede tomar snapshots y reintentar candidatos sobre una propagación que informa contradicción sin rollback implícito; #10 podrá reutilizar las tablas y la cola por chunk; #11 conectará el presupuesto incremental al worker. No cambian `src/contracts/`, contenido, render, assets ni mensajes.
+- Riesgos / deuda: `SocketCompatibility` todavía recibe strings y #15 será propietario del schema/compilación de gramática; la regla de dos salidas y el diagnóstico de camino mínimo pertenecen a #17. La propagación actual es síncrona; #11 conservará estado entre ticks para respetar 4 ms.
+- Seed / hash / benchmark: seed canónica `0xA91F42C0`; hash canónico `3069527348` antes/después, ya que no se fijan ni serializan tiles. Un tablero 64×64 alterno completo alcanzó 1.094,92 propagaciones/s, media 0,9133 ms y p99 1,4249 ms en Node 24.
+- Preservación de `FIXED`: una reducción incompatible dirigida a una celda marcada `fixed` devuelve `CONTRADICTION` con su `cellId` y conserva ambos words y su entropía; no existe rollback ni commit dentro de esta capa.
+- Pruebas: `npm run format:check`, `npm run check` (6 archivos, 38 tests), `npm run build`, `npm audit --omit=dev`, `git diff --check`, unitarias dedicadas y benchmark verdes. Se cubren reciprocidad, regla desconocida, deduplicación de cola, mapa alterno exacto, segunda propagación estable sin recálculos, dominio vacío y contradicción contra `FIXED`.
+- Deploy y navegador: Sliplane desplegó `2eb97c7` desde la rama con `service_event_hhp2wsor9pql`; los logs confirman el SHA clonado, `/` y `/health` responden 200. Local y remoto conservan shell, calibración y eco `#000001` con consola limpia. WebM N/A: solver puro sin flujo visual temporal nuevo.
+- Project y evidencia: #7 reconciliada en Done; #8 reclamada con `status:in-progress` y tarjeta en **In progress**. La primera captura del tablero agotó dos veces el timeout; tras filtrar la tarjeta se guardó evidencia autenticada reproducible junto con navegador local/remoto en [`docs/progress/issue-8-cardinal-propagation/`](./progress/issue-8-cardinal-propagation/).
+- Reversión: revertir los commits de #8 y devolver el preview a `dev`; no hay datos, migraciones, assets, volúmenes ni decisiones normativas que restaurar.
 
 ### 2026-08-05 — Issue #7 — Entropía, pesos efectivos y selección determinista
 
