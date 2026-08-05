@@ -9,7 +9,7 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 | Fase | Issues | Estado | Gate o dependencia principal |
 |---|---:|---|---|
 | WP0 — Fundación y contratos | #1–#4 | Completada y promovida | PR #61 fusionada; `main` y `dev` sincronizadas en `7be4649` |
-| WP1 — Solver puro | #5–#11 | En curso | #5 implementa la representación base de dominios; #6 sigue disponible |
+| WP1 — Solver puro | #5–#11 | En curso | #5 está integrada en `dev`; #6 implementa determinismo y desbloqueará #7 al integrarse |
 | WP2 — Render, cámara y física | #12–#14 | Pendiente | WP0 completada; se prioriza WP1 por orden del plan |
 | WP3 — Gramática y tiles | #15–#22 | Bloqueada | Requiere contratos y solver base |
 | WP4 — Mundo observable | #23–#29 | Bloqueada | Requiere WP1, WP2 y WP3; termina con vertical slice |
@@ -22,14 +22,30 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 ### Estado operativo actual
 
 - Fase actual: WP1 — Solver puro.
-- Issue actual: #5 — bitsets de 64 variantes; rama `codex/issue-5-bitset-domains` desde la base promovida `7be4649`.
-- Siguiente trabajo desbloqueable: #6 permanece disponible; #7 requiere que #5 y #6 estén cerradas mediante PRs integradas en `dev`.
-- Dependencias críticas: #5/#6 → #7; #5 también alimenta propagación (#8), transacciones (#9), chunks (#10) y la integración del worker (#11).
-- Arquitectura vigente: TypeScript estricto + Vite + Three.js; contratos públicos en `src/contracts/`; worker WFC separado; dominios internos mutables en dos palabras `uint32`; runtime offline tras la carga.
-- `dev` y `main`: `7be4649ece2a9a8f4bed40ff72653ef6cbf06478` tras la promoción WP0 y antes de la rama #5.
-- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio live `service_qi0aluudq024`, rama `codex/issue-5-bitset-domains`, commit `f2cbe674fc5b402331cb5e8a3124cb689945abfb`, evento `service_event_0p9k5b3x5bmu` y URL `https://la-ultima-observacion-web.sliplane.app`.
+- Issue actual: #6 — PRNG, seeds, cuantización temporal y hash final; rama `codex/issue-6-deterministic-rng` desde `dev` `2adebf247afdc184db65b378f127f10eeacf156f`.
+- Siguiente trabajo desbloqueable: #7 solo cuando #6 esté cerrada mediante una PR integrada en `dev`; #8–#11 continúan bloqueadas por sus relaciones nativas.
+- Dependencias críticas: #5/#6 → #7; la secuencia determinista de #6 alimentará selección, replay, chunks y el worker incremental sin cambiar los contratos públicos.
+- Arquitectura vigente: TypeScript estricto + Vite + Three.js; contratos públicos en `src/contracts/`; worker WFC separado; dominios internos en dos palabras `uint32`; PRNG Mulberry32 explícito, seeds derivados por sistema/chunk, tick fijo a 10 Hz y hash final canónico; runtime offline tras la carga.
+- `dev`: `2adebf247afdc184db65b378f127f10eeacf156f`, merge de #5; `main`: `7be4649ece2a9a8f4bed40ff72653ef6cbf06478`, última promoción WP0.
+- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio live `service_qi0aluudq024`, rama `codex/issue-6-deterministic-rng`, commit `127c9e5ab0d90e268d3f33af3c1523d254e79d3d`, evento `service_event_x0j48sgyco36` y URL `https://la-ultima-observacion-web.sliplane.app`.
 
 ## Registro cronológico
+
+### 2026-08-05 — Issue #6 — Determinismo temporal, de streams y del mundo final
+
+- Issue / PR / commits: issue #6; rama `codex/issue-6-deterministic-rng` desde `dev` exacta `2adebf247afdc184db65b378f127f10eeacf156f`; implementación `127c9e5ab0d90e268d3f33af3c1523d254e79d3d`; PR contra `dev` pendiente de publicación al redactar esta entrada.
+- Objetivo: garantizar que seed, identidad del subsistema/chunk y ticks fijos produzcan la misma secuencia y el mismo hash final, sin depender del framerate ni de `Math.random()`.
+- Decisiones: `src/wfc/rng.ts` implementa Mulberry32 con reducción explícita a `uint32`; `deriveSeed` combina `worldSeed`, nombre del sistema y coordenadas `int32` mediante FNV-1a etiquetado y avalancha; `simulationTickAt` proyecta tiempo real al último tick completo de 100 ms; `hashFinalWorld` ordena las celdas por `cellId` e incluye seed, terreno y presencia/ID de feature.
+- Alternativas descartadas: `Math.random()`, por no ser sembrable ni reproducible; estado global compartido, porque acoplaría subsistemas y chunks; hash por orden de colapso, porque dos estados finales iguales podrían diferir por orden de inserción; redondear cada frame a un tick, porque avanzaría el RNG un número distinto de veces según FPS.
+- Trade-offs: el hash final copia y ordena las celdas, una asignación aceptable al cierre/replay que evita coste durante cada commit; Mulberry32 prioriza estabilidad portable y velocidad para generación procedural, no seguridad criptográfica; el contrato exacto de serialización del solver se conectará en #11 sin cambiar estas primitivas.
+- Impacto: #7 puede usar streams separados y avanzar una vez por tick normativo; replay y worker reciben una referencia estable para verificar resultados. No cambian `src/contracts/`, mensajes, tiles, render, `FIXED` ni comportamiento visible del shell.
+- Riesgos / deuda: `hashFinalWorld` cubre la identidad disponible de celda/tiles; si una variante futura separa rotación del `numericId`, #15/#11 deberán añadir esa palabra con una nueva versión de hash. La versión actual queda etiquetada como `WFC1`/1 para no reinterpretarla silenciosamente.
+- Seed / hash / benchmark: antes no existía hash de mundo (`N/A`); vector nuevo `worldSeed=0xA91F42C0`, tres celdas canónicas → `3069527348`. En Node 24, 1.000.000 pasos PRNG tardaron 9,741 ms; 100 hashes de 4.096 celdas tardaron 26,481 ms, 0,2648 ms/hash, con hash `943344579`.
+- Preservación de `FIXED`: las utilidades son puras respecto al estado de celdas; el hash solo lee una copia ordenada y no expone ninguna operación de reescritura o rollback. La integración con commits permanece fuera de alcance hasta #8/#9/#11.
+- Pruebas: `npm run format:check`, `npm run check` (4 archivos, 21 tests), `npm run build`, `npm audit --omit=dev` y `git diff --check` verdes. Vectores fijos para seeds 0/máximo, separación por sistema/chunk, frames 30/60/144 con secuencia idéntica, hash independiente del orden y guardia de ausencia de `Math.random` en `src/wfc/`.
+- Deploy y navegador: Sliplane desplegó `127c9e5` desde la rama de issue con `service_event_x0j48sgyco36`; servicio live, 20 logs recientes sin coincidencias de error, `/` y `/health` 200. Build local y preview remoto conservan calibración y eco `#000001` con consola limpia. WebM N/A: no existe flujo visual nuevo.
+- Evidencia: [`docs/progress/issue-6-deterministic-rng/`](./progress/issue-6-deterministic-rng/).
+- Reversión: revertir los commits de #6 y devolver el preview a `dev`; no hay datos, migraciones, assets ni decisiones normativas que restaurar.
 
 ### 2026-08-05 — Issue #5 — Bitsets de 64 variantes y dominios sin asignaciones calientes
 
