@@ -9,7 +9,7 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 | Fase | Issues | Estado | Gate o dependencia principal |
 |---|---:|---|---|
 | WP0 — Fundación y contratos | #1–#4 | Completada y promovida | PR #61 fusionada; `main` y `dev` sincronizadas en `7be4649` |
-| WP1 — Solver puro | #5–#11 | En curso | #5 está integrada en `dev`; #6 implementa determinismo y desbloqueará #7 al integrarse |
+| WP1 — Solver puro | #5–#11 | En curso | #5 y #6 integradas en `dev`; #7 implementa entropía y desbloqueará #8 al integrarse |
 | WP2 — Render, cámara y física | #12–#14 | Pendiente | WP0 completada; se prioriza WP1 por orden del plan |
 | WP3 — Gramática y tiles | #15–#22 | Bloqueada | Requiere contratos y solver base |
 | WP4 — Mundo observable | #23–#29 | Bloqueada | Requiere WP1, WP2 y WP3; termina con vertical slice |
@@ -22,14 +22,30 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 ### Estado operativo actual
 
 - Fase actual: WP1 — Solver puro.
-- Issue actual: #6 — PRNG, seeds, cuantización temporal y hash final; rama `codex/issue-6-deterministic-rng` desde `dev` `2adebf247afdc184db65b378f127f10eeacf156f`.
-- Siguiente trabajo desbloqueable: #7 solo cuando #6 esté cerrada mediante una PR integrada en `dev`; #8–#11 continúan bloqueadas por sus relaciones nativas.
-- Dependencias críticas: #5/#6 → #7; la secuencia determinista de #6 alimentará selección, replay, chunks y el worker incremental sin cambiar los contratos públicos.
-- Arquitectura vigente: TypeScript estricto + Vite + Three.js; contratos públicos en `src/contracts/`; worker WFC separado; dominios internos en dos palabras `uint32`; PRNG Mulberry32 explícito, seeds derivados por sistema/chunk, tick fijo a 10 Hz y hash final canónico; runtime offline tras la carga.
-- `dev`: `2adebf247afdc184db65b378f127f10eeacf156f`, merge de #5; `main`: `7be4649ece2a9a8f4bed40ff72653ef6cbf06478`, última promoción WP0.
-- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio live `service_qi0aluudq024`, rama `codex/issue-6-deterministic-rng`, commit `127c9e5ab0d90e268d3f33af3c1523d254e79d3d`, evento `service_event_x0j48sgyco36` y URL `https://la-ultima-observacion-web.sliplane.app`.
+- Issue actual: #7 — entropía, pesos efectivos y selección determinista; rama `codex/issue-7-entropy-selection` desde `dev` `b6788e3da536ede060d7e680090be5707a217067`.
+- Siguiente trabajo desbloqueable: #8 solo cuando #7 esté cerrada mediante una PR integrada en `dev`; #9–#11 continúan bloqueadas por sus relaciones nativas.
+- Dependencias críticas: #5/#6 → #7 → #8; entropía y selección consumen bitsets y streams explícitos sin recuperar posibilidades incompatibles ni cambiar contratos públicos.
+- Arquitectura vigente: TypeScript estricto + Vite + Three.js; contratos públicos en `src/contracts/`; worker WFC separado; dominios internos en dos palabras `uint32`; PRNG Mulberry32 explícito, tick fijo a 10 Hz, hash final canónico y pesos/entropía deterministas en `src/wfc/`; runtime offline tras la carga.
+- `dev`: `b6788e3da536ede060d7e680090be5707a217067`, merge de #6; `main`: `7be4649ece2a9a8f4bed40ff72653ef6cbf06478`, última promoción WP0.
+- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio live `service_qi0aluudq024`, rama `codex/issue-7-entropy-selection`, commit `3215de13a02477cf09bc32f6c0f815ecfd06884a`, evento `service_event_gx0qh2t04i6x` y URL `https://la-ultima-observacion-web.sliplane.app`.
 
 ## Registro cronológico
+
+### 2026-08-05 — Issue #7 — Entropía, pesos efectivos y selección determinista
+
+- Issue / rama / commits: issue #7; rama `codex/issue-7-entropy-selection` desde `dev` exacta `b6788e3da536ede060d7e680090be5707a217067`; implementación `3215de13a02477cf09bc32f6c0f815ecfd06884a`; PR pendiente de publicación contra `dev` tras incorporar esta evidencia.
+- Objetivo: calcular la entropía ponderada normativa y elegir variantes/celdas de manera reproducible, incorporando distancia, vecinos, progresión y ruido pequeño sin permitir que una preferencia blanda restaure una incompatibilidad.
+- Decisiones: `src/wfc/entropy.ts` recorre únicamente bits presentes mediante `nextSetBit`; aplica la fórmula `log(sum(w)) - sum(w log(w))/sum(w)`; interpola curvas de distancia por tramos; compone sesgos por etiqueta observada; acepta ruido determinista por variante; consume `RngState` para elección ponderada; calcula prioridad `4 × carga + 1,5 × continuidad - 0,8 × entropía + ruido`; y desempata por menor `cellId`.
+- Alternativas descartadas: construir arrays/`Set` de candidatos, porque duplicaría la representación caliente; aplicar sesgos antes de intersectar compatibilidad, porque podría rescatar tiles ilegales; usar `Math.random()`, porque rompería replay; y asignar desempates al orden de llegada, porque haría el resultado dependiente de la colección.
+- Trade-offs: las curvas y multiplicadores se validan defensivamente en el camino público para fallar cerca del contenido inválido; una futura compilación de gramática puede precalcular esa validación si el perfil lo exige. El ruido de peso queda acotado a ±2 % y el de prioridad a ±0,000001, suficiente para estabilidad sin dominar carga, continuidad o entropía.
+- Impacto: #8 recibe pesos, entropía y elección sobre dominios de 64 bits; #11 podrá conectarlos al worker sin nuevas dependencias. No cambian `src/contracts/`, tiles, mensajes, render, assets ni la semántica de `FIXED`.
+- Riesgos / deuda: `neighborTagCounts` representa el resumen blando que construirá el solver; la compilación de contenido deberá mapear tags de vecinos de forma consistente. Las curvas vacías equivalen a multiplicador 1; puntos no ordenados, pesos no positivos, overflow y dominios habilitados sin definición fallan explícitamente.
+- Seed / hash / benchmark: seed canónica `0xA91F42C0`; el hash de tres celdas permanece `3069527348` antes y después porque #7 no cambia serialización ni tiles. Con 64 variantes y todos los factores activos, Vitest/Node 24 midió entropía a 100.481 ops/s (media 0,0100 ms, p99 0,0237 ms) y selección a 76.871 ops/s (media 0,0130 ms, p99 0,0338 ms).
+- Preservación de `FIXED`: las funciones reciben máscaras y metadatos de solo lectura, no exponen mutación y solo devuelven entropía, índice o candidato; rollback/commit siguen fuera de alcance. Una variante retirada del dominio nunca se evalúa ni puede ser elegida aunque tenga sesgo arbitrariamente alto.
+- Pruebas: `npm run check` (5 archivos, 31 tests), `npm run build`, `npm audit --omit=dev`, `git diff --check` y benchmark dedicado verdes. La suite cubre fórmula, factores, pesos inválidos, curva mal ordenada, dominio vacío, exclusión por compatibilidad, secuencia idéntica por seed, prioridad y empate estable.
+- Deploy y navegador: Sliplane desplegó `3215de1` desde la rama con `service_event_gx0qh2t04i6x`; build remoto 66 ms, cero logs de error, `/` y `/health` 200. Local y remoto conservan shell, calibración y eco `#000001`; assets relativos/same-origin y consola sin warnings/errores. WebM N/A: el cambio es solver puro y no añade un flujo temporal visible.
+- Evidencia: [`docs/progress/issue-7-entropy-selection/`](./progress/issue-7-entropy-selection/).
+- Reversión: revertir los commits de #7 y devolver el preview a `dev`; no hay datos, migraciones, assets ni decisiones normativas que restaurar.
 
 ### 2026-08-05 — Issue #6 — Determinismo temporal, de streams y del mundo final
 

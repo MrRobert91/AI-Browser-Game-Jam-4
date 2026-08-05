@@ -55,3 +55,15 @@ El hash final sigue una regla distinta a la generación: ordena las celdas fijad
 ![El preview conserva el shell y el worker](./issue-6-deterministic-rng/sliplane-browser.webp)
 
 ![El cambio determinista queda listo para revisión](./issue-6-deterministic-rng/pr-63-published.webp)
+
+## Las preferencias solo pesan sobre lo que sigue siendo posible
+
+La entropía llega después de fijar representación y azar explícito. Cada cálculo recorre directamente los bits que sobrevivieron a las restricciones duras. Distancia, vecinos, progresión y ruido pueden multiplicar el peso de esas variantes, pero no existe una ruta que vuelva a insertar una posibilidad eliminada. Esa separación convierte la regla de diseño —la belleza nace de preferencias, la coherencia de restricciones— en una propiedad del código.
+
+Las curvas de distancia se interpolan por tramos y los sesgos de vecinos se acumulan por etiquetas. Todos los factores activos deben ser positivos y finitos; un error de contenido falla antes de consumir el PRNG. La elección ponderada recorre los bits en orden estable y la prioridad de observación usa exactamente carga, continuidad de frontera y entropía normalizada. Si dos celdas siguen empatadas, gana la identidad menor, no el orden accidental de una colección.
+
+El benchmark con 64 variantes mantiene entropía y selección en centésimas de milisegundo de media. Más importante: la seed y el hash canónico no cambian, porque este corte introduce decisiones reproducibles sin tocar todavía commits, rollback o celdas `FIXED`.
+
+![La entropía entra en progreso](./issue-7-entropy-selection/project-initial.webp)
+
+![Preview del núcleo matemático](./issue-7-entropy-selection/sliplane-browser.webp)
