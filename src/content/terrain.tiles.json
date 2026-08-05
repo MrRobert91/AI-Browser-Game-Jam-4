@@ -163,5 +163,95 @@
     "lethal": false,
     "heightClass": 0,
     "fallbackRank": 2
+  },
+  {
+    "id": "terrain.water.deep",
+    "numericId": 9,
+    "packId": "water",
+    "weight": 4,
+    "mesh": "/assets/proxies/water/deep-water.proxy.json",
+    "rotationQuarterTurns": [0],
+    "sockets": {
+      "N": "WET_FLAT",
+      "E": "WET_FLAT",
+      "S": "WET_FLAT",
+      "W": "WET_FLAT"
+    },
+    "tags": ["water", "deep_water", "wet"],
+    "walkable": false,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "neighborBias": { "deep_water": 2.2, "shallow_water": 1.7 }
+  },
+  {
+    "id": "terrain.water.shallow",
+    "numericId": 10,
+    "packId": "water",
+    "weight": 7,
+    "mesh": "/assets/proxies/water/shallow-water.proxy.json",
+    "rotationQuarterTurns": [0, 1, 2, 3],
+    "sockets": {
+      "N": "WET_FLAT",
+      "E": "WET_FLAT",
+      "S": "BANK_IN",
+      "W": "BANK_IN"
+    },
+    "tags": ["water", "shallow_water", "wet", "walkable"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "neighborBias": { "deep_water": 1.45, "shallow_water": 2, "shore": 1.4 }
+  },
+  {
+    "id": "terrain.water.shore",
+    "numericId": 11,
+    "packId": "water",
+    "weight": 6,
+    "mesh": "/assets/proxies/water/shore.proxy.json",
+    "rotationQuarterTurns": [0, 1, 2, 3],
+    "sockets": {
+      "N": "BANK_OUT",
+      "E": "BANK_OUT",
+      "S": "OPEN_FLAT",
+      "W": "OPEN_FLAT"
+    },
+    "tags": ["water", "shore", "wet", "open", "walkable"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "neighborBias": {
+      "shallow_water": 1.65,
+      "shore": 1.8,
+      "marsh": 1.3,
+      "meadow": 1.15
+    }
+  },
+  {
+    "id": "terrain.water.marsh",
+    "numericId": 12,
+    "packId": "water",
+    "weight": 6,
+    "mesh": "/assets/proxies/water/marsh.proxy.json",
+    "rotationQuarterTurns": [0],
+    "sockets": {
+      "N": "OPEN_FLAT",
+      "E": "OPEN_FLAT",
+      "S": "OPEN_FLAT",
+      "W": "OPEN_FLAT"
+    },
+    "tags": ["water", "marsh", "wet", "open", "walkable"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "neighborBias": {
+      "shore": 1.45,
+      "marsh": 1.8,
+      "meadow": 1.2,
+      "wild_grass": 1.2
+    }
   }
 ]

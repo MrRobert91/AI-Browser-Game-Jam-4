@@ -70,5 +70,50 @@
     "blocksMovement": true,
     "lethal": false,
     "uniquePerChunk": true
+  },
+  {
+    "id": "feature.water.reeds",
+    "numericId": 5,
+    "packId": "water",
+    "weight": 8,
+    "mesh": "/assets/proxies/water/reeds.proxy.json",
+    "tags": ["reeds", "water", "vegetation"],
+    "allowedTerrainTags": ["shallow_water", "shore", "marsh"],
+    "forbiddenWithinMetersOf": { "origin": 4, "corridor": 0.8 },
+    "minDistanceFromOrigin": 8,
+    "maxSlopeDegrees": 20,
+    "blocksMovement": false,
+    "lethal": false,
+    "neighborBias": { "reeds": 1.6, "marsh": 1.4 }
+  },
+  {
+    "id": "feature.water.lilies",
+    "numericId": 6,
+    "packId": "water",
+    "weight": 5,
+    "mesh": "/assets/proxies/water/lilies.proxy.json",
+    "tags": ["lilies", "water", "detail"],
+    "allowedTerrainTags": ["water", "shallow_water"],
+    "forbiddenWithinMetersOf": { "origin": 4 },
+    "minDistanceFromOrigin": 8,
+    "maxSlopeDegrees": 5,
+    "blocksMovement": false,
+    "lethal": false,
+    "neighborBias": { "lilies": 1.25, "shallow_water": 1.3 }
+  },
+  {
+    "id": "feature.water.spring",
+    "numericId": 7,
+    "packId": "water",
+    "weight": 1,
+    "mesh": "/assets/proxies/water/spring.proxy.json",
+    "tags": ["spring", "water", "seed_anchor"],
+    "allowedTerrainTags": ["shore", "marsh", "walkable"],
+    "forbiddenWithinMetersOf": { "origin": 8, "corridor": 0 },
+    "minDistanceFromOrigin": 10,
+    "maxSlopeDegrees": 15,
+    "blocksMovement": false,
+    "lethal": false,
+    "uniquePerChunk": true
   }
 ]
