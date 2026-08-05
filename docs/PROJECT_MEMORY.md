@@ -33,7 +33,7 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 
 ### 2026-08-05 — Issue #7 — Entropía, pesos efectivos y selección determinista
 
-- Issue / rama / commits: issue #7; rama `codex/issue-7-entropy-selection` desde `dev` exacta `b6788e3da536ede060d7e680090be5707a217067`; implementación `3215de13a02477cf09bc32f6c0f815ecfd06884a`; PR pendiente de publicación contra `dev` tras incorporar esta evidencia.
+- Issue / PR / commits: issue #7; PR #64 (`dev` ← `codex/issue-7-entropy-selection`) desde `dev` exacta `b6788e3da536ede060d7e680090be5707a217067`; implementación `3215de13a02477cf09bc32f6c0f815ecfd06884a`, benchmark `9973b756ce786f722bf8a2fbae7dee2e0161c05b` y documentación/evidencia `e45942cf65acde7e34e270485b50e49f7e2a879c`.
 - Objetivo: calcular la entropía ponderada normativa y elegir variantes/celdas de manera reproducible, incorporando distancia, vecinos, progresión y ruido pequeño sin permitir que una preferencia blanda restaure una incompatibilidad.
 - Decisiones: `src/wfc/entropy.ts` recorre únicamente bits presentes mediante `nextSetBit`; aplica la fórmula `log(sum(w)) - sum(w log(w))/sum(w)`; interpola curvas de distancia por tramos; compone sesgos por etiqueta observada; acepta ruido determinista por variante; consume `RngState` para elección ponderada; calcula prioridad `4 × carga + 1,5 × continuidad - 0,8 × entropía + ruido`; y desempata por menor `cellId`.
 - Alternativas descartadas: construir arrays/`Set` de candidatos, porque duplicaría la representación caliente; aplicar sesgos antes de intersectar compatibilidad, porque podría rescatar tiles ilegales; usar `Math.random()`, porque rompería replay; y asignar desempates al orden de llegada, porque haría el resultado dependiente de la colección.
@@ -44,6 +44,7 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 - Preservación de `FIXED`: las funciones reciben máscaras y metadatos de solo lectura, no exponen mutación y solo devuelven entropía, índice o candidato; rollback/commit siguen fuera de alcance. Una variante retirada del dominio nunca se evalúa ni puede ser elegida aunque tenga sesgo arbitrariamente alto.
 - Pruebas: `npm run check` (5 archivos, 31 tests), `npm run build`, `npm audit --omit=dev`, `git diff --check` y benchmark dedicado verdes. La suite cubre fórmula, factores, pesos inválidos, curva mal ordenada, dominio vacío, exclusión por compatibilidad, secuencia idéntica por seed, prioridad y empate estable.
 - Deploy y navegador: Sliplane desplegó `3215de1` desde la rama con `service_event_gx0qh2t04i6x`; build remoto 66 ms, cero logs de error, `/` y `/health` 200. Local y remoto conservan shell, calibración y eco `#000001`; assets relativos/same-origin y consola sin warnings/errores. WebM N/A: el cambio es solver puro y no añade un flujo temporal visible.
+- Publicación y Project: PR #64 no draft, base `dev`, `MERGEABLE/CLEAN`, labels `codex`/`codex-automation` y CI `Check and build` terminal `SUCCESS` (run `30997263935`). Los cuatro criterios de #7 están marcados; la issue permanece abierta con `status:in-review` y su tarjeta está en **In review**. La PR de issue no se fusionó.
 - Evidencia: [`docs/progress/issue-7-entropy-selection/`](./progress/issue-7-entropy-selection/).
 - Reversión: revertir los commits de #7 y devolver el preview a `dev`; no hay datos, migraciones, assets ni decisiones normativas que restaurar.
 

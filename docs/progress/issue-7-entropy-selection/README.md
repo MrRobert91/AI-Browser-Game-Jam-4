@@ -22,6 +22,8 @@
 - `project-initial.webp`: #7 reclamada en **In progress** después de reconciliar #6.
 - `local-browser.webp`: build local calibrada, worker eco operativo y consola limpia.
 - `sliplane-browser.webp`: commit `3215de1` desplegado y validado en navegador.
+- `pr-64-published.webp`: PR no draft abierta contra `dev`, con tres commits y CI verde.
+- `project-final.webp`: #7 en **In review**; **In progress** vacío y #8 aún bloqueada.
 
 ## Validación reproducible
 
@@ -42,3 +44,11 @@
 - `https://la-ultima-observacion-web.sliplane.app/?rev=3215de1` y `/health`: HTTP 200.
 - Consola limpia, assets same-origin, calibración y eco `#000001` verificados.
 - WebM N/A: la issue añade infraestructura matemática sin interacción temporal nueva.
+
+## Publicación
+
+- PR #64: `feat(WP1): add deterministic entropy and selection`.
+- Base `dev`; head `codex/issue-7-entropy-selection`; no draft; no fusionada.
+- Estado `MERGEABLE/CLEAN`; CI `Check and build` `SUCCESS` (run `30997263935`).
+- Labels `codex` y `codex-automation`; issue #7 con `status:in-review`.
+- Project #2: tarjeta de #7 en **In review**.
