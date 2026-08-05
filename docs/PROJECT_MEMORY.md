@@ -8,9 +8,9 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 
 | Fase | Issues | Estado | Gate o dependencia principal |
 |---|---:|---|---|
-| WP0 — Fundación y contratos | #1–#4 | En curso | #1–#3 cerradas; #4 publicada en PR #60 contra `dev` |
-| WP1 — Solver puro | #5–#11 | Bloqueada | Requiere WP0 |
-| WP2 — Render, cámara y física | #12–#14 | Bloqueada | Requiere WP0 |
+| WP0 — Fundación y contratos | #1–#4 | Gate superado; promoción en curso | #1–#4 cerradas mediante PRs integradas en `dev`; preview y CI verdes |
+| WP1 — Solver puro | #5–#11 | Siguiente | Se desbloquea tras fusionar la promoción WP0 `dev` → `main` |
+| WP2 — Render, cámara y física | #12–#14 | Pendiente | Requiere la promoción de WP0; se prioriza WP1 por orden del plan |
 | WP3 — Gramática y tiles | #15–#22 | Bloqueada | Requiere contratos y solver base |
 | WP4 — Mundo observable | #23–#29 | Bloqueada | Requiere WP1, WP2 y WP3; termina con vertical slice |
 | WP5 — Progresión y peligros | #30–#35 | Bloqueada | Requiere el gate del vertical slice |
@@ -21,16 +21,28 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 
 ### Estado operativo actual
 
-- Fase actual: WP0 — Fundación y contratos.
-- Issue actual: #4 — check, lint, format, tests y CI; PR #60 en validación.
-- Siguiente trabajo desbloqueable: reconciliar #4 tras su merge en `dev` y ejecutar la promoción formal de WP0; #5/#12 no se seleccionan antes de esa puerta.
+- Fase actual: cierre y promoción formal de WP0 — Fundación y contratos.
+- Issue actual: ninguna; #1–#4 están cerradas mediante PRs fusionadas en `dev`.
+- Siguiente trabajo desbloqueable: fusionar la promoción WP0 `dev` → `main`; después, #5 es la primera issue de WP1 por prioridad y orden.
 - Dependencias críticas: #1 → #2 → #3/#4; ninguna fase posterior puede promoverse antes de completar sus gates.
 - Arquitectura vigente: TypeScript estricto + Vite + Three.js; contratos públicos en `src/contracts/`; worker WFC separado del main thread; runtime offline tras la carga.
-- `dev`: `9de883f12f64644a2a3b596d36372dc55aca32d1` al iniciar la ejecución de #4; contiene la PR #59 de #3.
-- `main`: `7190c837dcb1f4b4566273a785ea2948130e0d40`; está contenido en `dev` y WP0 aún no cumple gate de promoción.
-- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio live `service_qi0aluudq024`, rama `codex/issue-4-quality-gate-ci`, commit `d412bca2aad8c25e56f91efa7b365d1903a8acea` y URL `https://la-ultima-observacion-web.sliplane.app`.
+- `dev`: `85a25857134d34fe0bea1d9f4e0c88def4c750f0`; contiene la PR #60 y el cierre íntegro de WP0 antes del commit documental de promoción.
+- `main`: `7190c837dcb1f4b4566273a785ea2948130e0d40`; es ancestro de `dev` y espera la promoción formal.
+- Preview Sliplane: proyecto `La Ultima Observacion Preview` (`project_3o4wtis2vnhk`), servicio live `service_qi0aluudq024`, rama `dev`, commit `85a25857134d34fe0bea1d9f4e0c88def4c750f0`, evento `service_event_vqczlcrtcptd` y URL `https://la-ultima-observacion-web.sliplane.app`.
 
 ## Registro cronológico
+
+### 2026-08-05 — Gate de promoción WP0 — Fundación y contratos
+
+- Issues incluidas: #1–#4, integradas en `dev` mediante PRs #57–#60; no quedan PRs de issue abiertas, draft o bloqueadas de WP0. Project #2 muestra las cuatro tarjetas en **Done** y cero elementos en **In progress**/**In review**.
+- Gate: `npm run format:check`, `npm run check` (typecheck, ESLint y cuatro tests), `npm run build`, `npm audit --omit=dev` y `git diff --check` en verde sobre `dev` `85a25857134d34fe0bea1d9f4e0c88def4c750f0`. La CI terminal de PR #60 también concluyó `SUCCESS`.
+- Deploy: el preview existente se reconfiguró de la rama de issue a `dev` sin cambiar repositorio, Docker context, Dockerfile, puerto ni healthcheck. Sliplane desplegó `85a2585` con evento terminal `service_event_vqczlcrtcptd`; `/` y `/health` responden 200.
+- Navegador: preview de `dev` verificado con shell, eco `#000001`, recursos same-origin y consola sin warnings/errores. El tablero autenticado confirma #1–#4 en Done.
+- Decisiones acumuladas: conservar un único artefacto Vite/Nginx offline, contratos públicos en `src/contracts/`, worker separado y gate secuencial reproducible. La promoción no cambia comportamiento ni decisiones normativas.
+- Impacto siguiente: una promoción `dev` → `main` mediante merge commit desbloquea WP1; #5 debe nacer de la igualdad exacta entre `main` y `dev` posterior a la promoción.
+- Riesgos / deuda: TypeScript 6 continúa solo como alias de API para ESLint mientras `tsc` usa TypeScript 7; el scaffold visual y el worker eco son temporales hasta WP2/WP1. No hay datos, migraciones ni volúmenes.
+- Reversión: revertir el merge commit de promoción en `main`; `dev` conserva el historial validado de WP0 y el preview puede apuntarse de nuevo al SHA anterior sin cambios de infraestructura.
+- Evidencia: [`docs/progress/phase-WP0-promotion/`](./progress/phase-WP0-promotion/). El número de PR, merge commit y SHAs finales se añaden tras ejecutar la promoción, sin reescribir esta entrada.
 
 ### 2026-08-05 — Issue #4 — Puerta reproducible de calidad y CI
 
