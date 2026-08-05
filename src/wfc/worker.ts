@@ -1,6 +1,6 @@
 import type { WorkerOutput } from '../contracts/messages';
 import { getWorkerOutputTransferables } from '../contracts/transferables';
-import { handleWorkerInput } from './worker-runtime';
+import { handleWorkerInputBatch } from './worker-runtime';
 
 interface SolverWorkerScope {
   addEventListener(
@@ -13,6 +13,7 @@ interface SolverWorkerScope {
 const workerScope = self as unknown as SolverWorkerScope;
 
 workerScope.addEventListener('message', (event) => {
-  const output = handleWorkerInput(event.data);
-  workerScope.postMessage(output, getWorkerOutputTransferables(output));
+  for (const output of handleWorkerInputBatch(event.data)) {
+    workerScope.postMessage(output, getWorkerOutputTransferables(output));
+  }
 });

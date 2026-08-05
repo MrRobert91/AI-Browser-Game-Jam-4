@@ -23,6 +23,9 @@ const PACK_IDS: readonly UnlockablePackId[] = [
 const WARNING_CODES: readonly SolverWarning['code'][] = [
   'ECHO_ONLY',
   'INVALID_INPUT',
+  'QUANTUM_FALLBACK',
+  'QUANTUM_VOID_DEBUG',
+  'BUDGET_EXHAUSTED',
 ];
 
 function isRecord(value: unknown): value is UnknownRecord {
