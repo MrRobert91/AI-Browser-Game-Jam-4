@@ -33,7 +33,7 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 
 ### 2026-08-05 — Issue #6 — Determinismo temporal, de streams y del mundo final
 
-- Issue / PR / commits: issue #6; rama `codex/issue-6-deterministic-rng` desde `dev` exacta `2adebf247afdc184db65b378f127f10eeacf156f`; implementación `127c9e5ab0d90e268d3f33af3c1523d254e79d3d`; PR contra `dev` pendiente de publicación al redactar esta entrada.
+- Issue / PR / commits: issue #6; PR #63 (`dev` ← `codex/issue-6-deterministic-rng`) desde `dev` exacta `2adebf247afdc184db65b378f127f10eeacf156f`; implementación `127c9e5ab0d90e268d3f33af3c1523d254e79d3d`, documentación/evidencia `46ae7c467338bb74adecf09ef002c0d586a0b7ea` y commit final de publicación.
 - Objetivo: garantizar que seed, identidad del subsistema/chunk y ticks fijos produzcan la misma secuencia y el mismo hash final, sin depender del framerate ni de `Math.random()`.
 - Decisiones: `src/wfc/rng.ts` implementa Mulberry32 con reducción explícita a `uint32`; `deriveSeed` combina `worldSeed`, nombre del sistema y coordenadas `int32` mediante FNV-1a etiquetado y avalancha; `simulationTickAt` proyecta tiempo real al último tick completo de 100 ms; `hashFinalWorld` ordena las celdas por `cellId` e incluye seed, terreno y presencia/ID de feature.
 - Alternativas descartadas: `Math.random()`, por no ser sembrable ni reproducible; estado global compartido, porque acoplaría subsistemas y chunks; hash por orden de colapso, porque dos estados finales iguales podrían diferir por orden de inserción; redondear cada frame a un tick, porque avanzaría el RNG un número distinto de veces según FPS.
@@ -44,6 +44,7 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 - Preservación de `FIXED`: las utilidades son puras respecto al estado de celdas; el hash solo lee una copia ordenada y no expone ninguna operación de reescritura o rollback. La integración con commits permanece fuera de alcance hasta #8/#9/#11.
 - Pruebas: `npm run format:check`, `npm run check` (4 archivos, 21 tests), `npm run build`, `npm audit --omit=dev` y `git diff --check` verdes. Vectores fijos para seeds 0/máximo, separación por sistema/chunk, frames 30/60/144 con secuencia idéntica, hash independiente del orden y guardia de ausencia de `Math.random` en `src/wfc/`.
 - Deploy y navegador: Sliplane desplegó `127c9e5` desde la rama de issue con `service_event_x0j48sgyco36`; servicio live, 20 logs recientes sin coincidencias de error, `/` y `/health` 200. Build local y preview remoto conservan calibración y eco `#000001` con consola limpia. WebM N/A: no existe flujo visual nuevo.
+- Publicación y Project: PR #63 no draft, base `dev`, `MERGEABLE/CLEAN`, labels `codex`/`codex-automation` y CI `Check and build` terminal verde. Los cuatro criterios de #6 se marcaron completados; la issue permanece abierta con `status:in-review` y su tarjeta está en **In review**. La PR de issue no se fusionó.
 - Evidencia: [`docs/progress/issue-6-deterministic-rng/`](./progress/issue-6-deterministic-rng/).
 - Reversión: revertir los commits de #6 y devolver el preview a `dev`; no hay datos, migraciones, assets ni decisiones normativas que restaurar.
 

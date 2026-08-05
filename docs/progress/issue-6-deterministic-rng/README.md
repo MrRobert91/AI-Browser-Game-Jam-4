@@ -6,6 +6,8 @@
 - `main`: `7be4649ece2a9a8f4bed40ff72653ef6cbf06478`, última promoción de WP0.
 - Rama: `codex/issue-6-deterministic-rng`.
 - Commit de implementación: `127c9e5ab0d90e268d3f33af3c1523d254e79d3d`.
+- Commit de documentación/evidencia: `46ae7c467338bb74adecf09ef002c0d586a0b7ea`.
+- PR: #63, no draft, base `dev`; no fusionada.
 - Dependencia cerrada: #3; #5 también está integrada en `dev`.
 - Desbloquea: #7 cuando la PR de #6 se integre y la issue se reconcilie.
 
@@ -54,7 +56,13 @@
 
 ![Preview Sliplane de la rama](./sliplane-browser.webp)
 
+![PR #63 publicada contra dev](./pr-63-published.webp)
+
+![Project con #6 en In review](./project-final.webp)
+
 WebM es N/A: la implementación es infraestructura determinista pura y no añade una interacción visual temporal.
+
+PR #63 quedó no draft, base `dev`, `MERGEABLE/CLEAN`, con labels `codex`/`codex-automation` y CI terminal verde. La issue permanece abierta hasta que esa PR sea fusionada externamente en `dev` y una ejecución posterior reconcilie el merge.
 
 ## Reversión
 

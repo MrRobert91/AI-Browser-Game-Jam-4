@@ -53,3 +53,5 @@ El hash final sigue una regla distinta a la generación: ordena las celdas fijad
 ![La issue determinista entra en progreso](./issue-6-deterministic-rng/project-initial.webp)
 
 ![El preview conserva el shell y el worker](./issue-6-deterministic-rng/sliplane-browser.webp)
+
+![El cambio determinista queda listo para revisión](./issue-6-deterministic-rng/pr-63-published.webp)
