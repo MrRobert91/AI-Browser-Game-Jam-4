@@ -5,7 +5,7 @@ import type {
 import type { CellId, WorldVector3 } from '../contracts/world';
 import {
   WORLD_CELL_SIZE_METERS,
-  WorldState,
+  type WorldState,
   cellCenterToWorld,
 } from './world-state';
 

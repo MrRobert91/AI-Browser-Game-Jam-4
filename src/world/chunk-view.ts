@@ -1,7 +1,6 @@
 import { Group, type Object3D } from 'three';
 
-import type { WorldCellSnapshot } from './world-state';
-import { WorldState } from './world-state';
+import type { WorldCellSnapshot, WorldState } from './world-state';
 
 export type ChunkCellVisualFactory = (
   cell: WorldCellSnapshot,

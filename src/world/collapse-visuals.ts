@@ -14,7 +14,7 @@ import {
 import type { CollapseEvent } from '../contracts/messages';
 import type { CellId, WorldVector3 } from '../contracts/world';
 import type { CollapseVisualAdapter } from './collapse-director';
-import { WorldState } from './world-state';
+import type { WorldState } from './world-state';
 
 export type SliceFeatureKind = 'empty' | 'tree' | 'flower' | 'rock';
 

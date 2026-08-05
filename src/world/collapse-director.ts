@@ -2,7 +2,7 @@ import type { CollapseEvent } from '../contracts/messages';
 import type { CellId, WorldVector3 } from '../contracts/world';
 import {
   type FixedCellCommit,
-  WorldState,
+  type WorldState,
   cellCenterToWorld,
 } from './world-state';
 
