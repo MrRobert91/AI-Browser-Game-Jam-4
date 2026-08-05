@@ -1,9 +1,12 @@
 import { GameLoop } from './game-loop';
 import { SolverWorkerClient } from './solver-worker-client';
+import { createFirstPersonCamera } from '../player/camera';
+import { GameRenderer } from '../render/renderer';
 
 const SHELL_MARKUP = `
   <main class="observation-shell" aria-labelledby="game-title">
     <div class="field" aria-hidden="true">
+      <div class="game-viewport" data-game-viewport></div>
       <div class="field__horizon"></div>
       <div class="field__orb field__orb--one"></div>
       <div class="field__orb field__orb--two"></div>
@@ -85,20 +88,28 @@ export function bootstrap(root: HTMLElement): () => void {
   const systemState = root.querySelector<HTMLElement>('[data-system-state]');
   const shellStatus = root.querySelector<HTMLElement>('[data-shell-status]');
   const workerState = root.querySelector<HTMLElement>('[data-worker-state]');
+  const viewport = root.querySelector<HTMLElement>('[data-game-viewport]');
 
   if (
     !shell ||
     !observationButton ||
     !systemState ||
     !shellStatus ||
-    !workerState
+    !workerState ||
+    !viewport
   ) {
     throw new Error('La interfaz de observación está incompleta.');
   }
 
   const abortController = new AbortController();
+  const camera = createFirstPersonCamera(
+    Math.max(1, viewport.clientWidth),
+    Math.max(1, viewport.clientHeight),
+  );
+  const gameRenderer = new GameRenderer({ container: viewport, camera });
   const gameLoop = new GameLoop(({ elapsedSeconds }) => {
     shell.style.setProperty('--observation-phase', `${elapsedSeconds % 8}`);
+    gameRenderer.render();
   });
   const solverWorker = new SolverWorkerClient({
     onOutput: (output) => {
@@ -147,6 +158,9 @@ export function bootstrap(root: HTMLElement): () => void {
   document.addEventListener('visibilitychange', handleVisibilityChange, {
     signal: abortController.signal,
   });
+  window.addEventListener('resize', () => gameRenderer.resize(), {
+    signal: abortController.signal,
+  });
 
   gameLoop.start();
 
@@ -154,5 +168,6 @@ export function bootstrap(root: HTMLElement): () => void {
     abortController.abort();
     gameLoop.stop();
     solverWorker.dispose();
+    gameRenderer.dispose();
   };
 }
