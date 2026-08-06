@@ -808,6 +808,53 @@ button {
   line-height: 1.05;
 }
 
+.slice-result blockquote {
+  margin: 0;
+  white-space: pre-line;
+  color: #f3e7bb;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.1rem, 2vw, 1.7rem);
+  line-height: 1.6;
+}
+
+.slice-result__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.slice-result__actions button {
+  padding: 0.75rem 1rem;
+  border: 1px solid rgb(169 255 237 / 58%);
+  color: #dffcf5;
+  background: rgb(12 42 46 / 72%);
+  font:
+    0.68rem/1 "Courier New",
+    monospace;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.debug-overlay {
+  position: fixed;
+  z-index: 100;
+  top: 1rem;
+  left: 1rem;
+  max-width: min(42rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  margin: 0;
+  padding: 1rem;
+  overflow: auto;
+  border: 1px solid rgb(169 255 237 / 50%);
+  color: #cafff4;
+  background: rgb(3 9 15 / 92%);
+  font:
+    0.68rem/1.55 "Courier New",
+    monospace;
+  pointer-events: none;
+}
 @keyframes death-pulse {
   from {
     opacity: 1;

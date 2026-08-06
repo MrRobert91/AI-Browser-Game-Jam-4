@@ -187,3 +187,26 @@ La Medida también pasa a contenido local. Las líneas canónicas de inicio, Agu
 [Ver walkthrough WP6 (WebM VP9, 12 s)](./wp6-presentation/wp6-presentation-walkthrough.webm)
 
 El corte termina con 138 tests, build de producción, auditoría sin vulnerabilidades y un recorrido de navegador sin warnings ni errores. Lo importante no es que haya más efectos, sino que render, sonido, HUD y texto expresan la misma regla: mirar elimina posibilidades y convierte una superposición fría en un lugar material que puede recordarse.
+
+
+## WP7 convierte la partida en un retrato, no en una puntuación
+
+El final dejó de ser una pantalla activada por el preview. `RunClock` empieza exactamente con el primer colapso, pausa durante menú, pestaña oculta y el instante de una Semilla, pero continúa después de morir. A cero cierra simultáneamente dos fronteras: el main deja de enviar observaciones y también rechaza cualquier commit tardío del worker. Después la cámara asciende ocho segundos sobre lo fijado, mientras lo posible pierde brillo y vuelve a cuadrícula oscura.
+
+El retrato conserva las métricas normativas y las traduce a Jardinero, Cartógrafo, Guardián, Testigo o Impaciente mediante fixtures deterministas, sin puntos ni rango. El mismo replay produce el mismo haiku local de tres líneas. Copiar el resultado incluye título, seed, perfil y poema; reiniciar crea un mundo limpio.
+
+![El resultado interpreta atención sin ranking](./wp7-wp8-release/05-final.png)
+
+## WP8 intenta romper el mundo antes de empaquetarlo
+
+La depuración también forma parte de la arquitectura. Un replay cuantizado a 10 Hz reconstruye el hash sin renderer; F2 expone cuadrícula, fase, entropía, dominio, radio, oclusión, cola, chunk, epoch, tick y fallbacks; F3 avanza desbloqueos y F4 copia seed, posición, dominios vecinos y los últimos veinte eventos. Ninguna de esas herramientas entra en producción.
+
+La campaña final recorre 10.000 seeds y cinco rutas. Cien ejecuciones levantan el solver completo durante 600 ticks: no aparecen dominios vacíos, commits a más de 10,01 metros, hashes divergentes, fallbacks de juego, `quantum_void_debug` ni Semillas inaccesibles. Los tests de navegador recorren inicio, colapso, Agua, enemigo y final sin red ni errores de consola.
+
+![Agua cambia posibilidades futuras](./wp7-wp8-release/03-water.png)
+
+[Ver el recorrido de release completo (WebM)](./wp7-wp8-release/video.webm)
+
+El perfil automatizado mantiene worker y main por debajo de 4 y 12 ms p95, estima 60 FPS y coloca draw calls, triángulos, texturas, descarga y tiempo de arranque dentro de objetivo. Es un gate reproducible, no una afirmación sobre una GPU que no se probó: la matriz distingue Chromium, Firefox y Chrome estable verificados de Edge y hardware integrado pendientes.
+
+La candidata termina como ZIP estático con manifest SHA-256, favicon y assets locales, créditos, procedencia de contenido asistido, privacidad y texto listo para itch.io. Después de cargar sus archivos no hace llamadas de red ni envía datos a modelos. El artefacto final no demuestra que todo mundo posible sea bello; demuestra algo más útil para la jam: que el mundo observado puede terminar, explicarse y volver a reproducirse sin esconder sus límites.

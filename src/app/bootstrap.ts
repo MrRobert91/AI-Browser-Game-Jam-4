@@ -5,12 +5,25 @@ import { Wp5PreviewRuntime } from './wp5-preview-runtime';
 import { AudioDirector } from '../audio/audio-director';
 import type { UnlockablePackId } from '../contracts/tiles';
 import { planSeedAnchors } from '../gameplay/anchors';
+import {
+  closureForSeedCount,
+  EndingDirector,
+  formatSeed,
+  type RunResult,
+} from '../gameplay/ending';
+import { generateHaiku } from '../gameplay/haiku';
 import { NarrativeDirector, type NarrativeCueId } from '../gameplay/narrative';
-import { VerticalSliceDirector } from '../gameplay/vertical-slice';
+import {
+  AttentionPortraitTracker,
+  classifyAttentionPortrait,
+} from '../gameplay/portrait';
+import { RunClock, type RunMode } from '../gameplay/run-clock';
+import { DebugOverlay, debugToolsAvailable } from '../dev/debug-overlay';
 import {
   isGrammarViewerMode,
   renderGrammarViewer,
 } from '../dev/grammar-viewer';
+import { ReplayRecorder } from '../dev/replay';
 import { createFirstPersonCamera } from '../player/camera';
 import { PlayerInput } from '../player/input';
 import {
@@ -25,6 +38,7 @@ import { ObservationReticle } from '../ui/observation-reticle';
 import { GameHud } from '../ui/hud';
 import { loadGameSettings, PauseMenu, type GameSettings } from '../ui/pause';
 import { ProgressionHud } from '../ui/progression-hud';
+import { ResultsPanel } from '../ui/results';
 import { SliceCollapseVisuals } from '../world/collapse-visuals';
 import { createOriginDetailField } from '../world/origin-details';
 import {
@@ -75,13 +89,13 @@ const SHELL_MARKUP = `
     </aside>
 
     <footer class="shell-footer">
-      <p>WP6 // PRESENTATION BUILD</p>
+      <p>WP8 // RELEASE CANDIDATE</p>
       <p data-worker-state>CONTRATO // INICIALIZANDO</p>
       <p>BUILD <span>LOCAL</span></p>
     </footer>
 
     <section class="slice-hud" aria-live="polite">
-      <p><span>VENTANA</span><strong data-slice-time>01:30</strong></p>
+      <p><span>VENTANA</span><strong data-slice-time>10:00</strong></p>
       <p data-slice-message>Mira para iniciar el registro.</p>
       <p><span>SEED</span><strong>A91F-42C0</strong></p>
     </section>
@@ -162,6 +176,24 @@ export function bootstrap(root: HTMLElement): () => void {
 
   const abortController = new AbortController();
   const settings = loadGameSettings();
+  const search = new URLSearchParams(window.location.search);
+  const requestedMode = search.get('mode');
+  const runMode: RunMode =
+    requestedMode === 'brief' || requestedMode === 'contemplative'
+      ? requestedMode
+      : 'standard';
+  const requestedSeed = search.get('seed');
+  const parsedSeed = requestedSeed
+    ? Number.parseInt(requestedSeed.replace('-', ''), 16)
+    : Number.NaN;
+  const worldSeed = Number.isInteger(parsedSeed)
+    ? parsedSeed >>> 0
+    : 0xa91f42c0;
+  const requestedStart = Number(search.get('start') ?? '0');
+  const startAtSeconds =
+    search.get('evidence') === '1' && Number.isFinite(requestedStart)
+      ? Math.max(0, requestedStart)
+      : 0;
   const camera = createFirstPersonCamera(
     Math.max(1, viewport.clientWidth),
     Math.max(1, viewport.clientHeight),
@@ -191,9 +223,13 @@ export function bootstrap(root: HTMLElement): () => void {
     onSubtitle: (message) => hud.showSubtitle(message),
     onAudioCue: () => audioDirector.playNarrativeCue(),
   });
+  const portraitTracker = new AttentionPortraitTracker();
+  const endingDirector = new EndingDirector();
   let pauseMenu: PauseMenu | null = null;
+  let runClock: RunClock | null = null;
   const playerInput = new PlayerInput(shell, {
     onPauseChange: (paused) => {
+      runClock?.setPaused('MENU', paused);
       shell.dataset.paused = String(paused);
       if (shell.dataset.calibrated === 'true') {
         systemState.textContent =
@@ -255,9 +291,14 @@ export function bootstrap(root: HTMLElement): () => void {
       console.error('Rapier no pudo iniciar.', error);
     });
   let observableWorld: ObservableWorldBridge | null = null;
-  let sliceDirector: VerticalSliceDirector | null = null;
+  const debugEvents: string[] = [];
+  const replayRecorder = new ReplayRecorder();
   const solverWorker = new SolverWorkerClient({
     onOutput: (output) => {
+      debugEvents.push(
+        `${output.type} ${'cellId' in output ? output.cellId : ''}`.trim(),
+      );
+      if (debugEvents.length > 20) debugEvents.shift();
       observableWorld?.handleWorkerOutput(output, performance.now());
       if (
         output.type === 'SOLVER_WARNING' &&
@@ -276,6 +317,26 @@ export function bootstrap(root: HTMLElement): () => void {
   });
   const worldState = new WorldState();
   const fixedVisuals = new SliceCollapseVisuals(gameRenderer.scene, worldState);
+  let resultPresented = false;
+  runClock = new RunClock(
+    {
+      onCountdown: (remainingSeconds) => {
+        if (remainingSeconds === 30) narrative.play('lastThirtySeconds');
+      },
+      onEnding: () => {
+        playerInput.setEnabled(false);
+        shell.dataset.ending = 'true';
+        superposition.root.visible = false;
+        fixedVisuals.setEndingMode(true);
+        narrative.play('lastThirtySeconds');
+        endingDirector.start();
+      },
+    },
+    { mode: runMode, startAtSeconds },
+  );
+  const resultsPanel = new ResultsPanel(sliceResult, () =>
+    window.location.reload(),
+  );
   observableWorld = new ObservableWorldBridge({
     solver: solverWorker,
     getPlayerPosition: () => [
@@ -285,8 +346,10 @@ export function bootstrap(root: HTMLElement): () => void {
     ],
     worldState,
     visuals: fixedVisuals,
+    canObserve: () => runClock!.snapshot().canCommit,
+    canAcceptCollapse: () => runClock!.canCommit(),
     onCollapseAccepted: () => {
-      sliceDirector?.notifyFirstCollapse();
+      runClock!.notifyFirstCollapse();
       hud.notifyFirstCollapse();
       audioDirector.notifyCollapse();
     },
@@ -296,13 +359,11 @@ export function bootstrap(root: HTMLElement): () => void {
       }
     },
   });
-  const resetTick = observableWorld.reset(0xa91f42c0);
+  const resetTick = observableWorld.reset(worldSeed);
   workerState.textContent = `CONTRATO #${String(resetTick).padStart(6, '0')} // SEED`;
 
-  const search = new URLSearchParams(window.location.search);
   const replayMode = search.get('replay');
-  const wp5PreviewEnabled =
-    search.get('wp5') === 'preview' || search.get('wp6') === 'preview';
+  const wp5PreviewEnabled = search.get('wp5') !== 'off';
   const wp5Replay = wp5PreviewEnabled && replayMode === 'wp5';
   const canonicalReplay = replayMode === 'canonical' || wp5Replay;
   const requestedSpeed = Number(search.get('speed') ?? '1');
@@ -310,55 +371,17 @@ export function bootstrap(root: HTMLElement): () => void {
     Number.isFinite(requestedSpeed) && requestedSpeed > 0
       ? Math.min(8, requestedSpeed)
       : 1;
-  const requestedStart = Number(search.get('start') ?? '0');
-  const startAtSeconds =
-    search.get('evidence') === '1' && Number.isFinite(requestedStart)
-      ? Math.min(89, Math.max(0, requestedStart))
-      : 0;
-  sliceDirector = new VerticalSliceDirector(
-    {
-      onWaterUnlock: () => {
-        observableWorld!.unlockPack('water');
-        narrative.play('unlockWater');
-        shell.dataset.waterUnlocked = 'true';
-      },
-      onDeath: () => {
-        shell.dataset.playerState = 'death';
-        narrative.play('firstDeath');
-        playerInput.setEnabled(false);
-      },
-      onRespawn: () => {
-        playerPhysics?.controller.respawn();
-        shell.dataset.playerState = 'alive';
-        sliceMessage.textContent = 'El mundo observado permanece.';
-        if (!canonicalReplay) playerInput.setEnabled(true);
-      },
-      onEnding: () => {
-        playerInput.setEnabled(false);
-        shell.dataset.ending = 'true';
-        superposition.root.visible = false;
-        fixedVisuals.setEndingMode(true);
-        narrative.play('lastThirtySeconds');
-      },
-      onComplete: () => {
-        narrative.play('final');
-        sliceResult.hidden = false;
-        shell.dataset.complete = 'true';
-      },
-    },
-    { canonicalReplay, startAtSeconds },
-  );
 
   let wp5Preview: Wp5PreviewRuntime | null = null;
   let wp5Visuals: Wp5PreviewVisuals | null = null;
   let progressionHud: ProgressionHud | null = null;
   if (wp5PreviewEnabled) {
-    const plan = planSeedAnchors(0xa91f42c0);
+    const plan = planSeedAnchors(worldSeed);
     wp5Visuals = new Wp5PreviewVisuals(gameRenderer.scene, plan);
     progressionHud = new ProgressionHud(shell);
     shell.dataset.wp5Preview = 'true';
     wp5Preview = new Wp5PreviewRuntime({
-      worldSeed: 0xa91f42c0,
+      worldSeed,
       plan,
       unlockPack: (packId) => observableWorld!.unlockPack(packId),
       visuals: wp5Visuals,
@@ -378,7 +401,7 @@ export function bootstrap(root: HTMLElement): () => void {
         hud.showSubtitle(message);
       },
       onClockReward: (seconds) => {
-        sliceDirector!.addTime(seconds);
+        runClock!.addTime(seconds);
       },
     });
     progressionHud.update(wp5Preview.progression.snapshot());
@@ -392,21 +415,86 @@ export function bootstrap(root: HTMLElement): () => void {
       storm: 'unlockStorm',
     };
   const announcedPacks = new Set<UnlockablePackId>();
+  const debugOverlay = debugToolsAvailable()
+    ? new DebugOverlay({
+        getSnapshot: () => {
+          const coordinates = worldPositionToCell([
+            camera.position.x,
+            camera.position.y,
+            camera.position.z,
+          ]);
+          const cellId = coordinates ? cellCoordinatesToId(coordinates) : 2_080;
+          const cell = worldState.getCell(cellId);
+          return {
+            seed: formatSeed(worldSeed),
+            tick: Math.floor(runClock!.snapshot().elapsedSeconds * 10),
+            position: [camera.position.x, camera.position.y, camera.position.z],
+            gridCell: coordinates
+              ? `${coordinates.x},${coordinates.z}`
+              : 'out-of-bounds',
+            neighborDomains: coordinates
+              ? [
+                  { x: coordinates.x, z: coordinates.z - 1 },
+                  { x: coordinates.x + 1, z: coordinates.z },
+                  { x: coordinates.x, z: coordinates.z + 1 },
+                  { x: coordinates.x - 1, z: coordinates.z },
+                ]
+                  .filter(({ x, z }) => x >= 0 && z >= 0 && x < 64 && z < 64)
+                  .map(({ x, z }) => {
+                    const neighbor = worldState.getCell(
+                      cellCoordinatesToId({ x, z }),
+                    );
+                    return `${neighbor.cellId}:${neighbor.phase}:e${neighbor.paletteEpoch}`;
+                  })
+              : [],
+            phase: cell.phase,
+            entropy: cell.phase === 'FIXED' ? 0 : 1,
+            domainSize: cell.phase === 'FIXED' ? 1 : 3,
+            observationRadius: 10,
+            occluded: false,
+            queueLength: 0,
+            chunkId: Math.floor(cellId / 1_024),
+            paletteEpoch: cell.paletteEpoch,
+            fallbackCount: debugEvents.filter((event) =>
+              event.includes('QUANTUM'),
+            ).length,
+            recentEvents: debugEvents,
+          };
+        },
+        unlockNextPack: () => {
+          const order: readonly UnlockablePackId[] = [
+            'water',
+            'forest',
+            'ruin',
+            'storm',
+          ];
+          const pack = order.find(
+            (candidate) => !announcedPacks.has(candidate),
+          );
+          if (!pack) return null;
+          observableWorld!.unlockPack(pack);
+          announcedPacks.add(pack);
+          portraitTracker.recordUnlock(pack);
+          debugEvents.push(`F3 UNLOCK ${pack}`);
+          return pack;
+        },
+      })
+    : null;
 
   const gameLoop = new GameLoop(({ deltaSeconds, elapsedSeconds }) => {
     shell.style.setProperty('--observation-phase', `${elapsedSeconds % 8}`);
-    const previousSlice = sliceDirector!.snapshot();
+    const previousClock = runClock!.snapshot();
     if (
       !canonicalReplay &&
       wp5Preview?.respawn.snapshot().inputLocked !== true &&
-      previousSlice.phase !== 'ENDING' &&
-      previousSlice.phase !== 'COMPLETE'
+      previousClock.phase !== 'ENDING' &&
+      previousClock.phase !== 'COMPLETE'
     ) {
       playerPhysics?.controller.update(deltaSeconds);
     }
 
     if (canonicalReplay && shell.dataset.calibrated === 'true') {
-      const replayTime = previousSlice.elapsedSeconds;
+      const replayTime = previousClock.elapsedSeconds;
       const radius = 3.5 + Math.min(9, replayTime * 0.11);
       const angle = -Math.PI / 2 + replayTime * 0.16;
       camera.position.set(
@@ -427,6 +515,11 @@ export function bootstrap(root: HTMLElement): () => void {
       camera.position.z,
     ] as const;
     const forwardVector = camera.getWorldDirection(camera.up.clone());
+    replayRecorder.record(Math.floor(elapsedSeconds * 10), playerPosition, [
+      forwardVector.x,
+      forwardVector.y,
+      forwardVector.z,
+    ]);
     const nearbyCellIds = observableWorld!.getNearbyCellIds(playerPosition);
     let maximumCharge = 0;
     if (shell.dataset.calibrated === 'true') {
@@ -440,13 +533,13 @@ export function bootstrap(root: HTMLElement): () => void {
         elapsedSeconds * 1_000,
       );
       if (
-        sliceDirector!.snapshot().phase === 'READY' &&
+        runClock!.snapshot().phase === 'READY' &&
         nearbyCellIds.some(
           (cellId) =>
             observableWorld!.worldState.getCell(cellId).phase === 'FIXED',
         )
       ) {
-        sliceDirector!.notifyFirstCollapse();
+        runClock!.notifyFirstCollapse();
         hud.notifyFirstCollapse();
         hud.setMessage('La mirada está fijando el mundo.');
       }
@@ -469,6 +562,43 @@ export function bootstrap(root: HTMLElement): () => void {
         },
       ];
     });
+    for (const cellId of nearbyCellIds) {
+      const cell = worldState.getCell(cellId);
+      if (cell.phase !== 'FIXED') continue;
+      portraitTracker.recordFixedCell({
+        cellId,
+        terrainTileId: cell.terrainTileId ?? 0,
+        featureTileId: cell.featureTileId,
+        family:
+          cell.paletteEpoch === 1
+            ? 'water'
+            : cell.paletteEpoch === 2
+              ? 'forest'
+              : cell.paletteEpoch >= 3
+                ? 'ruin'
+                : 'base',
+      });
+    }
+    portraitTracker.recordFrame({
+      deltaSeconds,
+      playerPosition,
+      inDanger:
+        (wp5Preview?.snapshot().hazardCount ?? 0) > 0 &&
+        Math.hypot(playerPosition[0] - 64, playerPosition[2] - 64) > 14,
+      unresolvedVisibleCells: superposedCells.length,
+    });
+    const focusedCell = superposedCells.reduce<
+      (typeof superposedCells)[number] | null
+    >(
+      (selected, cell) =>
+        selected === null || cell.observationCharge > selected.observationCharge
+          ? cell
+          : selected,
+      null,
+    );
+    if (focusedCell && focusedCell.observationCharge > 0) {
+      portraitTracker.recordGaze(focusedCell.cellId, deltaSeconds);
+    }
     reticle.setCharge(maximumCharge);
     audioDirector.setObservationCharge(maximumCharge);
     const fixedRatio = Math.min(1, worldState.countFixedCells() / 60);
@@ -503,6 +633,7 @@ export function bootstrap(root: HTMLElement): () => void {
       for (const packId of wp5Snapshot.progression.collectedPacks) {
         if (announcedPacks.has(packId)) continue;
         announcedPacks.add(packId);
+        portraitTracker.recordUnlock(packId);
         audioDirector.unlockStem(packId);
         narrative.play(narrativeCueByPack[packId]);
       }
@@ -513,40 +644,64 @@ export function bootstrap(root: HTMLElement): () => void {
           uncertaintyState === 'PETRIFYING' ||
           uncertaintyState === 'FIXED_STATUE',
       );
+      if (wp5Snapshot.respawn.deaths > portraitTracker.snapshot().deaths) {
+        portraitTracker.recordDeath();
+      }
     }
 
-    const slice = sliceDirector!.update(
-      shell.dataset.calibrated === 'true' &&
-        (canonicalReplay || !playerInput.paused) &&
-        !(wp5Preview?.progression.isClockPaused() ?? false)
-        ? deltaSeconds * replaySpeed
-        : 0,
+    runClock!.setPaused(
+      'SEED',
+      wp5Preview?.progression.isClockPaused() ?? false,
     );
-    hud.setTime(slice.remainingSeconds);
-    audioDirector.updateCountdown(slice.remainingSeconds, slice.elapsedSeconds);
-    if (slice.phase === 'OBSERVING' && slice.remainingSeconds <= 30) {
-      narrative.play('lastThirtySeconds');
-    }
+    const clock = runClock!.update(
+      shell.dataset.calibrated === 'true' ? deltaSeconds * replaySpeed : 0,
+    );
+    hud.setTime(clock.remainingSeconds);
+    audioDirector.updateCountdown(clock.remainingSeconds, clock.elapsedSeconds);
 
     if (
       !canonicalReplay &&
       !wp5PreviewEnabled &&
-      slice.phase === 'OBSERVING' &&
-      slice.waterUnlocked
+      clock.phase === 'RUNNING' &&
+      announcedPacks.has('water')
     ) {
       const coordinates = worldPositionToCell(playerPosition);
       if (coordinates) {
         const playerCellId = cellCoordinatesToId(coordinates);
         if (fixedVisuals.isDeepWater(playerCellId)) {
-          sliceDirector!.triggerDeath();
+          wp5Preview?.respawn.requestDeath({ cause: 'HAZARD' });
         }
       }
     }
 
-    if (slice.phase === 'ENDING') {
-      camera.position.y += deltaSeconds * 3.1;
+    if (clock.phase === 'ENDING') {
+      const ending = endingDirector.update(deltaSeconds * replaySpeed);
+      camera.position.y = Math.max(
+        camera.position.y,
+        1.7 + ending.progress * 24.8,
+      );
       camera.lookAt(64, 0, 64);
+      if (ending.phase === 'COMPLETE' && !resultPresented) {
+        resultPresented = true;
+        runClock!.markComplete();
+        const portrait = portraitTracker.snapshot();
+        const profile = classifyAttentionPortrait(portrait);
+        const haiku = generateHaiku(worldSeed, portrait, profile);
+        const closure = closureForSeedCount(portrait.unlockedPacks.length);
+        const result: RunResult = {
+          worldSeed,
+          seedLabel: formatSeed(worldSeed),
+          profile,
+          portrait,
+          haiku,
+          ...closure,
+        };
+        narrative.play('final');
+        resultsPanel.show(result);
+        shell.dataset.complete = 'true';
+      }
     }
+    debugOverlay?.update();
     finalArt.update(elapsedSeconds);
     gameRenderer.render();
   });
@@ -563,7 +718,9 @@ export function bootstrap(root: HTMLElement): () => void {
         .querySelector('span')
         ?.replaceChildren('Mirada calibrada');
       playerInput.setEnabled(true);
-      void audioDirector.startFromGesture();
+      void audioDirector.startFromGesture().then((started) => {
+        shell.dataset.audioStarted = String(started);
+      });
       narrative.play('start');
       void playerInput.resume();
     },
@@ -572,9 +729,13 @@ export function bootstrap(root: HTMLElement): () => void {
 
   const handleVisibilityChange = (): void => {
     if (document.hidden) {
+      runClock!.setPaused('HIDDEN', true);
       playerInput.pause();
       gameLoop.stop();
-    } else gameLoop.start();
+    } else {
+      runClock!.setPaused('HIDDEN', false);
+      gameLoop.start();
+    }
   };
 
   document.addEventListener('visibilitychange', handleVisibilityChange, {
@@ -593,6 +754,7 @@ export function bootstrap(root: HTMLElement): () => void {
     solverWorker.dispose();
     reticle.destroy();
     hud.destroy();
+    debugOverlay?.destroy();
     pauseMenu?.destroy();
     audioDirector.dispose();
     superposition.dispose();

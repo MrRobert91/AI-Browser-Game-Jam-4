@@ -1,0 +1,33 @@
+{
+  "openings": [
+    { "text": "Muchos caminos.", "tags": ["cartographer", "revisit"] },
+    { "text": "El agua termina.", "tags": ["water"] },
+    { "text": "Moriste tres veces.", "tags": ["death"] },
+    { "text": "La hierba recuerda.", "tags": ["forest", "gardener"] },
+    { "text": "Tu mirada espera.", "tags": ["witness", "dwell"] },
+    { "text": "Cruzas lo incierto.", "tags": ["danger", "impatient"] }
+  ],
+  "middles": [
+    { "text": "Solo aquel que miraste", "tags": ["cartographer", "revisit"] },
+    { "text": "Más allá de tus ojos", "tags": ["water", "unresolved"] },
+    { "text": "El bosque, más paciente,", "tags": ["forest", "death"] },
+    { "text": "La piedra guarda luz", "tags": ["ruin", "witness"] },
+    { "text": "Donde sostienes la vista", "tags": ["dwell", "witness"] },
+    { "text": "La distancia arde", "tags": ["danger", "impatient"] }
+  ],
+  "closings": [
+    { "text": "recuerda tus pasos.", "tags": ["cartographer", "revisit"] },
+    { "text": "el mar aún duda.", "tags": ["water", "unresolved"] },
+    { "text": "conservó tu forma.", "tags": ["forest", "death"] },
+    { "text": "y pronuncia tu nombre.", "tags": ["ruin", "witness"] },
+    { "text": "la posibilidad duerme.", "tags": ["unresolved", "dwell"] },
+    { "text": "sin aprender tu sombra.", "tags": ["danger", "impatient"] }
+  ],
+  "fallbacks": [
+    ["Muchos caminos.", "Solo aquel que miraste", "recuerda tus pasos."],
+    ["El agua termina.", "Más allá de tus ojos", "el mar aún duda."],
+    ["Moriste tres veces.", "El bosque, más paciente,", "conservó tu forma."],
+    ["Tu mirada espera.", "Donde sostienes la vista", "la posibilidad duerme."],
+    ["Cruzas lo incierto.", "La distancia arde", "sin aprender tu sombra."]
+  ]
+}

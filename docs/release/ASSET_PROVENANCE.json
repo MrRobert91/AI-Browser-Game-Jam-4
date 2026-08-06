@@ -1,0 +1,39 @@
+{
+  "project": "La Última Observación",
+  "runtimeRemoteGeneration": false,
+  "telemetry": "disabled",
+  "assets": [
+    {
+      "path": "public/assets/proxies/**/*.proxy.json",
+      "kind": "procedural proxy definitions",
+      "tool": "Codex and manual TypeScript/JSON editing",
+      "process": "authored from the normative 2x2m tile grammar; reviewed and validated locally",
+      "editing": "human-directed iteration, validator and browser review",
+      "license": "Original project content; CC BY 4.0 for jam distribution"
+    },
+    {
+      "path": "src/render/**",
+      "kind": "procedural materials, atmosphere, vegetation and VFX",
+      "tool": "Three.js and authored shaders/material parameters",
+      "process": "generated at runtime from local code and deterministic seeds",
+      "editing": "human-directed implementation and visual QA",
+      "license": "Original project source under repository license"
+    },
+    {
+      "path": "src/audio/**",
+      "kind": "procedural local audio",
+      "tool": "Web Audio API",
+      "process": "oscillators, gains and filters synthesized after a user gesture",
+      "editing": "human-directed implementation and accessibility tuning",
+      "license": "Original project source under repository license"
+    },
+    {
+      "path": "public/favicon.svg",
+      "kind": "interface icon",
+      "tool": "manual SVG editing",
+      "process": "authored from the observation reticle motif and project palette",
+      "editing": "human-directed implementation and browser QA",
+      "license": "Original project content under repository license"
+    }
+  ]
+}
