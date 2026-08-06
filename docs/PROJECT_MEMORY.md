@@ -25,7 +25,7 @@ Actualizado: 2026-08-06 (Europe/Madrid)
 - Trabajo en revisión: issues #40–#51, desde RunClock y final cualitativo hasta replay, simulación masiva, E2E, rendimiento, balance, build offline y release candidate.
 - Arquitectura vigente: el reloj bloquea observación y commits al entrar en ending; replay/overlay viven en `src/dev` y el overlay solo entra en `DEV`; gates de release se ejecutan localmente y en CI sin alterar resultados del solver.
 - Evidencia actual: cinco capturas PNG, WebM y resultados reproducibles en [`docs/progress/wp7-wp8-release/`](./progress/wp7-wp8-release/), más checklist, matriz, rendimiento, balance, créditos y procedencia en [`docs/release/`](./release/).
-- Estado remoto: [PR #70](https://github.com/MrRobert91/AI-Browser-Game-Jam-4/pull/70) abierta, no draft, base `dev`; la candidata se enlaza al publicarse. La PR no se fusiona.
+- Estado remoto: [PR #70](https://github.com/MrRobert91/AI-Browser-Game-Jam-4/pull/70) abierta, no draft, base `dev`; [`v0.1.0-rc.1`](https://github.com/MrRobert91/AI-Browser-Game-Jam-4/releases/tag/v0.1.0-rc.1) publicada como prerelease desde el SHA `700c91e`. La PR no se fusiona.
 
 ## Registro cronológico
 

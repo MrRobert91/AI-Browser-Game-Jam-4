@@ -33,6 +33,6 @@ Entrega acumulativa de las issues #40–#51 en `codex/wp7-wp8-release`, creada d
 - `npm run test:e2e`: Chromium 1440×900 y Firefox 1280×720; cuatro casos verdes, sin errores de consola ni requests fallidas. Firefox compara el panel final con tolerancia `maxDiffPixelRatio = 0.035`.
 - `npm run test:e2e:desktop`: Chrome estable 1920×1080; dos casos verdes. La primera ejecución descubrió dos 404 de favicon; se añadió `public/favicon.svg` y la repetición quedó limpia.
 - `npm run profile:release`: worker p95 2,88 ms, main p95 9,32 ms, 60 FPS estimados, 148 draw calls, 882.000 triángulos, 228 MB de texturas, 8,62 MB en `dist` y 3,1 s hasta interacción; todos los objetivos se cumplen en el harness determinista.
-- `npm run package:release`: `release/la-ultima-observacion-rc.zip`, 2.653.429 bytes, SHA-256 `f21400ed03f1286c1dc7bf0e1e6e350ac5a4b36333aa76292bffeff2770b6d79`.
+- `npm run package:release`: [`v0.1.0-rc.1`](https://github.com/MrRobert91/AI-Browser-Game-Jam-4/releases/tag/v0.1.0-rc.1), ZIP de 2.653.429 bytes, SHA-256 `f21400ed03f1286c1dc7bf0e1e6e350ac5a4b36333aa76292bffeff2770b6d79`.
 
 Edge no estaba instalado en el equipo de validación y queda marcado como no disponible, no como aprobado. La medición de GPU integrada requiere hardware manual externo; las métricas automáticas del perfil son un gate reproducible, no una captura física del driver.
