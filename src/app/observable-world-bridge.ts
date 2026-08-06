@@ -36,6 +36,8 @@ export interface ObservableWorldBridgeOptions {
   readonly safeTerrainTileId?: number;
   readonly onWarning?: (warning: SolverWarning) => void;
   readonly onCollapseAccepted?: (cellId: CellId) => void;
+  readonly canObserve?: () => boolean;
+  readonly canAcceptCollapse?: () => boolean;
   readonly worldState?: WorldState;
 }
 
@@ -87,6 +89,10 @@ export class ObservableWorldBridge {
   }
 
   update(frame: ObservationFrame, nowMs: number): number {
+    if (this.options.canObserve?.() === false) {
+      this.collapses.update(nowMs);
+      return 0;
+    }
     let emitted = 0;
     for (const result of this.observation.update(frame)) {
       this.collapses.ensureSafeContactGround(
@@ -128,6 +134,9 @@ export class ObservableWorldBridge {
 
     const signature = collapseSignature(output);
     if (this.seenCollapseEvents.has(signature)) {
+      return false;
+    }
+    if (this.options.canAcceptCollapse?.() === false) {
       return false;
     }
     const accepted = this.collapses.accept(
