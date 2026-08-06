@@ -166,4 +166,24 @@ La muerte congela, disuelve y devuelve al monolito con 1,5 segundos de invulnera
 
 [Ver montaje del preview WP5 (WebM, 17 s)](./wp5-gameplay/wp5-gameplay-preview.webm)
 
-Nada de lo anterior cambia el resultado del gate. El preview requiere `?wp5=preview`, muestra `#29 NO-GO` en pantalla y permanece desactivado en el recorrido normal. Hasta completar cinco sesiones humanas, WP5 es una implementación revisable, no una mecánica promovida.
+Ese gate se cerró después y WP4/WP5 entraron juntas en `dev` mediante PR #68. A partir de ese punto, el replay acumulativo deja de presentarse como un NO-GO y se convierte en la base reproducible para trabajar la presentación final.
+
+## WP6 convierte sistemas legibles en una experiencia coherente
+
+La presentación no se trató como una capa de barniz. El renderer separa explícitamente lo probable de lo fijado: cian, violeta, wireframe y fresnel antes del commit; oro y blanco durante 450–700 ms; materiales cálidos y rugosos después. La vegetación nace de posiciones deterministas y una sola familia instanciada, mientras la densidad, sombras, bloom y SSAO degradan por preset sin cambiar una sola decisión del solver.
+
+![Superposición fría y lenguaje material WP6](./wp6-presentation/01-intro.webp)
+
+El audio sigue la misma arquitectura. Ningún `AudioContext` existe antes de calibrar la mirada. Tras ese gesto, master, música y efectos se separan en buses; la carga eleva un armónico, cada colapso tiene firma propia, cada Semilla añade un stem permanente y la cuenta atrás cambia de cadencia a 60 y 30 segundos. La Incertidumbre suena fuera del foco y calla en cuanto entra en observación. Un pool de ocho voces impide que el paisaje procedural se convierta en una fuente por celda.
+
+La interfaz deja el centro casi vacío: retícula de diez píxeles, un MIRA que desaparece con el primer colapso, tiempo arriba a la izquierda y cuatro Semillas arriba a la derecha. Escape libera Pointer Lock y abre una pausa que reúne sensibilidad, inversión Y, cabeceo, destellos reducidos, contraste, subtítulos, calidad y tres volúmenes. Mantener R dos segundos reinicia; ocultar la pestaña detiene el reloj.
+
+![Opciones accesibles y pausa](./wp6-presentation/03-pause-options.webp)
+
+La Medida también pasa a contenido local. Las líneas canónicas de inicio, Agua, muerte, últimos treinta segundos y final viven en `narrative.json`; Bosque, Ruina y Tormenta añaden una intervención breve cada uno. Los subtítulos están activos por defecto y el flujo completo funciona sin voz, de modo que la narración nunca depende de red ni de un proveedor.
+
+![Narrativa local durante el mundo fijado](./wp6-presentation/02-narrative-unlocks.webp)
+
+[Ver walkthrough WP6 (WebM VP9, 12 s)](./wp6-presentation/wp6-presentation-walkthrough.webm)
+
+El corte termina con 138 tests, build de producción, auditoría sin vulnerabilidades y un recorrido de navegador sin warnings ni errores. Lo importante no es que haya más efectos, sino que render, sonido, HUD y texto expresan la misma regla: mirar elimina posibilidades y convierte una superposición fría en un lugar material que puede recordarse.

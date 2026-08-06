@@ -4,7 +4,7 @@ Este documento conserva la historia de implementación de **La Última Observaci
 
 ## Vista de pájaro
 
-Actualizado: 2026-08-05 (Europe/Madrid)
+Actualizado: 2026-08-06 (Europe/Madrid)
 
 | Fase | Issues | Estado | Gate o dependencia principal |
 |---|---:|---|---|
@@ -12,23 +12,32 @@ Actualizado: 2026-08-05 (Europe/Madrid)
 | WP1 — Solver puro | #5–#11 | Integrada en `dev` | PR #66 fusionada; issues #5–#11 cerradas |
 | WP2 — Render, cámara y física | #12–#14 | Integrada en `dev` | PR #66 fusionada; issues #12–#14 cerradas |
 | WP3 — Gramática y tiles | #15–#22 | Integrada en `dev` salvo #22 | PR #67 fusionada; #22 bloqueada por release #51 |
-| WP4 — Mundo observable | #23–#29 | #23–#28 en revisión; #29 pendiente | Slice técnico listo; gate humano 0/5 |
-| WP5 — Progresión y peligros | #30–#35 | Implementada en preview; promoción bloqueada | Requiere que #29 pase de NO-GO a GO |
-| WP6 — Presentación | #36–#39 | Bloqueada | Requiere mundo observable estable |
+| WP4 — Mundo observable | #23–#29 | Integrada en `dev` | PR #68 fusionada; dependencias WP6 cerradas |
+| WP5 — Progresión y peligros | #30–#35 | Integrada en `dev` | PR #68 fusionada; Semillas, peligros y respawn disponibles |
+| WP6 — Presentación | #36–#39 | Implementada; PR pendiente | Rama acumulativa desde `dev` `8a95fa5` |
 | WP7 — Final | #40–#43 | Bloqueada | Requiere progresión y presentación |
 | WP8 — QA y entrega | #44–#51 | Bloqueada | Requiere juego completo; termina en release candidate |
 | POST — Expansiones | #52–#56 | Bloqueada | Solo después de la release de jam |
 
 ### Estado operativo actual
 
-- Fase actual: WP4 y la implementación técnica de WP5 están acumuladas sobre una rama nacida de `dev` actualizado (`0cd7cd1cabbb97be1d89c4614c748dd6153605d9`).
-- Trabajo en revisión: mundo observable, vertical slice, plan macro de Semillas, progresión, curvas de distancia, peligros, La Incertidumbre y respawn persistente.
-- Gate humano: #29 no se declara completada. Hay protocolo, plantilla y matriz, pero siguen faltando cinco sesiones reales. WP5 está desactivada por defecto y solo puede inspeccionarse con `?wp5=preview`; enemigos y packs no entran en el slice normal.
-- Arquitectura vigente: `WorldState` conserva identidad/rotación de `FIXED`; el renderer alterna top-3/top-2 sin cargar GLB por posibilidad; `CollapseDirector` valida 10,01 m y habilita física al 70 %; `ObservableWorldBridge` deduplica eventos, copia bordes y limita epochs a mundo futuro.
-- `dev` base de esta entrega: `0cd7cd1cabbb97be1d89c4614c748dd6153605d9`; rama: `codex/wp4-observable-world-vertical-slice`.
-- Evidencia actual: replay WP4 en [`docs/progress/wp4-observable-world/`](./progress/wp4-observable-world/), preview WP5 en [`docs/progress/wp5-gameplay/`](./progress/wp5-gameplay/) y playtest pendiente en [`docs/playtests/wp4-vertical-slice/`](./playtests/wp4-vertical-slice/).
+- Fase actual: WP6 completa en la rama `codex/wp6-presentation-audio-ux`, nacida de `dev` actualizado `8a95fa572b7a4d32a99c37602570f757da0b8e6b`.
+- Trabajo en revisión: arte/VFX final (#36), audio local por buses/stems (#37), HUD/pausa/opciones (#38) y narrativa española (#39).
+- Estado previo reconciliado: PR #68 integró WP4/WP5 en `dev`; #29 y las dependencias externas de #36–#39 están cerradas. El replay acumulativo se expone con `?wp6=preview&replay=wp5` para evidencia reproducible.
+- Arquitectura vigente: postprocesado por preset sin tocar solver; vegetación instanciada y materiales compartidos; Web Audio solo tras gesto y con máximo ocho fuentes; ajustes persistentes separados de estado de partida; narrativa local desacoplada de voz.
+- Evidencia actual: tres WebP y walkthrough VP9 en [`docs/progress/wp6-presentation/`](./progress/wp6-presentation/), además de los registros históricos WP4/WP5.
 
 ## Registro cronológico
+
+### 2026-08-06 — Entrega acumulativa WP6
+
+- Secuencia: #36 dirección visual y VFX; #37 `AudioDirector`, buses, pool y stems; #38 HUD, onboarding, pausa y opciones; #39 narrativa española local.
+- Render: `WorldPostprocessing` aplica bloom por umbral en medio/alto y SSAO solo en alto; `ProceduralVegetationField` usa una única geometría/material instanciados y densidad 48/104/160; el colapso conserva su duración normativa y transita de emisión oro a material fijo.
+- Audio: no se crea `AudioContext` antes del gesto; master, música y SFX tienen ganancias independientes; los cuatro packs desbloquean stems persistentes; observación, colapso, entorno, cuenta atrás e Incertidumbre tienen firmas separadas; el pool rechaza una novena voz.
+- UX: Escape libera Pointer Lock y abre pausa, la pestaña oculta detiene loop/reloj, R exige dos segundos, los subtítulos y destellos reducidos vienen activos, y calidad/contraste/sensibilidad/volúmenes se aplican sin alterar el solver.
+- Narrativa: inicio, primer unlock, primera muerte, últimos treinta segundos y final conservan literalmente el texto canónico; Bosque, Ruina y Tormenta añaden una sola línea cada uno; toda intervención funciona sin voz y no bloquea control.
+- Validación: `npm run format:check`, `npm run check` (33 archivos, 138 tests), `npm run build`, `npm audit --omit=dev` (0 vulnerabilidades), `git diff --check`, replay local completo y consola sin warnings/errores.
+- Evidencia: [`docs/progress/wp6-presentation/`](./progress/wp6-presentation/) contiene tres capturas WebP y WebM VP9 de 12 s verificado con `ffprobe`.
 
 ### 2026-08-05 — Implementación técnica WP5 detrás del gate #29
 

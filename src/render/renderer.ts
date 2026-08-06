@@ -15,6 +15,7 @@ import {
   type QualityPreset,
   type QualityProfile,
 } from './quality';
+import { WorldPostprocessing } from './postprocessing';
 
 export interface GameRendererOptions {
   readonly container: HTMLElement;
@@ -29,6 +30,7 @@ export class GameRenderer {
   readonly #container: HTMLElement;
   readonly #atmosphere: Atmosphere;
   readonly #resolution: DynamicResolutionController;
+  readonly #postprocessing: WorldPostprocessing;
   #profile: QualityProfile;
   #lastRenderTime: number | null = null;
 
@@ -56,6 +58,12 @@ export class GameRenderer {
     this.renderer.toneMappingExposure = 1;
     this.renderer.shadowMap.type = PCFShadowMap;
     this.#atmosphere = createAtmosphere(this.scene, this.#profile);
+    this.#postprocessing = new WorldPostprocessing(
+      this.renderer,
+      this.scene,
+      this.camera,
+      this.#profile,
+    );
     this.#container.replaceChildren(canvas);
     this.#applyQuality();
     this.resize();
@@ -69,6 +77,7 @@ export class GameRenderer {
     this.#profile = resolveQualityProfile(preset);
     this.#resolution.setProfile(this.#profile);
     this.#atmosphere.applyQuality(this.#profile);
+    this.#postprocessing.applyQuality(this.#profile);
     this.#applyQuality();
     this.resize();
   }
@@ -78,6 +87,11 @@ export class GameRenderer {
     const height = Math.max(1, this.#container.clientHeight);
     updateCameraAspect(this.camera, width, height);
     this.renderer.setSize(width, height, false);
+    this.#postprocessing.setSize(
+      width,
+      height,
+      Math.min(window.devicePixelRatio || 1, 2) * this.#resolution.scale,
+    );
   }
 
   render(timestamp = performance.now()): void {
@@ -91,12 +105,17 @@ export class GameRenderer {
         this.resize();
       }
     }
+    const deltaSeconds =
+      this.#lastRenderTime === null
+        ? 0
+        : Math.min(0.1, Math.max(0, timestamp - this.#lastRenderTime) / 1_000);
     this.#lastRenderTime = timestamp;
-    this.renderer.render(this.scene, this.camera);
+    this.#postprocessing.render(deltaSeconds);
   }
 
   dispose(): void {
     this.#atmosphere.dispose();
+    this.#postprocessing.dispose();
     this.renderer.dispose();
     this.renderer.domElement.remove();
   }
