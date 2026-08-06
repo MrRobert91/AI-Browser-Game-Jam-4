@@ -140,7 +140,9 @@ export class PlayerInput {
 
   readonly #handleKeyDown = (event: KeyboardEvent): void => {
     if (event.code === 'Escape') {
+      const wasPaused = this.#paused;
       this.pause();
+      if (wasPaused) this.#handlers.onPauseChange?.(true);
       return;
     }
     if (this.#paused) return;

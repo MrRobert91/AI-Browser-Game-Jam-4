@@ -97,6 +97,8 @@ export class SliceCollapseVisuals implements CollapseVisualAdapter {
     group.scale.setScalar(0.85);
     const terrainMaterial = new MeshStandardMaterial({
       color: style.color,
+      emissive: 0xffc45c,
+      emissiveIntensity: 1.15,
       roughness: style.deepWater ? 0.24 : 0.92,
       metalness: style.deepWater ? 0.16 : 0,
       transparent: true,
@@ -126,6 +128,7 @@ export class SliceCollapseVisuals implements CollapseVisualAdapter {
     const eased = 1 - Math.pow(1 - progress, 3);
     record.group.scale.setScalar(0.85 + eased * 0.15);
     record.terrainMaterial.opacity = eased;
+    record.terrainMaterial.emissiveIntensity = (1 - eased) * 1.15;
   }
 
   emitBoundaryWave(cellId: CellId): void {
@@ -152,6 +155,7 @@ export class SliceCollapseVisuals implements CollapseVisualAdapter {
     record.group.scale.setScalar(1);
     record.terrainMaterial.opacity = 1;
     record.terrainMaterial.transparent = false;
+    record.terrainMaterial.emissiveIntensity = 0;
   }
 
   updateFrame(deltaSeconds: number): void {

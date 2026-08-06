@@ -2,7 +2,10 @@ import { GameLoop } from './game-loop';
 import { ObservableWorldBridge } from './observable-world-bridge';
 import { SolverWorkerClient } from './solver-worker-client';
 import { Wp5PreviewRuntime } from './wp5-preview-runtime';
+import { AudioDirector } from '../audio/audio-director';
+import type { UnlockablePackId } from '../contracts/tiles';
 import { planSeedAnchors } from '../gameplay/anchors';
+import { NarrativeDirector, type NarrativeCueId } from '../gameplay/narrative';
 import { VerticalSliceDirector } from '../gameplay/vertical-slice';
 import {
   isGrammarViewerMode,
@@ -15,9 +18,12 @@ import {
   type PlayerPhysicsRuntime,
 } from '../player/physics';
 import { GameRenderer } from '../render/renderer';
+import { FinalArtDirector } from '../render/final-art-director';
 import { SuperpositionRenderer } from '../render/superposition';
 import { Wp5PreviewVisuals } from '../render/wp5-preview-visuals';
 import { ObservationReticle } from '../ui/observation-reticle';
+import { GameHud } from '../ui/hud';
+import { loadGameSettings, PauseMenu, type GameSettings } from '../ui/pause';
 import { ProgressionHud } from '../ui/progression-hud';
 import { SliceCollapseVisuals } from '../world/collapse-visuals';
 import { createOriginDetailField } from '../world/origin-details';
@@ -69,7 +75,7 @@ const SHELL_MARKUP = `
     </aside>
 
     <footer class="shell-footer">
-      <p>WP0 // SYSTEM SHELL</p>
+      <p>WP6 // PRESENTATION BUILD</p>
       <p data-worker-state>CONTRATO // INICIALIZANDO</p>
       <p>BUILD <span>LOCAL</span></p>
     </footer>
@@ -81,7 +87,7 @@ const SHELL_MARKUP = `
     </section>
 
     <p class="wp5-gate-status" data-wp5-gate-status>
-      WP5 PREVIEW · #29 NO-GO · 0/5 TESTERS
+      WP6 · PRESENTACIÓN LOCAL
     </p>
 
     <section class="slice-result" data-slice-result hidden>
@@ -155,25 +161,83 @@ export function bootstrap(root: HTMLElement): () => void {
   }
 
   const abortController = new AbortController();
+  const settings = loadGameSettings();
   const camera = createFirstPersonCamera(
     Math.max(1, viewport.clientWidth),
     Math.max(1, viewport.clientHeight),
   );
-  const gameRenderer = new GameRenderer({ container: viewport, camera });
+  const gameRenderer = new GameRenderer({
+    container: viewport,
+    camera,
+    quality: settings.quality,
+  });
+  const finalArt = new FinalArtDirector(
+    gameRenderer.scene,
+    gameRenderer.quality,
+  );
+  const audioDirector = new AudioDirector();
+  audioDirector.setVolumes(settings.volumes);
   const originDetails = createOriginDetailField(gameRenderer.scene);
   const superposition = new SuperpositionRenderer(
     gameRenderer.quality.preset === 'low' ? 'low' : 'medium',
   );
   gameRenderer.scene.add(superposition.root);
   const reticle = new ObservationReticle(shell);
+  const hud = new GameHud(shell, { time: sliceTime, message: sliceMessage });
+  hud.setSubtitlesEnabled(settings.subtitles);
+  hud.setHighContrast(settings.highContrast);
+  const narrative = new NarrativeDirector({
+    onMessage: (message) => hud.setMessage(message),
+    onSubtitle: (message) => hud.showSubtitle(message),
+    onAudioCue: () => audioDirector.playNarrativeCue(),
+  });
+  let pauseMenu: PauseMenu | null = null;
   const playerInput = new PlayerInput(shell, {
     onPauseChange: (paused) => {
       shell.dataset.paused = String(paused);
       if (shell.dataset.calibrated === 'true') {
-        systemState.textContent = paused ? 'PAUSA' : 'OBSERVANDO';
+        systemState.textContent =
+          shell.dataset.playerState === 'death'
+            ? 'RECONSTRUYENDO'
+            : shell.dataset.ending === 'true'
+              ? 'CIERRE'
+              : paused
+                ? 'PAUSA'
+                : 'OBSERVANDO';
+        pauseMenu?.setOpen(
+          paused &&
+            shell.dataset.playerState !== 'death' &&
+            shell.dataset.ending !== 'true' &&
+            shell.dataset.complete !== 'true',
+        );
       }
     },
   });
+  const applySettings = (nextSettings: GameSettings): void => {
+    playerInput.setSettings({
+      mouseSensitivity: nextSettings.mouseSensitivity,
+      invertY: nextSettings.invertY,
+      headBobEnabled: nextSettings.headBobEnabled,
+    });
+    gameRenderer.setQuality(nextSettings.quality);
+    finalArt.applyQuality(gameRenderer.quality);
+    superposition.setQuality(
+      gameRenderer.quality.preset === 'low'
+        ? 'low'
+        : gameRenderer.quality.preset,
+    );
+    superposition.setHighContrast(nextSettings.highContrast);
+    hud.setSubtitlesEnabled(nextSettings.subtitles);
+    hud.setHighContrast(nextSettings.highContrast);
+    audioDirector.setVolumes(nextSettings.volumes);
+    shell.dataset.reducedFlashes = String(nextSettings.reducedFlashes);
+  };
+  pauseMenu = new PauseMenu(shell, settings, {
+    onResume: () => void playerInput.resume(),
+    onRestart: () => window.location.reload(),
+    onSettingsChange: applySettings,
+  });
+  applySettings(settings);
   let playerPhysics: PlayerPhysicsRuntime | null = null;
   let disposed = false;
   void createPlayerPhysicsRuntime(camera, playerInput)
@@ -221,7 +285,11 @@ export function bootstrap(root: HTMLElement): () => void {
     ],
     worldState,
     visuals: fixedVisuals,
-    onCollapseAccepted: () => sliceDirector?.notifyFirstCollapse(),
+    onCollapseAccepted: () => {
+      sliceDirector?.notifyFirstCollapse();
+      hud.notifyFirstCollapse();
+      audioDirector.notifyCollapse();
+    },
     onWarning: (warning) => {
       if (warning.code !== 'ECHO_ONLY') {
         workerState.textContent = `SOLVER // ${warning.code}`;
@@ -233,7 +301,8 @@ export function bootstrap(root: HTMLElement): () => void {
 
   const search = new URLSearchParams(window.location.search);
   const replayMode = search.get('replay');
-  const wp5PreviewEnabled = search.get('wp5') === 'preview';
+  const wp5PreviewEnabled =
+    search.get('wp5') === 'preview' || search.get('wp6') === 'preview';
   const wp5Replay = wp5PreviewEnabled && replayMode === 'wp5';
   const canonicalReplay = replayMode === 'canonical' || wp5Replay;
   const requestedSpeed = Number(search.get('speed') ?? '1');
@@ -250,13 +319,12 @@ export function bootstrap(root: HTMLElement): () => void {
     {
       onWaterUnlock: () => {
         observableWorld!.unlockPack('water');
-        sliceMessage.textContent =
-          'El agua no estaba ausente. Todavía no era posible.';
+        narrative.play('unlockWater');
         shell.dataset.waterUnlocked = 'true';
       },
       onDeath: () => {
         shell.dataset.playerState = 'death';
-        sliceMessage.textContent = 'El mundo recuerda mejor que tú.';
+        narrative.play('firstDeath');
         playerInput.setEnabled(false);
       },
       onRespawn: () => {
@@ -270,9 +338,10 @@ export function bootstrap(root: HTMLElement): () => void {
         shell.dataset.ending = 'true';
         superposition.root.visible = false;
         fixedVisuals.setEndingMode(true);
-        sliceMessage.textContent = 'No queda tiempo para verlo todo.';
+        narrative.play('lastThirtySeconds');
       },
       onComplete: () => {
+        narrative.play('final');
         sliceResult.hidden = false;
         shell.dataset.complete = 'true';
       },
@@ -294,7 +363,7 @@ export function bootstrap(root: HTMLElement): () => void {
       unlockPack: (packId) => observableWorld!.unlockPack(packId),
       visuals: wp5Visuals,
       canonicalAutomation: wp5Replay,
-      reducedFlashes: true,
+      reducedFlashes: settings.reducedFlashes,
       ensureRespawnGround: () => {
         observableWorld!.collapses.ensureSafeContactGround([2_080], 0);
       },
@@ -305,7 +374,8 @@ export function bootstrap(root: HTMLElement): () => void {
         else camera.position.set(64, 1.7, 64);
       },
       onMessage: (message) => {
-        sliceMessage.textContent = message;
+        hud.setMessage(message);
+        hud.showSubtitle(message);
       },
       onClockReward: (seconds) => {
         sliceDirector!.addTime(seconds);
@@ -313,6 +383,15 @@ export function bootstrap(root: HTMLElement): () => void {
     });
     progressionHud.update(wp5Preview.progression.snapshot());
   }
+
+  const narrativeCueByPack: Readonly<Record<UnlockablePackId, NarrativeCueId>> =
+    {
+      water: 'unlockWater',
+      forest: 'unlockForest',
+      ruin: 'unlockRuin',
+      storm: 'unlockStorm',
+    };
+  const announcedPacks = new Set<UnlockablePackId>();
 
   const gameLoop = new GameLoop(({ deltaSeconds, elapsedSeconds }) => {
     shell.style.setProperty('--observation-phase', `${elapsedSeconds % 8}`);
@@ -368,7 +447,8 @@ export function bootstrap(root: HTMLElement): () => void {
         )
       ) {
         sliceDirector!.notifyFirstCollapse();
-        sliceMessage.textContent = 'La mirada está fijando el mundo.';
+        hud.notifyFirstCollapse();
+        hud.setMessage('La mirada está fijando el mundo.');
       }
     }
 
@@ -390,6 +470,12 @@ export function bootstrap(root: HTMLElement): () => void {
       ];
     });
     reticle.setCharge(maximumCharge);
+    audioDirector.setObservationCharge(maximumCharge);
+    const fixedRatio = Math.min(1, worldState.countFixedCells() / 60);
+    audioDirector.setEnvironmentMix({
+      fixed: fixedRatio,
+      unresolved: 1 - fixedRatio,
+    });
     superposition.update(superposedCells, elapsedSeconds * 1_000);
     fixedVisuals.updateFrame(deltaSeconds);
 
@@ -399,7 +485,10 @@ export function bootstrap(root: HTMLElement): () => void {
       : 2_080;
     const wp5Snapshot = wp5Preview?.update({
       deltaSeconds:
-        shell.dataset.calibrated === 'true' ? deltaSeconds * replaySpeed : 0,
+        shell.dataset.calibrated === 'true' &&
+        (canonicalReplay || !playerInput.paused)
+          ? deltaSeconds * replaySpeed
+          : 0,
       playerPosition,
       cameraForward: [forwardVector.x, forwardVector.y, forwardVector.z],
       playerCellId,
@@ -409,21 +498,34 @@ export function bootstrap(root: HTMLElement): () => void {
     });
     if (wp5Snapshot && progressionHud) {
       progressionHud.update(wp5Snapshot.progression);
-      wp5GateStatus.textContent = `WP5 PREVIEW · #29 NO-GO · ${wp5Snapshot.progression.collectedPacks.length}/4 SEMILLAS · ${wp5Snapshot.uncertainty?.state ?? 'SIN ENEMIGO'}`;
+      wp5GateStatus.textContent = `WP6 · ${wp5Snapshot.progression.collectedPacks.length}/4 SEMILLAS · ${wp5Snapshot.uncertainty?.state ?? 'SIN ENEMIGO'}`;
       shell.dataset.respawnPhase = wp5Snapshot.respawn.phase;
+      for (const packId of wp5Snapshot.progression.collectedPacks) {
+        if (announcedPacks.has(packId)) continue;
+        announcedPacks.add(packId);
+        audioDirector.unlockStem(packId);
+        narrative.play(narrativeCueByPack[packId]);
+      }
+      const uncertaintyState = wp5Snapshot.uncertainty?.state;
+      audioDirector.setUncertaintyObserved(
+        uncertaintyState === undefined ||
+          uncertaintyState === 'SEEN' ||
+          uncertaintyState === 'PETRIFYING' ||
+          uncertaintyState === 'FIXED_STATUE',
+      );
     }
 
     const slice = sliceDirector!.update(
       shell.dataset.calibrated === 'true' &&
+        (canonicalReplay || !playerInput.paused) &&
         !(wp5Preview?.progression.isClockPaused() ?? false)
         ? deltaSeconds * replaySpeed
         : 0,
     );
-    const totalSeconds = Math.ceil(slice.remainingSeconds);
-    sliceTime.textContent = `${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:${String(totalSeconds % 60).padStart(2, '0')}`;
+    hud.setTime(slice.remainingSeconds);
+    audioDirector.updateCountdown(slice.remainingSeconds, slice.elapsedSeconds);
     if (slice.phase === 'OBSERVING' && slice.remainingSeconds <= 30) {
-      sliceMessage.textContent =
-        'No queda tiempo para verlo todo. Elige qué merece terminar.';
+      narrative.play('lastThirtySeconds');
     }
 
     if (
@@ -445,6 +547,7 @@ export function bootstrap(root: HTMLElement): () => void {
       camera.position.y += deltaSeconds * 3.1;
       camera.lookAt(64, 0, 64);
     }
+    finalArt.update(elapsedSeconds);
     gameRenderer.render();
   });
 
@@ -460,14 +563,18 @@ export function bootstrap(root: HTMLElement): () => void {
         .querySelector('span')
         ?.replaceChildren('Mirada calibrada');
       playerInput.setEnabled(true);
+      void audioDirector.startFromGesture();
+      narrative.play('start');
       void playerInput.resume();
     },
     { signal: abortController.signal },
   );
 
   const handleVisibilityChange = (): void => {
-    if (document.hidden) gameLoop.stop();
-    else gameLoop.start();
+    if (document.hidden) {
+      playerInput.pause();
+      gameLoop.stop();
+    } else gameLoop.start();
   };
 
   document.addEventListener('visibilitychange', handleVisibilityChange, {
@@ -485,11 +592,15 @@ export function bootstrap(root: HTMLElement): () => void {
     gameLoop.stop();
     solverWorker.dispose();
     reticle.destroy();
+    hud.destroy();
+    pauseMenu?.destroy();
+    audioDirector.dispose();
     superposition.dispose();
     fixedVisuals.dispose();
     wp5Visuals?.dispose();
     progressionHud?.destroy();
     originDetails.dispose();
+    finalArt.dispose();
     gameRenderer.dispose();
     playerInput.dispose();
     playerPhysics?.dispose();

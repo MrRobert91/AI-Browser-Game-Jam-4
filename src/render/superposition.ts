@@ -161,6 +161,7 @@ export class SuperpositionRenderer {
   private readonly pools = new Map<ProxyFamily, ProxyPool>();
   private readonly matrix = new Matrix4();
   private readonly position = new Vector3();
+  private highContrast = false;
 
   constructor(private quality: SuperpositionQuality = 'medium') {
     for (const family of Object.keys(FAMILY_COLORS) as ProxyFamily[]) {
@@ -179,6 +180,10 @@ export class SuperpositionRenderer {
 
   setQuality(quality: SuperpositionQuality): void {
     this.quality = quality;
+  }
+
+  setHighContrast(enabled: boolean): void {
+    this.highContrast = enabled;
   }
 
   update(cells: readonly SuperpositionCell[], elapsedMs: number): number {
@@ -210,7 +215,12 @@ export class SuperpositionRenderer {
       pool.mesh.instanceMatrix.needsUpdate = pool.count > 0;
       pool.material.uniforms.uTime!.value = elapsedMs / 1_000;
       pool.material.uniforms.uOpacity!.value =
-        pool.count > 0 ? pool.opacityTotal / pool.count : 0;
+        pool.count > 0
+          ? Math.min(
+              0.9,
+              (pool.opacityTotal / pool.count) * (this.highContrast ? 1.45 : 1),
+            )
+          : 0;
     }
     return visibleCount;
   }

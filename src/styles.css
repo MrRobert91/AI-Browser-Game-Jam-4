@@ -49,6 +49,48 @@ body {
   filter: drop-shadow(0 0 4px rgba(157, 230, 255, 0.7));
 }
 
+.onboarding-prompt {
+  position: fixed;
+  z-index: 19;
+  top: calc(50% + 1.5rem);
+  left: 50%;
+  margin: 0;
+  color: #e8fff9;
+  font-family: "Courier New", monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.28em;
+  pointer-events: none;
+  transform: translateX(-50%);
+  transition: opacity 500ms ease;
+}
+
+.onboarding-prompt[data-complete="true"] {
+  opacity: 0;
+}
+
+.narrative-subtitle {
+  position: absolute;
+  z-index: 24;
+  right: 20%;
+  bottom: 4.5rem;
+  left: 20%;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgb(255 231 171 / 18%);
+  color: #fff1c9;
+  background: rgb(3 10 15 / 64%);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+  line-height: 1.45;
+  text-align: center;
+  text-wrap: balance;
+  pointer-events: none;
+}
+
+.narrative-subtitle[hidden] {
+  display: none;
+}
+
 button {
   font: inherit;
 }
@@ -495,6 +537,138 @@ button {
   opacity: 1;
 }
 
+.observation-shell[data-countdown="warning"] .slice-hud p:first-child strong {
+  color: #ffe3a6;
+}
+
+.observation-shell[data-countdown="critical"] .slice-hud p:first-child strong {
+  color: #ff9f91;
+}
+
+.observation-shell[data-high-contrast="true"] .observation-reticle {
+  filter: drop-shadow(0 0 6px #fff);
+}
+
+.observation-shell[data-high-contrast="true"] .game-viewport__canvas {
+  filter: contrast(1.12) saturate(1.08);
+}
+
+.pause-menu {
+  position: absolute;
+  z-index: 40;
+  inset: 0;
+  display: grid;
+  overflow: auto;
+  place-items: center;
+  padding: 2rem;
+  background: rgb(2 8 13 / 82%);
+  backdrop-filter: blur(12px);
+}
+
+.pause-menu[hidden] {
+  display: none;
+}
+
+.pause-menu__panel {
+  width: min(620px, 100%);
+  padding: clamp(1.25rem, 3vw, 2.5rem);
+  border: 1px solid rgb(166 255 238 / 28%);
+  color: #dff8f2;
+  background: rgb(7 22 29 / 94%);
+  box-shadow: 0 24px 90px rgb(0 0 0 / 45%);
+}
+
+.pause-menu__panel > p,
+.pause-menu__restart {
+  color: #82aea6;
+  font-family: "Courier New", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+}
+
+.pause-menu h2 {
+  margin: 0.4rem 0 1.3rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-weight: 400;
+}
+
+.pause-menu button,
+.pause-menu select,
+.pause-menu input {
+  accent-color: #aaffec;
+}
+
+.pause-menu button {
+  padding: 0.75rem 1rem;
+  border: 1px solid #5b9489;
+  color: #eafff8;
+  background: #12333a;
+  cursor: pointer;
+}
+
+.pause-menu__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1.5rem;
+  margin: 1.5rem 0;
+  padding: 1.25rem 0;
+  border-block: 1px solid rgb(166 255 238 / 14%);
+}
+
+.pause-menu__options label {
+  display: flex;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: #b7d7d0;
+  font-size: 0.76rem;
+}
+
+.pause-menu__options input[type="range"] {
+  width: min(10rem, 45%);
+}
+
+.pause-menu__options select {
+  padding: 0.35rem;
+  border: 1px solid #315861;
+  color: #eafff8;
+  background: #0c1c25;
+}
+
+.pause-menu__restart {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.pause-menu[data-restart-holding="true"] .pause-menu__restart::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: #ffad94;
+  content: "";
+  transform-origin: left;
+  animation: restart-hold 2s linear forwards;
+}
+
+.observation-shell[data-reduced-flashes="true"][data-player-state="death"]::before {
+  background: rgb(12 8 14 / 58%);
+  animation: none;
+}
+
+@keyframes restart-hold {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 .wp5-gate-status {
   position: absolute;
   z-index: 6;
@@ -723,6 +897,15 @@ noscript {
     top: 16%;
     right: -16%;
     width: 58vw;
+  }
+
+  .narrative-subtitle {
+    right: 1.5rem;
+    left: 1.5rem;
+  }
+
+  .pause-menu__options {
+    grid-template-columns: 1fr;
   }
 }
 
