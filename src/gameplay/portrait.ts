@@ -18,11 +18,7 @@ export interface AttentionPortrait {
 }
 
 export type AttentionProfile =
-  | 'Jardinero'
-  | 'Cartógrafo'
-  | 'Guardián'
-  | 'Testigo'
-  | 'Impaciente';
+  'Jardinero' | 'Cartógrafo' | 'Guardián' | 'Testigo' | 'Impaciente';
 
 export interface FixedAttentionCell {
   readonly cellId: CellId;
@@ -61,8 +57,7 @@ export function classifyAttentionPortrait(
       portrait.revisitRatio * 1.8 +
       (1 - distance) * 0.7,
     Cartógrafo: distance * 2.3 + diversity * 1.6 + (1 - concentration) * 0.4,
-    Guardián:
-      safety * 1.8 + portrait.revisitRatio * 1.4 + (1 - danger) * 0.8,
+    Guardián: safety * 1.8 + portrait.revisitRatio * 1.4 + (1 - danger) * 0.8,
     Testigo: dwell * 2.4 + concentration * 1.5 + (1 - danger) * 0.3,
     Impaciente:
       distance * 1.5 + danger * 1.5 + (1 - dwell) * 1.2 + (1 - safety) * 0.3,

@@ -18,10 +18,12 @@ import {
   classifyAttentionPortrait,
 } from '../gameplay/portrait';
 import { RunClock, type RunMode } from '../gameplay/run-clock';
+import { DebugOverlay, debugToolsAvailable } from '../dev/debug-overlay';
 import {
   isGrammarViewerMode,
   renderGrammarViewer,
 } from '../dev/grammar-viewer';
+import { ReplayRecorder } from '../dev/replay';
 import { createFirstPersonCamera } from '../player/camera';
 import { PlayerInput } from '../player/input';
 import {
@@ -87,13 +89,13 @@ const SHELL_MARKUP = `
     </aside>
 
     <footer class="shell-footer">
-      <p>WP6 // PRESENTATION BUILD</p>
+      <p>WP8 // RELEASE CANDIDATE</p>
       <p data-worker-state>CONTRATO // INICIALIZANDO</p>
       <p>BUILD <span>LOCAL</span></p>
     </footer>
 
     <section class="slice-hud" aria-live="polite">
-      <p><span>VENTANA</span><strong data-slice-time>01:30</strong></p>
+      <p><span>VENTANA</span><strong data-slice-time>10:00</strong></p>
       <p data-slice-message>Mira para iniciar el registro.</p>
       <p><span>SEED</span><strong>A91F-42C0</strong></p>
     </section>
@@ -289,8 +291,14 @@ export function bootstrap(root: HTMLElement): () => void {
       console.error('Rapier no pudo iniciar.', error);
     });
   let observableWorld: ObservableWorldBridge | null = null;
+  const debugEvents: string[] = [];
+  const replayRecorder = new ReplayRecorder();
   const solverWorker = new SolverWorkerClient({
     onOutput: (output) => {
+      debugEvents.push(
+        `${output.type} ${'cellId' in output ? output.cellId : ''}`.trim(),
+      );
+      if (debugEvents.length > 20) debugEvents.shift();
       observableWorld?.handleWorkerOutput(output, performance.now());
       if (
         output.type === 'SOLVER_WARNING' &&
@@ -364,8 +372,6 @@ export function bootstrap(root: HTMLElement): () => void {
       ? Math.min(8, requestedSpeed)
       : 1;
 
-
-
   let wp5Preview: Wp5PreviewRuntime | null = null;
   let wp5Visuals: Wp5PreviewVisuals | null = null;
   let progressionHud: ProgressionHud | null = null;
@@ -409,6 +415,71 @@ export function bootstrap(root: HTMLElement): () => void {
       storm: 'unlockStorm',
     };
   const announcedPacks = new Set<UnlockablePackId>();
+  const debugOverlay = debugToolsAvailable()
+    ? new DebugOverlay({
+        getSnapshot: () => {
+          const coordinates = worldPositionToCell([
+            camera.position.x,
+            camera.position.y,
+            camera.position.z,
+          ]);
+          const cellId = coordinates ? cellCoordinatesToId(coordinates) : 2_080;
+          const cell = worldState.getCell(cellId);
+          return {
+            seed: formatSeed(worldSeed),
+            tick: Math.floor(runClock!.snapshot().elapsedSeconds * 10),
+            position: [camera.position.x, camera.position.y, camera.position.z],
+            gridCell: coordinates
+              ? `${coordinates.x},${coordinates.z}`
+              : 'out-of-bounds',
+            neighborDomains: coordinates
+              ? [
+                  { x: coordinates.x, z: coordinates.z - 1 },
+                  { x: coordinates.x + 1, z: coordinates.z },
+                  { x: coordinates.x, z: coordinates.z + 1 },
+                  { x: coordinates.x - 1, z: coordinates.z },
+                ]
+                  .filter(({ x, z }) => x >= 0 && z >= 0 && x < 64 && z < 64)
+                  .map(({ x, z }) => {
+                    const neighbor = worldState.getCell(
+                      cellCoordinatesToId({ x, z }),
+                    );
+                    return `${neighbor.cellId}:${neighbor.phase}:e${neighbor.paletteEpoch}`;
+                  })
+              : [],
+            phase: cell.phase,
+            entropy: cell.phase === 'FIXED' ? 0 : 1,
+            domainSize: cell.phase === 'FIXED' ? 1 : 3,
+            observationRadius: 10,
+            occluded: false,
+            queueLength: 0,
+            chunkId: Math.floor(cellId / 1_024),
+            paletteEpoch: cell.paletteEpoch,
+            fallbackCount: debugEvents.filter((event) =>
+              event.includes('QUANTUM'),
+            ).length,
+            recentEvents: debugEvents,
+          };
+        },
+        unlockNextPack: () => {
+          const order: readonly UnlockablePackId[] = [
+            'water',
+            'forest',
+            'ruin',
+            'storm',
+          ];
+          const pack = order.find(
+            (candidate) => !announcedPacks.has(candidate),
+          );
+          if (!pack) return null;
+          observableWorld!.unlockPack(pack);
+          announcedPacks.add(pack);
+          portraitTracker.recordUnlock(pack);
+          debugEvents.push(`F3 UNLOCK ${pack}`);
+          return pack;
+        },
+      })
+    : null;
 
   const gameLoop = new GameLoop(({ deltaSeconds, elapsedSeconds }) => {
     shell.style.setProperty('--observation-phase', `${elapsedSeconds % 8}`);
@@ -444,6 +515,11 @@ export function bootstrap(root: HTMLElement): () => void {
       camera.position.z,
     ] as const;
     const forwardVector = camera.getWorldDirection(camera.up.clone());
+    replayRecorder.record(Math.floor(elapsedSeconds * 10), playerPosition, [
+      forwardVector.x,
+      forwardVector.y,
+      forwardVector.z,
+    ]);
     const nearbyCellIds = observableWorld!.getNearbyCellIds(playerPosition);
     let maximumCharge = 0;
     if (shell.dataset.calibrated === 'true') {
@@ -515,8 +591,7 @@ export function bootstrap(root: HTMLElement): () => void {
       (typeof superposedCells)[number] | null
     >(
       (selected, cell) =>
-        selected === null ||
-        cell.observationCharge > selected.observationCharge
+        selected === null || cell.observationCharge > selected.observationCharge
           ? cell
           : selected,
       null,
@@ -579,9 +654,7 @@ export function bootstrap(root: HTMLElement): () => void {
       wp5Preview?.progression.isClockPaused() ?? false,
     );
     const clock = runClock!.update(
-      shell.dataset.calibrated === 'true'
-        ? deltaSeconds * replaySpeed
-        : 0,
+      shell.dataset.calibrated === 'true' ? deltaSeconds * replaySpeed : 0,
     );
     hud.setTime(clock.remainingSeconds);
     audioDirector.updateCountdown(clock.remainingSeconds, clock.elapsedSeconds);
@@ -628,6 +701,7 @@ export function bootstrap(root: HTMLElement): () => void {
         shell.dataset.complete = 'true';
       }
     }
+    debugOverlay?.update();
     finalArt.update(elapsedSeconds);
     gameRenderer.render();
   });
@@ -644,7 +718,9 @@ export function bootstrap(root: HTMLElement): () => void {
         .querySelector('span')
         ?.replaceChildren('Mirada calibrada');
       playerInput.setEnabled(true);
-      void audioDirector.startFromGesture();
+      void audioDirector.startFromGesture().then((started) => {
+        shell.dataset.audioStarted = String(started);
+      });
       narrative.play('start');
       void playerInput.resume();
     },
@@ -678,6 +754,7 @@ export function bootstrap(root: HTMLElement): () => void {
     solverWorker.dispose();
     reticle.destroy();
     hud.destroy();
+    debugOverlay?.destroy();
     pauseMenu?.destroy();
     audioDirector.dispose();
     superposition.dispose();

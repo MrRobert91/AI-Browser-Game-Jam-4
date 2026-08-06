@@ -103,11 +103,7 @@ export class RunClock {
   }
 
   addTime(seconds: number): RunClockSnapshot {
-    if (
-      this.phase === 'RUNNING' &&
-      Number.isFinite(seconds) &&
-      seconds > 0
-    ) {
+    if (this.phase === 'RUNNING' && Number.isFinite(seconds) && seconds > 0) {
       this.elapsedSeconds = Math.max(0, this.elapsedSeconds - seconds);
     }
     return this.snapshot();

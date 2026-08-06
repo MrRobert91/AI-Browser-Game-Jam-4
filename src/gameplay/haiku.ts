@@ -77,10 +77,11 @@ export function generateHaiku(
 ): GeneratedHaiku {
   const tags = tagsForPortrait(portrait, profile);
   const fallbackIndex =
-    nextUint32(createRng(deriveSeed(worldSeed, `haiku:${PROFILE_TAG[profile]}`))) %
-    haikuLines.fallbacks.length;
-  const fallback = haikuLines.fallbacks[fallbackIndex] ??
-    haikuLines.fallbacks[0]!;
+    nextUint32(
+      createRng(deriveSeed(worldSeed, `haiku:${PROFILE_TAG[profile]}`)),
+    ) % haikuLines.fallbacks.length;
+  const fallback =
+    haikuLines.fallbacks[fallbackIndex] ?? haikuLines.fallbacks[0]!;
   const lines = [
     chooseLine(haikuLines.openings, tags, worldSeed, 'opening') ?? fallback[0]!,
     chooseLine(haikuLines.middles, tags, worldSeed, 'middle') ?? fallback[1]!,

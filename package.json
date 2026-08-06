@@ -18,7 +18,14 @@
     "test:contracts": "vitest run tests/unit/contracts.worker.test.ts tests/unit/architecture-boundaries.test.ts",
     "validate:assets": "vitest run tests/unit/asset-validator.test.ts",
     "validate:tiles": "vitest run tests/unit/grammar-validator.test.ts",
-    "typecheck": "tsc --noEmit --pretty false"
+    "typecheck": "tsc --noEmit --pretty false && tsc -p tsconfig.tools.json --noEmit --pretty false",
+    "test:sim": "tsx scripts/run-simulation.ts --seeds=100 --ticks=600 --full=100",
+    "test:sim:release": "tsx scripts/run-simulation.ts --seeds=10000 --ticks=600 --full=100",
+    "test:e2e": "playwright test",
+    "test:e2e:desktop": "playwright test --config=playwright.desktop.config.ts",
+    "profile:release": "tsx scripts/profile-release.ts",
+    "package:release": "npm run build && tsx scripts/package-release.ts",
+    "release:check": "npm run check && npm run validate:tiles && npm run validate:assets && npm run test:sim:release && npm run build && npm run test:e2e && npm run profile:release"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.19.3",
@@ -26,12 +33,15 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@playwright/test": "^1.55.0",
     "@types/node": "26.1.2",
     "@types/three": "0.185.0",
     "@typescript/native": "npm:typescript@7.0.2",
     "eslint": "10.8.0",
+    "fflate": "^0.8.2",
     "globals": "17.9.0",
     "prettier": "3.9.6",
+    "tsx": "^4.20.5",
     "typescript": "npm:@typescript/typescript6@6.0.3",
     "typescript-eslint": "8.66.0",
     "vite": "8.2.0",

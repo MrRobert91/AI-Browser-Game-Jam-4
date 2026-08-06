@@ -12,9 +12,7 @@ export interface RunResult {
   readonly portrait: AttentionPortrait;
   readonly haiku: GeneratedHaiku;
   readonly closure:
-    | 'Fragmento observado'
-    | 'Mundo habitable'
-    | 'Mundo que puede continuar';
+    'Fragmento observado' | 'Mundo habitable' | 'Mundo que puede continuar';
   readonly reading:
     | 'Protegió lo cercano.'
     | 'Equilibró profundidad y expansión.'
@@ -35,10 +33,9 @@ export function formatSeed(worldSeed: number): string {
     .replace(/(.{4})(.{4})/, '$1-$2');
 }
 
-export function closureForSeedCount(seedCount: number): Pick<
-  RunResult,
-  'closure' | 'reading'
-> {
+export function closureForSeedCount(
+  seedCount: number,
+): Pick<RunResult, 'closure' | 'reading'> {
   if (seedCount >= 4) {
     return {
       closure: 'Mundo que puede continuar',

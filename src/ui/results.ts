@@ -56,7 +56,8 @@ export class ResultsPanel {
     const eyebrow = document.createElement('p');
     eyebrow.textContent = 'REGISTRO DE ATENCIÓN';
     const title = document.createElement('h2');
-    title.textContent = 'No encontraste este mundo. Lo separaste de todos los demás.';
+    title.textContent =
+      'No encontraste este mundo. Lo separaste de todos los demás.';
     const closure = document.createElement('p');
     closure.className = 'slice-result__closure';
     closure.textContent = `${result.closure} · ${result.reading}`;

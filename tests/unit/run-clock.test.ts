@@ -54,9 +54,9 @@ describe('RunClock', () => {
   });
 
   it('supports optional five and fifteen minute modes', () => {
-    expect(new RunClock({}, { mode: 'brief' }).snapshot().remainingSeconds).toBe(
-      300,
-    );
+    expect(
+      new RunClock({}, { mode: 'brief' }).snapshot().remainingSeconds,
+    ).toBe(300);
     expect(
       new RunClock({}, { mode: 'contemplative' }).snapshot().remainingSeconds,
     ).toBe(900);
