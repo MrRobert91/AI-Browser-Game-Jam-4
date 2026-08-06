@@ -15,8 +15,8 @@ Actualizado: 2026-08-06 (Europe/Madrid)
 | WP4 — Mundo observable | #23–#29 | Integrada en `dev` | PR #68 fusionada; dependencias WP6 cerradas |
 | WP5 — Progresión y peligros | #30–#35 | Integrada en `dev` | PR #68 fusionada; Semillas, peligros y respawn disponibles |
 | WP6 — Presentación | #36–#39 | Integrada en `dev` | PR #69 fusionada; audio, HUD, accesibilidad y narrativa local |
-| WP7 — Final | #40–#43 | Implementada; PR pendiente | Reloj, retrato, haiku y ascenso final completos |
-| WP8 — QA y entrega | #44–#51 | Implementada; PR pendiente | Gates, evidencia y candidata reproducible en `codex/wp7-wp8-release` |
+| WP7 — Final | #40–#43 | En revisión | PR #70 abierta contra `dev`; Reloj, retrato, haiku y ascenso final completos |
+| WP8 — QA y entrega | #44–#51 | En revisión | PR #70 abierta contra `dev`; Gates, evidencia y candidata reproducible en `codex/wp7-wp8-release` |
 | POST — Expansiones | #52–#56 | Bloqueada | Solo después de la release de jam |
 
 ### Estado operativo actual
@@ -25,7 +25,7 @@ Actualizado: 2026-08-06 (Europe/Madrid)
 - Trabajo en revisión: issues #40–#51, desde RunClock y final cualitativo hasta replay, simulación masiva, E2E, rendimiento, balance, build offline y release candidate.
 - Arquitectura vigente: el reloj bloquea observación y commits al entrar en ending; replay/overlay viven en `src/dev` y el overlay solo entra en `DEV`; gates de release se ejecutan localmente y en CI sin alterar resultados del solver.
 - Evidencia actual: cinco capturas PNG, WebM y resultados reproducibles en [`docs/progress/wp7-wp8-release/`](./progress/wp7-wp8-release/), más checklist, matriz, rendimiento, balance, créditos y procedencia en [`docs/release/`](./release/).
-- Estado remoto: la PR a `dev` y la URL de la candidata se enlazarán inmediatamente después de publicarlas; no se fusionará la PR.
+- Estado remoto: [PR #70](https://github.com/MrRobert91/AI-Browser-Game-Jam-4/pull/70) abierta, no draft, base `dev`; la candidata se enlaza al publicarse. La PR no se fusiona.
 
 ## Registro cronológico
 

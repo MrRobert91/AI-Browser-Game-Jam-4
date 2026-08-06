@@ -1,6 +1,6 @@
 # WP7 + WP8 — cierre, verificación y release candidate
 
-Entrega acumulativa de las issues #40–#51 en `codex/wp7-wp8-release`, creada desde `origin/dev` `e14d782` después de integrar WP6.
+Entrega acumulativa de las issues #40–#51 en `codex/wp7-wp8-release`, creada desde `origin/dev` `e14d782` después de integrar WP6 y publicada como [PR #70](https://github.com/MrRobert91/AI-Browser-Game-Jam-4/pull/70) contra `dev`.
 
 ## Alcance verificado
 
