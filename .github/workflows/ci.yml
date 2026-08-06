@@ -47,6 +47,9 @@ jobs:
       - name: Build static application
         run: npm run build
 
+      - name: Build deployment image
+        run: docker build --tag la-ultima-observacion:ci .
+
   simulation:
     name: Deterministic simulation
     runs-on: ubuntu-latest
