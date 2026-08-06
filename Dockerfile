@@ -5,8 +5,12 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-COPY index.html tsconfig.json vite.config.ts ./
+COPY index.html tsconfig.json tsconfig.tools.json vite.config.ts ./
+COPY playwright.config.ts playwright.desktop.config.ts ./
+COPY public ./public
+COPY scripts ./scripts
 COPY src ./src
+COPY tests ./tests
 RUN npm run build
 
 FROM nginx:1.29.5-alpine

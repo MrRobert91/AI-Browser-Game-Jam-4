@@ -29,6 +29,14 @@ Actualizado: 2026-08-06 (Europe/Madrid)
 
 ## Registro cronológico
 
+### 2026-08-06 — Issue #71 — Hotfix del build Docker tras WP8
+
+- Incidente: el despliegue de `dev` en Sliplane falló durante `npm run build` con `TS5058` porque PR #70 añadió `tsconfig.tools.json` al typecheck, pero la etapa Docker seguía copiando solo `tsconfig.json`.
+- Corrección: la etapa de build copia ambos proyectos TypeScript y todas sus entradas (`scripts`, `tests`, configuraciones Playwright y `public`) antes de ejecutar el mismo `npm run build` que en local.
+- Prevención: CI construye también la imagen de despliegue después del build Vite, de modo que cualquier futura divergencia entre scripts y contexto Docker bloquee la PR.
+- Validación local: `npm run check` (40 archivos, 159 tests), `validate:tiles`, `validate:assets`, `npm run build`, `format:check` y `git diff --check` en verde. Docker Desktop no está disponible en esta máquina; la construcción real de la imagen queda como evidencia del job remoto añadido.
+- Alcance: no cambia gameplay, solver, contenido, assets ni configuración de Sliplane; solo repara y protege el artefacto de despliegue.
+
 ### 2026-08-06 — Entrega acumulativa WP7 y WP8
 
 - Secuencia: #40 RunClock; #41 retrato; #42 haiku; #43 ending/resultados; #44 suite; #45 replay/debug; #46 simulación; #47 E2E/matriz; #48 rendimiento; #49 balance; #50 offline/créditos/itch; #51 checklist y candidata.
