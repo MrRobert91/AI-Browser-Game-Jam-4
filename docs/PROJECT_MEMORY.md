@@ -14,20 +14,29 @@ Actualizado: 2026-08-06 (Europe/Madrid)
 | WP3 — Gramática y tiles | #15–#22 | Integrada en `dev` salvo #22 | PR #67 fusionada; #22 bloqueada por release #51 |
 | WP4 — Mundo observable | #23–#29 | Integrada en `dev` | PR #68 fusionada; dependencias WP6 cerradas |
 | WP5 — Progresión y peligros | #30–#35 | Integrada en `dev` | PR #68 fusionada; Semillas, peligros y respawn disponibles |
-| WP6 — Presentación | #36–#39 | Implementada; PR pendiente | Rama acumulativa desde `dev` `8a95fa5` |
-| WP7 — Final | #40–#43 | Bloqueada | Requiere progresión y presentación |
-| WP8 — QA y entrega | #44–#51 | Bloqueada | Requiere juego completo; termina en release candidate |
+| WP6 — Presentación | #36–#39 | Integrada en `dev` | PR #69 fusionada; audio, HUD, accesibilidad y narrativa local |
+| WP7 — Final | #40–#43 | Implementada; PR pendiente | Reloj, retrato, haiku y ascenso final completos |
+| WP8 — QA y entrega | #44–#51 | Implementada; PR pendiente | Gates, evidencia y candidata reproducible en `codex/wp7-wp8-release` |
 | POST — Expansiones | #52–#56 | Bloqueada | Solo después de la release de jam |
 
 ### Estado operativo actual
 
-- Fase actual: WP6 completa en la rama `codex/wp6-presentation-audio-ux`, nacida de `dev` actualizado `8a95fa572b7a4d32a99c37602570f757da0b8e6b`.
-- Trabajo en revisión: arte/VFX final (#36), audio local por buses/stems (#37), HUD/pausa/opciones (#38) y narrativa española (#39).
-- Estado previo reconciliado: PR #68 integró WP4/WP5 en `dev`; #29 y las dependencias externas de #36–#39 están cerradas. El replay acumulativo se expone con `?wp6=preview&replay=wp5` para evidencia reproducible.
-- Arquitectura vigente: postprocesado por preset sin tocar solver; vegetación instanciada y materiales compartidos; Web Audio solo tras gesto y con máximo ocho fuentes; ajustes persistentes separados de estado de partida; narrativa local desacoplada de voz.
-- Evidencia actual: tres WebP y walkthrough VP9 en [`docs/progress/wp6-presentation/`](./progress/wp6-presentation/), además de los registros históricos WP4/WP5.
+- Fase actual: WP7/WP8 implementadas en `codex/wp7-wp8-release`, nacida de `origin/dev` actualizado `e14d7824d31c3137d5e4e9dbfcc01bd42b58d440` después de integrar PR #69.
+- Trabajo en revisión: issues #40–#51, desde RunClock y final cualitativo hasta replay, simulación masiva, E2E, rendimiento, balance, build offline y release candidate.
+- Arquitectura vigente: el reloj bloquea observación y commits al entrar en ending; replay/overlay viven en `src/dev` y el overlay solo entra en `DEV`; gates de release se ejecutan localmente y en CI sin alterar resultados del solver.
+- Evidencia actual: cinco capturas PNG, WebM y resultados reproducibles en [`docs/progress/wp7-wp8-release/`](./progress/wp7-wp8-release/), más checklist, matriz, rendimiento, balance, créditos y procedencia en [`docs/release/`](./release/).
+- Estado remoto: la PR a `dev` y la URL de la candidata se enlazarán inmediatamente después de publicarlas; no se fusionará la PR.
 
 ## Registro cronológico
+
+### 2026-08-06 — Entrega acumulativa WP7 y WP8
+
+- Secuencia: #40 RunClock; #41 retrato; #42 haiku; #43 ending/resultados; #44 suite; #45 replay/debug; #46 simulación; #47 E2E/matriz; #48 rendimiento; #49 balance; #50 offline/créditos/itch; #51 checklist y candidata.
+- Final: el reloj estándar dura 600 s desde el primer colapso, pausa por menú, pestaña oculta y Semilla, nunca por muerte, y bloquea observación/commits a cero. El ascenso dura ocho segundos y termina en perfil cualitativo, haiku local determinista, seed, copia y reinicio limpio.
+- QA: 159 tests, fixtures rojos de gramática, límites de ending, replay headless a 10 Hz, F2/F3/F4 solo en desarrollo y campaña de 10.000 seeds con cinco rutas; 0 vacíos, 0 commits fuera de radio, 0 hashes divergentes, fallback 0 %, `quantum_void_debug = 0` y 0 Semillas inaccesibles.
+- Navegador: Chromium 1440×900, Firefox 1280×720 y Chrome estable 1920×1080 completan el recorrido sin errores ni red fallida. Firefox compara el panel final con tolerancia 0,035. Edge y GPU integrada física quedan declarados no disponibles/pendientes, nunca aprobados sin ejecución.
+- Rendimiento: harness de release con worker p95 2,88 ms, main p95 9,32 ms, 60 FPS estimados, 148 draw calls, 882.000 triángulos, 228 MB de texturas, `dist` 8,62 MB y TTI 3,1 s; cumple objetivos y conserva el orden normativo de degradación.
+- Entrega: build estática offline, créditos/procedencia/privacidad/itch, ZIP y manifest SHA-256 reproducibles. Evidencia en [`docs/progress/wp7-wp8-release/`](./progress/wp7-wp8-release/) y documentación de release en [`docs/release/`](./release/).
 
 ### 2026-08-06 — Entrega acumulativa WP6
 
