@@ -35,6 +35,7 @@ describe('local haiku and ending', () => {
     const second = generateHaiku(0xa91f42c0, PORTRAIT, 'Cartógrafo');
     expect(second).toEqual(first);
     expect(first.lines).toHaveLength(3);
+    expect(first.lines.join(' ')).not.toContain('Ã');
     for (const line of first.lines) {
       expect(approximateSpanishSyllables(line)).toBeGreaterThanOrEqual(8);
       expect(approximateSpanishSyllables(line)).toBeLessThanOrEqual(17);
