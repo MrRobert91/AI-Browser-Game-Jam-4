@@ -5,6 +5,7 @@ import { Wp5PreviewRuntime } from './wp5-preview-runtime';
 import { AudioDirector } from '../audio/audio-director';
 import type { UnlockablePackId } from '../contracts/tiles';
 import { planSeedAnchors } from '../gameplay/anchors';
+import { CollapsadorRecordDirector } from '../gameplay/collapsador-records';
 import {
   closureForSeedCount,
   EndingDirector,
@@ -253,6 +254,18 @@ export function bootstrap(root: HTMLElement): () => void {
     onMessage: (message) => hud.setMessage(message),
     onSubtitle: (message) => hud.showSubtitle(message),
     onAudioCue: () => audioDirector.playNarrativeCue(),
+  });
+  const collapsadorRecords = new CollapsadorRecordDirector({
+    onPlay: (record) => {
+      const message = `${record.speaker} // ${record.subtitle}`;
+      shell.dataset.recordingId = record.id;
+      hud.setMessage(message);
+      hud.showSubtitle(message);
+      audioDirector.playNarrativeCue();
+    },
+    onInterrupt: () => {
+      delete shell.dataset.recordingId;
+    },
   });
   const portraitTracker = new AttentionPortraitTracker();
   const endingDirector = new EndingDirector();
@@ -700,6 +713,22 @@ export function bootstrap(root: HTMLElement): () => void {
     );
     hud.setTime(clock.remainingSeconds);
     audioDirector.updateCountdown(clock.remainingSeconds, clock.elapsedSeconds);
+    const distanceFromOrigin = Math.hypot(
+      playerPosition[0] - 64,
+      playerPosition[2] - 64,
+    );
+    collapsadorRecords.update({
+      deltaMs: deltaSeconds * replaySpeed * 1_000,
+      fixedCells: worldState.countFixedCells(),
+      seeds: wp5Snapshot?.progression.collectedPacks.length ?? 0,
+      maxDistance: distanceFromOrigin,
+      blocked:
+        (wp5Snapshot?.respawn.phase ?? 'ALIVE') !== 'ALIVE' ||
+        (wp5Snapshot?.progression.pauseRemainingSeconds ?? 0) > 0 ||
+        clock.remainingSeconds <= 30 ||
+        clock.phase === 'ENDING' ||
+        clock.phase === 'COMPLETE',
+    });
 
     if (
       !canonicalReplay &&

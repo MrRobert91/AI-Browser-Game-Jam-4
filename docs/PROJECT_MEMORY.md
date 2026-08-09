@@ -46,6 +46,12 @@ Actualizado: 2026-08-09 (Europe/Madrid)
 - Colapso inicial, cuatro Semillas, primera muerte, respawn, detección/reconciliación de Incertidumbre, cuenta atrás y final se conectan por IDs tipados; progresión y respawn ya no contienen copy narrativo disperso.
 - `NarrativeDirector` valida unicidad, orden, prioridades y fallback, emite subtítulo/audio con la misma duración y conserva una historia determinista para tests y replay.
 
+### 2026-08-09 — Issue #79 — Registros automáticos de otros Colapsadores
+
+- Cuatro registros locales se activan por celdas fijadas, Semillas y distancia. Dos describen resultados incompatibles en 64,58 y la Agencia los clasifica como “variabilidad de usuario”.
+- Cada registro declara hablante, subtítulo, duración, prioridad y umbrales de replay; no añade coleccionables ni interacción obligatoria.
+- La cola admite como máximo dos pendientes, reproduce una vez y omite/interrumpe de forma segura ante muerte, Semilla, últimos 30 s o final. La misma secuencia de métricas produce el mismo orden.
+
 ## Registro cronológico
 
 ### 2026-08-09 — Issue #73 — Calibración, música y legibilidad del recorrido
