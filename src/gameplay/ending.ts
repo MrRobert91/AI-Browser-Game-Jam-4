@@ -57,12 +57,32 @@ export function closureForSeedCount(
 export function formatRunResult(result: RunResult): string {
   return [
     'LA ÚLTIMA OBSERVACIÓN',
+    'EXPEDIENTE DE ACTUALIZACIÓN DEL AGENTE',
     `Seed: ${result.seedLabel}`,
     `Perfil: ${result.profile}`,
+    `Lectura: ${result.closure} · ${result.reading}`,
+    `Atención: ${describeAgentUpdate(result)}`,
     `Haiku: ${result.haiku.lines[0]}`,
     result.haiku.lines[1],
     result.haiku.lines[2],
+    'Nota de la Agencia: expediente cerrado sin reconocimiento de causalidad cosmológica.',
   ].join('\n');
+}
+
+export function describeAgentUpdate(result: RunResult): string {
+  const portrait = result.portrait;
+  const breadth = `${portrait.fixedCells} resultados, ${portrait.uniqueTerrainTiles + portrait.uniqueFeatureTiles} formas`;
+  const route =
+    portrait.maxDistance >= 36
+      ? 'intervenciones lejanas'
+      : portrait.revisitRatio >= 0.25
+        ? 'intervenciones revisitadas'
+        : 'intervenciones concentradas';
+  const risk =
+    portrait.dangerExposureSeconds >= 20
+      ? 'con exposición al riesgo'
+      : 'con atención al resguardo';
+  return `${breadth}; ${route}; ${risk}.`;
 }
 
 export class EndingDirector {

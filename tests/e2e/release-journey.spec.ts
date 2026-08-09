@@ -68,8 +68,12 @@ test('canonical offline journey reaches the qualitative ending', async ({
 
   const result = page.locator('[data-slice-result]');
   await expect(result).toBeVisible({ timeout: 20_000 });
+  await expect(result).toHaveAttribute('role', 'dialog');
+  await expect(result).toBeFocused();
+  await expect(result).toContainText('EXPEDIENTE DE ACTUALIZACIÓN DEL AGENTE');
   await expect(result).toContainText('Perfil:');
   await expect(result).toContainText('SEED A91F-42C0');
+  await expect(result).toContainText('sin reconocimiento de causalidad');
   if (testInfo.project.name.startsWith('firefox')) {
     await page.screenshot({ path: testInfo.outputPath('05-final.png') });
     await expect(result).toHaveScreenshot('result-panel.png');

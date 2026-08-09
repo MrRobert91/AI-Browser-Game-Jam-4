@@ -873,7 +873,7 @@ button {
   inset: 0;
   display: grid;
   place-content: center;
-  gap: 1.5rem;
+  gap: 1rem;
   padding: 2rem;
   color: #e7fff7;
   text-align: center;
@@ -898,9 +898,56 @@ button {
 .slice-result h2 {
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(2rem, 4vw, 4.8rem);
+  max-width: 52rem;
+  font-size: clamp(1.5rem, 3vw, 3.2rem);
   font-weight: 400;
   line-height: 1.05;
+}
+
+.slice-result__interpretation {
+  max-width: 52rem;
+  justify-self: center;
+  color: #b8d8d1;
+}
+
+.slice-result__metrics {
+  display: grid;
+  width: min(42rem, 90vw);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid rgb(169 255 237 / 18%);
+  background: rgb(169 255 237 / 18%);
+}
+
+.slice-result__metrics div {
+  padding: 0.65rem;
+  background: rgb(4 17 22 / 82%);
+}
+
+.slice-result__metrics dt,
+.slice-result__metrics dd {
+  margin: 0;
+  font-family: "Courier New", monospace;
+}
+
+.slice-result__metrics dt {
+  color: #79aaa2;
+  font-size: 0.52rem;
+  letter-spacing: 0.12em;
+}
+
+.slice-result__metrics dd {
+  margin-top: 0.25rem;
+  color: #effff9;
+  font-size: 0.8rem;
+}
+
+.slice-result__agency-note {
+  max-width: 48rem;
+  justify-self: center;
+  color: #779992;
 }
 
 .slice-result blockquote {

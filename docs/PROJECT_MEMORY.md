@@ -57,6 +57,12 @@ Actualizado: 2026-08-09 (Europe/Madrid)
 - Copy, HUD y canon presentan las tres siluetas como informes incompatibles de otro Colapsador. La etiqueta “Incidencia de actualización pendiente” evoluciona hasta “Resultado reconciliado” al fijarse como estatua.
 - La línea de detección y la reconciliación ya pertenecen al catálogo tipado. No cambian estados, distancias 18/8 m, 1,2 s de observación, gracia 0,4 s, recompensa +3 s, pathfinding, spawn ni máximo cuatro.
 
+### 2026-08-09 — Issue #81 — Expediente QBista del agente
+
+- El panel final conserva ascenso de 8 s, bloqueo de commits, seed, perfil, haiku y cálculos. La presentación se renombra “Expediente de actualización del agente” y explica que La Medida registraba intervenciones, expectativas y experiencias.
+- Resultados, formas, familias desbloqueadas y distancia se presentan como decisiones de atención, sin puntuación, ranking ni diagnóstico. La nota final de la Agencia conserva la ambigüedad con humor administrativo.
+- El diálogo recibe foco, nombre accesible y botones de teclado; la copia incluye expediente, lectura, interpretación, seed, perfil, haiku y nota institucional.
+
 ## Registro cronológico
 
 ### 2026-08-09 — Issue #73 — Calibración, música y legibilidad del recorrido
