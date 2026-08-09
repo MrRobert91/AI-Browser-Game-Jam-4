@@ -106,7 +106,10 @@ export class ResultsPanel {
     const poem = document.createElement('blockquote');
     poem.textContent = result.haiku.lines.join('\n');
     const seed = document.createElement('strong');
-    seed.textContent = `SEED ${result.seedLabel}`;
+    seed.textContent =
+      result.seedMode === 'daily' && result.dailyDateKey
+        ? `DIARIA UTC ${result.dailyDateKey} · SEED ${result.seedLabel}`
+        : `SEED ${result.seedLabel}`;
     const note = document.createElement('p');
     note.className = 'slice-result__agency-note';
     note.textContent =

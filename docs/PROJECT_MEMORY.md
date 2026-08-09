@@ -40,6 +40,12 @@ Actualizado: 2026-08-09 (Europe/Madrid)
 - IndexedDB conserva como máximo cinco panoramas de hasta 5 MiB, elimina el más antiguo y ofrece descarga/borrado. No hay subida, telemetría ni permiso externo.
 - Playwright descargó y validó una captura real 1216×68 de 228.167 bytes y reabrió sus metadatos desde la galería. Evidencia: [`docs/progress/issue-52-local-panorama/`](./progress/issue-52-local-panorama/).
 
+### 2026-08-09 — Issue #53 — Seed diaria compartida
+
+- `?daily=1` deriva la seed exclusivamente de la fecha UTC con el hash estable del proyecto; la misma fecha produce el mismo mundo sin backend.
+- La portada alterna de forma explícita entre diaria UTC y observación estándar aleatoria. Seed explícita y replay canónico tienen rutas deterministas separadas.
+- HUD, expediente y copia etiquetan el modo diario con fecha UTC. Vitest cubre la medianoche y Playwright la recarga/replay. Evidencia: [`docs/progress/issue-53-daily-seed/`](./progress/issue-53-daily-seed/).
+
 ### 2026-08-09 — Issue #76 — Canon QBista y límites científicos
 
 - La narrativa separa QBism real, doctrina ficticia de la Agencia y WFC como metáfora procedural. El jugador elige una intervención; La Medida expresa expectativas y el resultado se incorpora a un expediente, sin afirmar que la conciencia cause un colapso físico.

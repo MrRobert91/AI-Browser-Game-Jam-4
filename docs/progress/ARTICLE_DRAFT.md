@@ -215,6 +215,8 @@ La candidata termina como ZIP estático con manifest SHA-256, favicon y assets l
 
 La primera expansión post-jam captura el canvas final como PNG sin retrasar el expediente. Seed, perfil y haiku se guardan con la imagen en IndexedDB: cinco entradas como máximo, 5 MiB por entrada, descarga y borrado local. No hay cuenta, nube ni galería pública; conservar un mundo sigue siendo una decisión privada del jugador.
 
+Una segunda opción convierte la fecha UTC en seed compartida sin servidor. El enlace diario y la vuelta a una seed aleatoria estándar viven en la misma portada; el expediente etiqueta fecha y seed. Compartir el día no introduce leaderboard, login ni reloj autoritativo: compartir la seed basta para comparar observaciones.
+
 ## Pulido posterior: fallar sin quedar a oscuras
 
 La calibración de mirada escondía un fallo especialmente cruel: si Pointer Lock era rechazado durante el gesto inicial, la interfaz podía retirarse antes de saber si el navegador había concedido el control. Ahora la captura es una transacción observable. Solo se entra en juego al recibir confirmación; ante error, el mundo sigue renderizado, aparece «Reintentar calibración» y el mismo flujo puede completarse sin recargar.

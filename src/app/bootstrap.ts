@@ -6,6 +6,7 @@ import { AudioDirector } from '../audio/audio-director';
 import type { UnlockablePackId } from '../contracts/tiles';
 import { planSeedAnchors } from '../gameplay/anchors';
 import { CollapsadorRecordDirector } from '../gameplay/collapsador-records';
+import { resolveWorldSeed } from '../gameplay/daily-seed';
 import {
   closureForSeedCount,
   EndingDirector,
@@ -84,6 +85,9 @@ const SHELL_MARKUP = `
         <button class="intro-panel__skip" type="button" data-intro-skip>
           Omitir introducción y calibrar
         </button>
+        <a class="intro-panel__daily" href="?daily=1" data-seed-mode-link>
+          Observación diaria UTC
+        </a>
       </div>
       <p class="intro-panel__hint" data-shell-status role="status" aria-live="polite">
         Instrumento local · sin conexión de runtime
@@ -108,7 +112,7 @@ const SHELL_MARKUP = `
     <section class="slice-hud" aria-live="polite">
       <p><span>VENTANA</span><strong data-slice-time>10:00</strong></p>
       <p data-slice-message>Mira para iniciar el registro.</p>
-      <p><span>SEED</span><strong>A91F-42C0</strong></p>
+      <p><span data-seed-mode-label>SEED</span><strong data-seed-label>A91F-42C0</strong></p>
     </section>
 
     <p class="wp5-gate-status" data-wp5-gate-status>
@@ -162,6 +166,9 @@ export function bootstrap(root: HTMLElement): () => void {
     '[data-observation-button]',
   );
   const introSkip = root.querySelector<HTMLButtonElement>('[data-intro-skip]');
+  const seedModeLink = root.querySelector<HTMLAnchorElement>(
+    '[data-seed-mode-link]',
+  );
   const introEyebrow = root.querySelector<HTMLElement>('[data-intro-eyebrow]');
   const introCopy = root.querySelector<HTMLElement>('[data-intro-copy]');
   const systemState = root.querySelector<HTMLElement>('[data-system-state]');
@@ -171,6 +178,10 @@ export function bootstrap(root: HTMLElement): () => void {
   const sliceTime = root.querySelector<HTMLElement>('[data-slice-time]');
   const sliceMessage = root.querySelector<HTMLElement>('[data-slice-message]');
   const sliceResult = root.querySelector<HTMLElement>('[data-slice-result]');
+  const seedModeLabel = root.querySelector<HTMLElement>(
+    '[data-seed-mode-label]',
+  );
+  const seedValueLabel = root.querySelector<HTMLElement>('[data-seed-label]');
   const wp5GateStatus = root.querySelector<HTMLElement>(
     '[data-wp5-gate-status]',
   );
@@ -182,6 +193,7 @@ export function bootstrap(root: HTMLElement): () => void {
     !shell ||
     !observationButton ||
     !introSkip ||
+    !seedModeLink ||
     !introEyebrow ||
     !introCopy ||
     !systemState ||
@@ -191,6 +203,8 @@ export function bootstrap(root: HTMLElement): () => void {
     !sliceTime ||
     !sliceMessage ||
     !sliceResult ||
+    !seedModeLabel ||
+    !seedValueLabel ||
     !wp5GateStatus ||
     !uncertaintyStatus
   ) {
@@ -219,13 +233,26 @@ export function bootstrap(root: HTMLElement): () => void {
     requestedMode === 'brief' || requestedMode === 'contemplative'
       ? requestedMode
       : 'standard';
-  const requestedSeed = search.get('seed');
-  const parsedSeed = requestedSeed
-    ? Number.parseInt(requestedSeed.replace('-', ''), 16)
-    : Number.NaN;
-  const worldSeed = Number.isInteger(parsedSeed)
-    ? parsedSeed >>> 0
-    : 0xa91f42c0;
+  const seedSelection = resolveWorldSeed(search);
+  const worldSeed = seedSelection.worldSeed;
+  seedModeLabel.textContent =
+    seedSelection.mode === 'daily' ? 'DIARIA UTC' : 'SEED';
+  seedValueLabel.textContent = formatSeed(worldSeed);
+  shell.dataset.seedMode = seedSelection.mode;
+  if (seedSelection.dateKey) shell.dataset.dailyDate = seedSelection.dateKey;
+  const alternateSeedUrl = new URL(window.location.href);
+  alternateSeedUrl.searchParams.delete('seed');
+  alternateSeedUrl.searchParams.delete('replay');
+  alternateSeedUrl.searchParams.delete('evidence');
+  alternateSeedUrl.searchParams.delete('start');
+  if (seedSelection.mode === 'daily') {
+    alternateSeedUrl.searchParams.delete('daily');
+    seedModeLink.textContent = 'Nueva observación aleatoria';
+  } else {
+    alternateSeedUrl.searchParams.set('daily', '1');
+    seedModeLink.textContent = 'Observación diaria UTC';
+  }
+  seedModeLink.href = `${alternateSeedUrl.pathname}${alternateSeedUrl.search}`;
   const requestedStart = Number(search.get('start') ?? '0');
   const startAtSeconds =
     search.get('evidence') === '1' && Number.isFinite(requestedStart)
@@ -790,6 +817,8 @@ export function bootstrap(root: HTMLElement): () => void {
         const result: RunResult = {
           worldSeed,
           seedLabel: formatSeed(worldSeed),
+          seedMode: seedSelection.mode,
+          dailyDateKey: seedSelection.dateKey,
           profile,
           portrait,
           haiku,

@@ -145,6 +145,29 @@ test('the Agency introduction can play or be skipped into one-gesture calibratio
   );
 });
 
+test('daily mode is shared by UTC date while replay keeps its canonical seed', async ({
+  page,
+}) => {
+  await page.goto('/?daily=1&wp5=off');
+  const shell = page.locator('.observation-shell');
+  await expect(shell).toHaveAttribute('data-seed-mode', 'daily');
+  await expect(shell).toHaveAttribute(
+    'data-daily-date',
+    /^\d{4}-\d{2}-\d{2}$/u,
+  );
+  await expect(page.locator('[data-seed-mode-label]')).toHaveText('DIARIA UTC');
+  const first = await page.locator('[data-seed-label]').textContent();
+  await page.reload();
+  await expect(page.locator('[data-seed-label]')).toHaveText(first ?? '');
+  await expect(page.locator('[data-seed-mode-link]')).toHaveText(
+    'Nueva observación aleatoria',
+  );
+
+  await page.goto('/?replay=wp5&wp5=preview');
+  await expect(shell).toHaveAttribute('data-seed-mode', 'replay');
+  await expect(page.locator('[data-seed-label]')).toHaveText('A91F-42C0');
+});
+
 test('a rejected first calibration stays visible and can be retried', async ({
   page,
 }, testInfo) => {

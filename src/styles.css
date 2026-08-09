@@ -451,6 +451,15 @@ button {
   cursor: pointer;
 }
 
+.intro-panel__daily {
+  color: #9fe1d6;
+  font:
+    0.66rem/1.4 "Courier New",
+    monospace;
+  letter-spacing: 0.08em;
+  text-underline-offset: 0.2em;
+}
+
 .intro-panel__skip:hover:not(:disabled),
 .intro-panel__skip:focus-visible {
   color: #d5fff7;
