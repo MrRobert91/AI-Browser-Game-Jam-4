@@ -1,5 +1,5 @@
 import type { UnlockablePackId } from '../contracts/tiles';
-import { MusicStemBank } from './music-stems';
+import { createCustomSongElement } from './custom-song';
 import { SpatialAudioPool } from './spatial-pool';
 
 export interface AudioVolumes {
@@ -8,18 +8,9 @@ export interface AudioVolumes {
   readonly effects: number;
 }
 
-export interface EnvironmentMix {
-  readonly fixed: number;
-  readonly unresolved: number;
-}
-
 export interface AudioDirectorOptions {
   readonly createContext?: () => AudioContext;
-}
-
-interface ContinuousVoice {
-  readonly oscillator: OscillatorNode;
-  readonly gain: GainNode;
+  readonly createMusicElement?: () => HTMLAudioElement;
 }
 
 const DEFAULT_VOLUMES: AudioVolumes = {
@@ -39,18 +30,16 @@ export function countdownPulseInterval(
   return remainingSeconds <= 30 ? 1 : 2.5;
 }
 
-/** Local procedural score. It allocates no AudioContext before a user gesture. */
+/** Local generated score. It allocates no AudioContext before a user gesture. */
 export class AudioDirector {
   private readonly createContext: () => AudioContext;
+  private readonly createMusicElement: () => HTMLAudioElement;
   private context: AudioContext | null = null;
   private masterBus: GainNode | null = null;
   private musicBus: GainNode | null = null;
   private effectsBus: GainNode | null = null;
-  private unresolvedVoice: ContinuousVoice | null = null;
-  private fixedVoice: ContinuousVoice | null = null;
-  private observationVoice: ContinuousVoice | null = null;
-  private uncertaintyVoice: ContinuousVoice | null = null;
-  private stems: MusicStemBank | null = null;
+  private musicElement: HTMLAudioElement | null = null;
+  private musicSource: MediaElementAudioSourceNode | null = null;
   private spatialPool: SpatialAudioPool | null = null;
   private volumes: AudioVolumes = DEFAULT_VOLUMES;
   private lastCountdownPulse = Number.NEGATIVE_INFINITY;
@@ -63,6 +52,8 @@ export class AudioDirector {
         const Context = window.AudioContext;
         return new Context();
       });
+    this.createMusicElement =
+      options.createMusicElement ?? createCustomSongElement;
   }
 
   get started(): boolean {
@@ -92,45 +83,13 @@ export class AudioDirector {
     this.effectsBus?.gain.setTargetAtTime(this.volumes.effects, now, 0.04);
   }
 
-  setEnvironmentMix(mix: EnvironmentMix): void {
-    const now = this.context?.currentTime;
-    if (now === undefined) return;
-    this.unresolvedVoice?.gain.gain.setTargetAtTime(
-      clamp01(mix.unresolved) * 0.035,
-      now,
-      0.25,
-    );
-    this.fixedVoice?.gain.gain.setTargetAtTime(
-      clamp01(mix.fixed) * 0.028,
-      now,
-      0.25,
-    );
-  }
-
-  setObservationCharge(charge: number): void {
-    const now = this.context?.currentTime;
-    if (now === undefined || !this.observationVoice) return;
-    const normalized = clamp01(charge);
-    this.observationVoice.oscillator.frequency.setTargetAtTime(
-      320 + normalized * 520,
-      now,
-      0.035,
-    );
-    this.observationVoice.gain.gain.setTargetAtTime(
-      normalized * 0.07,
-      now,
-      0.025,
-    );
-  }
-
-  setUncertaintyObserved(observed: boolean): void {
-    const now = this.context?.currentTime;
-    if (now === undefined || !this.uncertaintyVoice) return;
-    this.uncertaintyVoice.gain.gain.setTargetAtTime(
-      observed ? 0 : 0.035,
-      now,
-      0.04,
-    );
+  setPaused(paused: boolean): void {
+    if (paused) {
+      this.musicElement?.pause();
+      return;
+    }
+    void this.context?.resume().catch(() => undefined);
+    void this.musicElement?.play().catch(() => undefined);
   }
 
   notifyCollapse(pan = 0): void {
@@ -150,14 +109,18 @@ export class AudioDirector {
     });
   }
 
-  unlockStem(packId: UnlockablePackId): void {
-    if (this.stems?.unlock(packId)) {
-      this.spatialPool?.play({
-        frequency: 330,
-        durationSeconds: 0.8,
-        gain: 0.12,
-      });
-    }
+  playUnlockCue(packId: UnlockablePackId): void {
+    const packPitch: Readonly<Record<UnlockablePackId, number>> = {
+      water: 293.66,
+      forest: 349.23,
+      ruin: 220,
+      storm: 440,
+    };
+    this.spatialPool?.play({
+      frequency: packPitch[packId],
+      durationSeconds: 0.8,
+      gain: 0.12,
+    });
   }
 
   updateCountdown(remainingSeconds: number, elapsedSeconds: number): void {
@@ -178,23 +141,15 @@ export class AudioDirector {
 
   dispose(): void {
     this.spatialPool?.dispose();
-    this.stems?.dispose();
-    for (const voice of [
-      this.unresolvedVoice,
-      this.fixedVoice,
-      this.observationVoice,
-      this.uncertaintyVoice,
-    ]) {
-      if (!voice) continue;
-      voice.oscillator.stop();
-      voice.oscillator.disconnect();
-      voice.gain.disconnect();
-    }
+    this.musicElement?.pause();
+    this.musicSource?.disconnect();
     void this.context?.close();
     this.context = null;
     this.masterBus = null;
     this.musicBus = null;
     this.effectsBus = null;
+    this.musicElement = null;
+    this.musicSource = null;
   }
 
   private async performStart(): Promise<boolean> {
@@ -205,12 +160,17 @@ export class AudioDirector {
         return false;
       }
     }
-    try {
-      await this.context!.resume();
-      return this.context!.state === 'running';
-    } catch {
-      return false;
-    }
+    const contextStart = this.context!.resume()
+      .then(() => this.context!.state === 'running')
+      .catch(() => false);
+    const musicStart = this.musicElement!.play()
+      .then(() => true)
+      .catch(() => false);
+    const [contextStarted, musicStarted] = await Promise.all([
+      contextStart,
+      musicStart,
+    ]);
+    return contextStarted && musicStarted;
   }
 
   private initialize(context: AudioContext): void {
@@ -221,46 +181,12 @@ export class AudioDirector {
     this.musicBus.connect(this.masterBus);
     this.effectsBus.connect(this.masterBus);
     this.masterBus.connect(context.destination);
-    this.unresolvedVoice = this.createContinuousVoice(
-      'sawtooth',
-      73.42,
-      this.effectsBus,
-    );
-    this.fixedVoice = this.createContinuousVoice(
-      'sine',
-      174.61,
-      this.effectsBus,
-    );
-    this.observationVoice = this.createContinuousVoice(
-      'sine',
-      320,
-      this.effectsBus,
-    );
-    this.uncertaintyVoice = this.createContinuousVoice(
-      'triangle',
-      116.54,
-      this.effectsBus,
-    );
-    this.stems = new MusicStemBank(context, this.musicBus);
+    this.musicElement = this.createMusicElement();
+    this.musicElement.loop = true;
+    this.musicElement.preload = 'auto';
+    this.musicSource = context.createMediaElementSource(this.musicElement);
+    this.musicSource.connect(this.musicBus);
     this.spatialPool = new SpatialAudioPool(context, this.effectsBus);
     this.setVolumes(this.volumes);
-    this.setEnvironmentMix({ fixed: 0, unresolved: 1 });
-    this.setObservationCharge(0);
-    this.setUncertaintyObserved(true);
-  }
-
-  private createContinuousVoice(
-    type: OscillatorType,
-    frequency: number,
-    destination: AudioNode,
-  ): ContinuousVoice {
-    const oscillator = this.context!.createOscillator();
-    const gain = this.context!.createGain();
-    oscillator.type = type;
-    oscillator.frequency.value = frequency;
-    gain.gain.value = 0;
-    oscillator.connect(gain).connect(destination);
-    oscillator.start();
-    return { oscillator, gain };
   }
 }

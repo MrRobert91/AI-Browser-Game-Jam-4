@@ -1,8 +1,29 @@
 import { expect, test } from '@playwright/test';
 
+test.beforeEach(async ({ browserName, page }) => {
+  if (browserName !== 'firefox') return;
+  await page.addInitScript(() => {
+    let lockedElement: Element | null = null;
+    Object.defineProperty(Document.prototype, 'pointerLockElement', {
+      configurable: true,
+      get: () => lockedElement,
+    });
+    HTMLElement.prototype.requestPointerLock = function () {
+      lockedElement = document.querySelector('.observation-shell');
+      document.dispatchEvent(new Event('pointerlockchange'));
+      return Promise.resolve();
+    };
+    Document.prototype.exitPointerLock = function () {
+      lockedElement = null;
+      document.dispatchEvent(new Event('pointerlockchange'));
+    };
+  });
+});
+
 test('canonical offline journey reaches the qualitative ending', async ({
   page,
 }, testInfo) => {
+  test.slow();
   const consoleErrors: string[] = [];
   const failedRequests: string[] = [];
   page.on('console', (message) => {
@@ -68,4 +89,36 @@ test('pointer lock and pause recover after user gestures', async ({ page }) => {
   await expect(pauseMenu).toBeVisible();
   await pauseMenu.locator('[data-resume]').click();
   await expect(shell).toHaveAttribute('data-paused', 'false');
+});
+
+test('a rejected first calibration stays visible and can be retried', async ({
+  page,
+}, testInfo) => {
+  await page.addInitScript(() => {
+    const nativeRequestPointerLock = HTMLElement.prototype.requestPointerLock;
+    let attempts = 0;
+    HTMLElement.prototype.requestPointerLock = function (...options) {
+      attempts += 1;
+      if (attempts === 1) {
+        return Promise.reject(new DOMException('Synthetic rejection'));
+      }
+      return nativeRequestPointerLock.apply(this, options);
+    };
+  });
+  await page.goto('/?wp5=preview&replay=wp5&speed=8');
+  const shell = page.locator('.observation-shell');
+  const calibrate = page.locator('[data-observation-button]');
+
+  await calibrate.click();
+  await expect(shell).toHaveAttribute('data-calibration', 'error');
+  await expect(shell).toHaveAttribute('data-calibrated', 'false');
+  await expect(calibrate).toBeVisible();
+  await expect(calibrate).toBeEnabled();
+  await expect(page.locator('[data-shell-status]')).toContainText('reintentar');
+  await page.screenshot({ path: testInfo.outputPath('01-retry-visible.png') });
+
+  await calibrate.click();
+  await expect(shell).toHaveAttribute('data-calibration', 'ready');
+  await expect(shell).toHaveAttribute('data-calibrated', 'true');
+  await page.screenshot({ path: testInfo.outputPath('02-recovered.png') });
 });

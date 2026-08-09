@@ -5,6 +5,7 @@ import {
   SUPERPOSITION_MAX_INTERVAL_MS,
   SUPERPOSITION_MIN_INTERVAL_MS,
   SuperpositionRenderer,
+  normalizeCandidatePercentages,
   selectSuperpositionProxy,
   type SuperpositionCell,
 } from '../../src/render/superposition';
@@ -57,5 +58,22 @@ describe('superposition proxy selection', () => {
 
     expect(renderer.update(cells, 0)).toBe(MAX_VISIBLE_SUPERPOSITION_PROXIES);
     renderer.dispose();
+  });
+
+  it('shows deterministic normalized percentages that total exactly 100', () => {
+    const percentages = normalizeCandidatePercentages(cell.candidates, 'high');
+    expect(
+      percentages.map(({ tileId, percentage }) => [tileId, percentage]),
+    ).toEqual([
+      [1, 53],
+      [2, 35],
+      [3, 12],
+    ]);
+    expect(
+      percentages.reduce((total, candidate) => total + candidate.percentage, 0),
+    ).toBe(100);
+    expect(normalizeCandidatePercentages(cell.candidates, 'low')).toHaveLength(
+      2,
+    );
   });
 });

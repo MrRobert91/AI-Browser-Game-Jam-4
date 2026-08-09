@@ -4,7 +4,7 @@ Este documento conserva la historia de implementación de **La Última Observaci
 
 ## Vista de pájaro
 
-Actualizado: 2026-08-06 (Europe/Madrid)
+Actualizado: 2026-08-09 (Europe/Madrid)
 
 | Fase | Issues | Estado | Gate o dependencia principal |
 |---|---:|---|---|
@@ -15,19 +15,30 @@ Actualizado: 2026-08-06 (Europe/Madrid)
 | WP4 — Mundo observable | #23–#29 | Integrada en `dev` | PR #68 fusionada; dependencias WP6 cerradas |
 | WP5 — Progresión y peligros | #30–#35 | Integrada en `dev` | PR #68 fusionada; Semillas, peligros y respawn disponibles |
 | WP6 — Presentación | #36–#39 | Integrada en `dev` | PR #69 fusionada; audio, HUD, accesibilidad y narrativa local |
-| WP7 — Final | #40–#43 | En revisión | PR #70 abierta contra `dev`; Reloj, retrato, haiku y ascenso final completos |
-| WP8 — QA y entrega | #44–#51 | En revisión | PR #70 abierta contra `dev`; Gates, evidencia y candidata reproducible en `codex/wp7-wp8-release` |
+| WP7 — Final | #40–#43 | Integrada en `dev` | PR #70 fusionada; Reloj, retrato, haiku y ascenso final completos |
+| WP8 — QA y entrega | #44–#51 | Integrada en `dev` | PR #70 fusionada; gates, evidencia y candidata reproducible |
+| POST — Pulido de juego | #73 | En revisión | Calibración recuperable, canción local, límite, probabilidades y movimiento |
 | POST — Expansiones | #52–#56 | Bloqueada | Solo después de la release de jam |
 
 ### Estado operativo actual
 
-- Fase actual: WP7/WP8 implementadas en `codex/wp7-wp8-release`, nacida de `origin/dev` actualizado `e14d7824d31c3137d5e4e9dbfcc01bd42b58d440` después de integrar PR #69.
-- Trabajo en revisión: issues #40–#51, desde RunClock y final cualitativo hasta replay, simulación masiva, E2E, rendimiento, balance, build offline y release candidate.
-- Arquitectura vigente: el reloj bloquea observación y commits al entrar en ending; replay/overlay viven en `src/dev` y el overlay solo entra en `DEV`; gates de release se ejecutan localmente y en CI sin alterar resultados del solver.
-- Evidencia actual: cinco capturas PNG, WebM y resultados reproducibles en [`docs/progress/wp7-wp8-release/`](./progress/wp7-wp8-release/), más checklist, matriz, rendimiento, balance, créditos y procedencia en [`docs/release/`](./release/).
-- Estado remoto: [PR #70](https://github.com/MrRobert91/AI-Browser-Game-Jam-4/pull/70) abierta, no draft, base `dev`; [`v0.1.0-rc.1`](https://github.com/MrRobert91/AI-Browser-Game-Jam-4/releases/tag/v0.1.0-rc.1) publicada como prerelease desde el SHA `700c91e`. La PR no se fusiona.
+- Fase actual: pulido posterior a la candidata sobre `origin/dev` `9a82adedb36b67034d461d83e64788c095e78195`; WP7/WP8 y el hotfix Docker ya están integrados.
+- Trabajo en revisión: issue #73, con recuperación de calibración, canción generada y empaquetada localmente, límite esférico, porcentajes de superposición y velocidades reducidas.
+- Arquitectura vigente: el juego sigue siendo offline tras cargar; OpenRouter solo participa en producción de assets y ninguna clave ni llamada de red entra en runtime.
+- Evidencia actual: capturas y WebM reproducibles en [`docs/progress/issue-73-gameplay-polish/`](./progress/issue-73-gameplay-polish/), además de la evidencia acumulada de WP7/WP8 y la documentación de release.
+- Estado remoto: [`v0.1.0-rc.1`](https://github.com/MrRobert91/AI-Browser-Game-Jam-4/releases/tag/v0.1.0-rc.1) permanece como prerelease; la rama de #73 apunta a una PR no draft contra `dev` y no debe fusionarse automáticamente.
 
 ## Registro cronológico
+
+### 2026-08-09 — Issue #73 — Calibración, música y legibilidad del recorrido
+
+- Base: rama `codex/issue-73-gameplay-polish` creada desde la `origin/dev` exacta `9a82adedb36b67034d461d83e64788c095e78195`.
+- Calibración: Pointer Lock es el único gate transaccional; si el navegador rechaza o no confirma la captura, la escena permanece visible, el botón pasa a reintento y una segunda pulsación puede completar el flujo. El arranque de audio es asíncrono y nunca deja una pantalla negra.
+- Audio: se eliminan los osciladores musicales continuos y los stems sintéticos. «La función que nos mira» se generó en dos pasos con OpenRouter (letra y después Lyria), se seleccionó entre dos tomas y se empaqueta como MP3 local de 2:58. Las llamadas de runtime siguen siendo cero.
+- Mundo y control: 64 colliders tangenciales forman un límite circular de 62 m, acompañado por una esfera visual sutil; caminar y correr bajan un 40 %, a 2,52 y 3,72 m/s.
+- Superposición: las posibilidades visibles exponen porcentajes deterministas, ordenados y normalizados para sumar exactamente 100; calidad baja conserva dos candidatos y el resto hasta tres.
+- QA: pruebas unitarias cubren audio sin oscilador de fondo, MP3 real, normalización de porcentajes, velocidades y colisión Rapier. Playwright reproduce rechazo, reintento y recuperación en Chromium real; Firefox headless usa un shim de Pointer Lock acotado al test y conserva las mismas aserciones de estado.
+- Evidencia y procedencia: [`docs/progress/issue-73-gameplay-polish/`](./progress/issue-73-gameplay-polish/) y [`docs/audio/la-funcion-que-nos-mira.md`](./audio/la-funcion-que-nos-mira.md).
 
 ### 2026-08-06 — Issue #71 — Hotfix del build Docker tras WP8
 

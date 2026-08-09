@@ -129,7 +129,7 @@ Cámara y movimiento normativos:
 - Cabeceo muy reducido y desactivable; sin motion blur.
 - Retícula central: círculo incompleto de 10 px que se cierra al cargar observación.
 - HUD fuera del centro salvo retícula.
-- Velocidad 4,2 m/s; carrera 6,2 m/s; salto ≈1,1 m.
+- Velocidad 2,52 m/s; carrera 3,72 m/s; salto ≈1,1 m.
 - Aceleración y frenado suaves, sin inercia que impida esquivar.
 - Cápsula física y pendientes transitables ≤38°.
 
@@ -152,7 +152,13 @@ Chunk lógico:                16 × 16 celdas
 Radio máximo observación:    10 m = 5 celdas
 Radio activación de chunk:   18 m
 Radio de seguridad corporal: 2,5 m
+Radio interior de contención: 62 m desde el origen del mundo
 ```
+
+El mundo jugable queda dentro de una cúpula esférica amplia y translúcida. Su
+ecuador actúa como pared física continua: el jugador nunca puede atravesarla ni
+alcanzar una caída fuera del suelo. La barrera debe permanecer visualmente
+discreta con niebla y no reducir las garantías de alcance de las cuatro anclas.
 
 ```ts
 export type CellPhase =
@@ -609,6 +615,9 @@ Identidad: naturaleza sublime con simulación visible. Fijado = material, cálid
 Superposición:
 
 - Máximo tres candidatos de mayor peso por celda.
+- La celda bajo la retícula muestra esos candidatos con porcentajes enteros
+  normalizados que suman 100 %; son probabilidades relativas, no certeza del
+  resultado hasta el commit.
 - Proxies low-poly alternan cada 160–260 ms.
 - Una geometría proxy instanciada por familia; ruido de vértices y fresnel.
 - Opacidad baja conforme sube la Carga.
@@ -636,7 +645,7 @@ Audio Web Audio API:
 |---|---|
 | No observado | Granular y notas sin resolver |
 | Fijado | Viento/insectos/agua/piedra por mezcla local |
-| Observación | Armónico que sube con carga |
+| Observación | La retícula y el colapso comunican la carga; no hay tono continuo |
 | Colapso | Impacto suave y timbre de familia |
 | Semillas | Instrumento permanente adicional |
 | Cuenta atrás | Pulso grave desde 60 s, claro desde 30 s |
@@ -645,7 +654,11 @@ Audio Web Audio API:
 - Un bus por familia y límite de voces.
 - Ambientes mezclados por proporción local, no una fuente por celda.
 - Máximo ocho fuentes posicionales.
-- Música con stems pregenerados y sincronizados.
+- Una canción original pregenerada acompaña la partida desde un asset local,
+  con letra sobre WFC y colapso cuántico. Puede haberse producido con un modelo
+  generativo, pero el runtime nunca llama a APIs ni depende de red.
+- No se usan osciladores continuos como ambiente o música; solo efectos breves
+  y delimitados para colapso, Semillas, narrativa y cuenta atrás.
 - Volumen maestro, música y efectos separados.
 
 HUD: tiempo arriba izquierda; cuatro iconos arriba derecha; retícula/carga centro; mensaje breve abajo. Sin minimapa. Monolito con columna de luz visible.
@@ -731,7 +744,7 @@ src/
                  uncertainty-enemy.ts, ending.ts, portrait.ts, haiku.ts
   render/        renderer.ts, quality.ts, materials.ts, superposition.ts,
                  postprocessing.ts, atmosphere.ts
-  audio/         audio-director.ts, spatial-pool.ts, music-stems.ts
+  audio/         audio-director.ts, spatial-pool.ts, custom-song.ts
   ui/            hud.ts, pause.ts, results.ts
   dev/           debug-overlay.ts, seed-browser.ts, grammar-viewer.ts
 tests/           unit/, property/, integration/, e2e/

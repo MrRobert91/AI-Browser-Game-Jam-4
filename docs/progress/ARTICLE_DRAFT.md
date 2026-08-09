@@ -210,3 +210,17 @@ La campaña final recorre 10.000 seeds y cinco rutas. Cien ejecuciones levantan 
 El perfil automatizado mantiene worker y main por debajo de 4 y 12 ms p95, estima 60 FPS y coloca draw calls, triángulos, texturas, descarga y tiempo de arranque dentro de objetivo. Es un gate reproducible, no una afirmación sobre una GPU que no se probó: la matriz distingue Chromium, Firefox y Chrome estable verificados de Edge y hardware integrado pendientes.
 
 La candidata termina como ZIP estático con manifest SHA-256, favicon y assets locales, créditos, procedencia de contenido asistido, privacidad y texto listo para itch.io. Después de cargar sus archivos no hace llamadas de red ni envía datos a modelos. El artefacto final no demuestra que todo mundo posible sea bello; demuestra algo más útil para la jam: que el mundo observado puede terminar, explicarse y volver a reproducirse sin esconder sus límites.
+
+## Pulido posterior: fallar sin quedar a oscuras
+
+La calibración de mirada escondía un fallo especialmente cruel: si Pointer Lock era rechazado durante el gesto inicial, la interfaz podía retirarse antes de saber si el navegador había concedido el control. Ahora la captura es una transacción observable. Solo se entra en juego al recibir confirmación; ante error, el mundo sigue renderizado, aparece «Reintentar calibración» y el mismo flujo puede completarse sin recargar.
+
+![Reintento visible tras rechazar Pointer Lock](./issue-73-gameplay-polish/01-calibration-retry.png)
+
+La superposición también cuenta mejor qué está haciendo el algoritmo. Sus candidatos ya no son solo siluetas alternantes: muestran pesos normalizados que siempre suman 100 %. La barrera esférica de 62 metros conserva la escala visual del paisaje, mientras un anillo de colliders impide abandonar el tablero. Caminar y correr son un 40 % más lentos para dar tiempo a observar antes de atravesar una zona.
+
+![Probabilidades después de recuperar la calibración](./issue-73-gameplay-polish/02-calibration-recovered.png)
+
+[Ver la recuperación completa de calibración (WebM, 24 s)](./issue-73-gameplay-polish/calibration-recovery.webm)
+
+El cambio sonoro elimina el tono sintético continuo y lo sustituye por una pieza original de casi tres minutos. Primero se generó la letra sobre WFC, superposición y colapso cuántico; después Lyria produjo dos interpretaciones. La toma elegida se validó y se incorporó como MP3 local, de forma que el juego conserva su promesa offline y OpenRouter no participa durante una partida.

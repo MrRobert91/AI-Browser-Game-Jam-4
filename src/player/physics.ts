@@ -2,6 +2,7 @@ import type { PerspectiveCamera } from 'three';
 
 import { PlayerController } from './controller';
 import type { PlayerInput } from './input';
+import { createWorldBoundaryColliders } from '../world/world-boundary';
 
 export interface PlayerPhysicsRuntime {
   readonly controller: PlayerController;
@@ -22,6 +23,7 @@ export async function createPlayerPhysicsRuntime(
     rapier.ColliderDesc.cuboid(64, 0.1, 64).setFriction(0.8),
     groundBody,
   );
+  createWorldBoundaryColliders(world, rapier);
   const controller = new PlayerController(world, camera, input, rapier);
 
   return {
