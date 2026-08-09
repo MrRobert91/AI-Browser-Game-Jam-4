@@ -34,6 +34,12 @@ Actualizado: 2026-08-09 (Europe/Madrid)
 - `AGENTS.md` 1.1 fija Agencia, Cámara de Silencio, Condensado de Posibilidad, Colapsador, cuerpo de campo, La Medida y resultado no reconciliado, además del tono administrativo-poético.
 - [`docs/narrative/QBISM_CANON.md`](./narrative/QBISM_CANON.md) documenta referencias primarias, licencias científicas, glosario editorial y una prueba de consistencia para el copy posterior. No cambia solver, reloj, movimiento ni runtime.
 
+### 2026-08-09 — Issue #77 — Introducción y calibración de conciencia
+
+- La pantalla existente presenta Cámara, Condensado, cuerpo de campo, certificación provisional y el contrato “elige la pregunta, no la respuesta” en cuatro beats automáticos de 18 s como máximo.
+- “Aceptar y calibrar” y “Omitir introducción y calibrar” nacen de un gesto real y entran directamente en el flujo transaccional de Pointer Lock. El fallo conserva el mundo visible y el reintento; el reloj sigue esperando al primer colapso.
+- La máquina de estados y las pruebas cubren reproducción determinista, omisión, línea obligatoria y camino E2E de un solo gesto.
+
 ## Registro cronológico
 
 ### 2026-08-09 — Issue #73 — Calibración, música y legibilidad del recorrido

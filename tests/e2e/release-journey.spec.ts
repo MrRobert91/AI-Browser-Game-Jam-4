@@ -91,6 +91,23 @@ test('pointer lock and pause recover after user gestures', async ({ page }) => {
   await expect(shell).toHaveAttribute('data-paused', 'false');
 });
 
+test('the Agency introduction can play or be skipped into one-gesture calibration', async ({
+  page,
+}) => {
+  await page.goto('/?wp5=preview&replay=wp5&speed=8');
+  const shell = page.locator('.observation-shell');
+  await expect(shell).toHaveAttribute('data-intro-step', 'chamber');
+  await expect(page.locator('[data-intro-copy]')).toContainText(
+    'Condensado de Posibilidad',
+  );
+  await page.locator('[data-intro-skip]').click();
+  await expect(shell).toHaveAttribute('data-intro-skipped', 'true');
+  await expect(shell).toHaveAttribute('data-calibrated', 'true');
+  await expect(page.locator('[data-intro-copy]')).toContainText(
+    'Mira. Lo que permanezca',
+  );
+});
+
 test('a rejected first calibration stays visible and can be retried', async ({
   page,
 }, testInfo) => {

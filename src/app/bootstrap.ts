@@ -12,6 +12,7 @@ import {
   type RunResult,
 } from '../gameplay/ending';
 import { generateHaiku } from '../gameplay/haiku';
+import { AgencyIntroduction } from '../gameplay/introduction';
 import { NarrativeDirector, type NarrativeCueId } from '../gameplay/narrative';
 import {
   AttentionPortraitTracker,
@@ -67,15 +68,20 @@ const SHELL_MARKUP = `
     </header>
 
     <section class="intro-panel">
-      <p class="intro-panel__eyebrow">LA MEDIDA // REGISTRO 01</p>
+      <p class="intro-panel__eyebrow" data-intro-eyebrow>AGENCIA // CÁMARA DE SILENCIO 7-C</p>
       <h1 id="game-title">La Última<br /><span>Observación</span></h1>
-      <p class="intro-panel__statement">
-        <strong>Mira.</strong> Lo que permanezca bajo tu atención tendrá derecho a existir.
+      <p class="intro-panel__statement" data-intro-copy aria-live="polite">
+        Condensado de Posibilidad estable. Se ha asignado un cuerpo de campo al Colapsador remoto.
       </p>
-      <button class="observation-button" type="button" data-observation-button>
-        <span>Calibrar mirada</span>
-        <span aria-hidden="true">↗</span>
-      </button>
+      <div class="intro-panel__actions">
+        <button class="observation-button" type="button" data-observation-button>
+          <span>Aceptar y calibrar</span>
+          <span aria-hidden="true">↗</span>
+        </button>
+        <button class="intro-panel__skip" type="button" data-intro-skip>
+          Omitir introducción y calibrar
+        </button>
+      </div>
       <p class="intro-panel__hint" data-shell-status role="status" aria-live="polite">
         Instrumento local · sin conexión de runtime
       </p>
@@ -150,6 +156,9 @@ export function bootstrap(root: HTMLElement): () => void {
   const observationButton = root.querySelector<HTMLButtonElement>(
     '[data-observation-button]',
   );
+  const introSkip = root.querySelector<HTMLButtonElement>('[data-intro-skip]');
+  const introEyebrow = root.querySelector<HTMLElement>('[data-intro-eyebrow]');
+  const introCopy = root.querySelector<HTMLElement>('[data-intro-copy]');
   const systemState = root.querySelector<HTMLElement>('[data-system-state]');
   const shellStatus = root.querySelector<HTMLElement>('[data-shell-status]');
   const workerState = root.querySelector<HTMLElement>('[data-worker-state]');
@@ -164,6 +173,9 @@ export function bootstrap(root: HTMLElement): () => void {
   if (
     !shell ||
     !observationButton ||
+    !introSkip ||
+    !introEyebrow ||
+    !introCopy ||
     !systemState ||
     !shellStatus ||
     !workerState ||
@@ -177,6 +189,20 @@ export function bootstrap(root: HTMLElement): () => void {
   }
 
   const abortController = new AbortController();
+  const introduction = new AgencyIntroduction();
+  const renderIntroduction = (): void => {
+    introEyebrow.textContent = introduction.current.eyebrow;
+    introCopy.textContent = introduction.current.text;
+    shell.dataset.introStep = introduction.current.id;
+    shell.dataset.introComplete = String(introduction.complete);
+    shell.dataset.introSkipped = String(introduction.wasSkipped);
+  };
+  renderIntroduction();
+  const introductionTimer = window.setInterval(() => {
+    introduction.advance(4_500);
+    renderIntroduction();
+    if (introduction.complete) window.clearInterval(introductionTimer);
+  }, 4_500);
   const settings = loadGameSettings();
   const search = new URLSearchParams(window.location.search);
   const requestedMode = search.get('mode');
@@ -720,60 +746,70 @@ export function bootstrap(root: HTMLElement): () => void {
     gameRenderer.render();
   });
 
+  const startCalibration = async (skipIntroduction: boolean): Promise<void> => {
+    if (shell.dataset.calibration === 'pending') return;
+    window.clearInterval(introductionTimer);
+    if (skipIntroduction) introduction.skip();
+    renderIntroduction();
+    shell.dataset.calibration = 'pending';
+    systemState.textContent = 'CALIBRANDO';
+    shellStatus.textContent = 'Solicitando control de mirada…';
+    observationButton.disabled = true;
+    introSkip.disabled = true;
+    observationButton
+      .querySelector('span')
+      ?.replaceChildren('Calibrando mirada…');
+    playerInput.setEnabled(true);
+
+    // Start both privileged operations synchronously from the same gesture.
+    // Audio is optional; Pointer Lock is the transactional calibration gate.
+    const audioStart = audioDirector.startFromGesture();
+    shell.dataset.audioStarted = 'pending';
+    const pointerLockAcquired = await playerInput.resume();
+
+    void audioStart.then((audioStarted) => {
+      shell.dataset.audioStarted = String(audioStarted);
+      if (shell.dataset.calibration === 'error') {
+        audioDirector.setPaused(true);
+      } else if (!audioStarted) {
+        shellStatus.textContent = 'Shell lista · audio no disponible';
+      }
+    });
+
+    if (!pointerLockAcquired) {
+      playerInput.setEnabled(false);
+      shell.dataset.calibration = 'error';
+      shell.dataset.calibrated = 'false';
+      systemState.textContent = 'EN ESPERA';
+      shellStatus.textContent =
+        'No se pudo capturar la mirada. Haz clic para reintentar.';
+      observationButton.disabled = false;
+      introSkip.hidden = true;
+      observationButton
+        .querySelector('span')
+        ?.replaceChildren('Reintentar calibración');
+      return;
+    }
+
+    shell.dataset.calibration = 'ready';
+    shell.dataset.calibrated = 'true';
+    systemState.textContent = 'CALIBRADA';
+    shellStatus.textContent =
+      'Shell lista · el primer colapso iniciará el reloj';
+    observationButton
+      .querySelector('span')
+      ?.replaceChildren('Mirada calibrada');
+    narrative.play('start');
+  };
+
   observationButton.addEventListener(
     'click',
-    async () => {
-      if (shell.dataset.calibration === 'pending') return;
-      shell.dataset.calibration = 'pending';
-      systemState.textContent = 'CALIBRANDO';
-      shellStatus.textContent = 'Solicitando control de mirada…';
-      observationButton.disabled = true;
-      observationButton
-        .querySelector('span')
-        ?.replaceChildren('Calibrando mirada…');
-      playerInput.setEnabled(true);
-
-      // Start both privileged operations synchronously from the same gesture.
-      // Audio is optional; Pointer Lock is the transactional calibration gate.
-      const audioStart = audioDirector.startFromGesture();
-      shell.dataset.audioStarted = 'pending';
-      const pointerLockAcquired = await playerInput.resume();
-
-      void audioStart.then((audioStarted) => {
-        shell.dataset.audioStarted = String(audioStarted);
-        if (shell.dataset.calibration === 'error') {
-          audioDirector.setPaused(true);
-        } else if (!audioStarted) {
-          shellStatus.textContent = 'Shell lista · audio no disponible';
-        }
-      });
-
-      if (!pointerLockAcquired) {
-        playerInput.setEnabled(false);
-        shell.dataset.calibration = 'error';
-        shell.dataset.calibrated = 'false';
-        systemState.textContent = 'EN ESPERA';
-        shellStatus.textContent =
-          'No se pudo capturar la mirada. Haz clic para reintentar.';
-        observationButton.disabled = false;
-        observationButton
-          .querySelector('span')
-          ?.replaceChildren('Reintentar calibración');
-        return;
-      }
-
-      shell.dataset.calibration = 'ready';
-      shell.dataset.calibrated = 'true';
-      systemState.textContent = 'CALIBRADA';
-      shellStatus.textContent =
-        'Shell lista · el primer colapso iniciará el reloj';
-      observationButton
-        .querySelector('span')
-        ?.replaceChildren('Mirada calibrada');
-      narrative.play('start');
-    },
+    () => void startCalibration(false),
     { signal: abortController.signal },
   );
+  introSkip.addEventListener('click', () => void startCalibration(true), {
+    signal: abortController.signal,
+  });
 
   const handleVisibilityChange = (): void => {
     if (document.hidden) {
@@ -799,6 +835,7 @@ export function bootstrap(root: HTMLElement): () => void {
 
   return () => {
     disposed = true;
+    window.clearInterval(introductionTimer);
     abortController.abort();
     gameLoop.stop();
     solverWorker.dispose();

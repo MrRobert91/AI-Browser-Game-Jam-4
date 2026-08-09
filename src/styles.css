@@ -409,6 +409,37 @@ button {
   font-weight: 400;
 }
 
+.intro-panel__actions {
+  display: grid;
+  width: min(360px, 100%);
+  gap: 0.65rem;
+}
+
+.intro-panel__skip {
+  padding: 0.7rem 0;
+  border: 0;
+  color: #8bb5ae;
+  background: transparent;
+  font-family: "Courier New", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.11em;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
+  cursor: pointer;
+}
+
+.intro-panel__skip:hover:not(:disabled),
+.intro-panel__skip:focus-visible {
+  color: #d5fff7;
+  outline: none;
+}
+
+.intro-panel__skip:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
 .observation-button {
   display: inline-flex;
   width: min(320px, 100%);

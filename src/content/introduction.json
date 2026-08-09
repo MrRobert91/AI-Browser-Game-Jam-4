@@ -1,0 +1,22 @@
+[
+  {
+    "id": "chamber",
+    "eyebrow": "AGENCIA // CÁMARA DE SILENCIO 7-C",
+    "text": "Condensado de Posibilidad estable. Se ha asignado un cuerpo de campo al Colapsador remoto."
+  },
+  {
+    "id": "agency",
+    "eyebrow": "LA MEDIDA // CERTIFICACIÓN PROVISIONAL",
+    "text": "Su experiencia subjetiva ha sido autorizada con carácter temporal y sin reconocimiento de precedente administrativo."
+  },
+  {
+    "id": "question",
+    "eyebrow": "PROTOCOLO // INTERVENCIÓN",
+    "text": "Usted decide qué pregunta formular. La Cámara registrará una respuesta compatible con sus expectativas."
+  },
+  {
+    "id": "look",
+    "eyebrow": "LA MEDIDA // REGISTRO 01",
+    "text": "Mira. Lo que permanezca bajo tu atención tendrá derecho a existir."
+  }
+]
