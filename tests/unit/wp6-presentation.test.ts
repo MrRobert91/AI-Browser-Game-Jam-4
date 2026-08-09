@@ -12,7 +12,12 @@ import {
   CUSTOM_SONG_PATH,
 } from '../../src/audio/custom-song';
 import { MAX_POSITIONAL_AUDIO_SOURCES } from '../../src/audio/spatial-pool';
-import { NarrativeDirector } from '../../src/gameplay/narrative';
+import {
+  NARRATIVE_CATALOG,
+  NARRATIVE_CUE_ORDER,
+  NarrativeDirector,
+  validateNarrativeCatalog,
+} from '../../src/gameplay/narrative';
 import { createStylizedMaterialLibrary } from '../../src/render/materials';
 import { resolveQualityProfile } from '../../src/render/quality';
 import {
@@ -135,8 +140,12 @@ describe('WP6 accessible settings and narrative', () => {
       'Mira. Lo que permanezca bajo tu atención tendrá derecho a existir.',
     );
     director.play('start');
-    expect(director.play('firstDeath')).toBe('El mundo recuerda mejor que tú.');
-    expect(director.play('lastThirtySeconds')).toBe(
+    expect(validateNarrativeCatalog()).toEqual([]);
+    expect(new Set(NARRATIVE_CUE_ORDER).size).toBe(NARRATIVE_CUE_ORDER.length);
+    expect(director.play('firstDeath')).toContain(
+      'El mundo recuerda mejor que tú.',
+    );
+    expect(director.play('lastThirtySeconds')).toContain(
       'No queda tiempo para verlo todo. Elige qué merece terminar.',
     );
     expect(director.play('final')).toBe(
@@ -144,5 +153,29 @@ describe('WP6 accessible settings and narrative', () => {
     );
     expect(onMessage).toHaveBeenCalledTimes(4);
     expect(onSubtitle).toHaveBeenCalledTimes(4);
+    expect(director.playedCueIds()).toEqual([
+      'start',
+      'firstDeath',
+      'lastThirtySeconds',
+      'final',
+    ]);
+    expect(NARRATIVE_CATALOG.locale).toBe('es-ES');
+  });
+
+  it('uses the localized fallback when approved copy is unavailable', () => {
+    const catalog = {
+      ...NARRATIVE_CATALOG,
+      cues: {
+        ...NARRATIVE_CATALOG.cues,
+        start: { ...NARRATIVE_CATALOG.cues.start, text: '' },
+      },
+    };
+    const onMessage = vi.fn();
+    const director = new NarrativeDirector(
+      { onMessage, onSubtitle: vi.fn() },
+      catalog,
+    );
+    expect(director.play('start')).toBe('Mira. La Cámara está preparada.');
+    expect(onMessage).toHaveBeenCalledWith('Mira. La Cámara está preparada.');
   });
 });

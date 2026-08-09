@@ -40,6 +40,12 @@ Actualizado: 2026-08-09 (Europe/Madrid)
 - “Aceptar y calibrar” y “Omitir introducción y calibrar” nacen de un gesto real y entran directamente en el flujo transaccional de Pointer Lock. El fallo conserva el mundo visible y el reintento; el reloj sigue esperando al primer colapso.
 - La máquina de estados y las pruebas cubren reproducción determinista, omisión, línea obligatoria y camino E2E de un solo gesto.
 
+### 2026-08-09 — Issue #78 — Catálogo reactivo de La Medida
+
+- `narrative.json` es ahora un catálogo localizable `es-ES` con evento, hablante, texto, fallback, prioridad, duración y política de repetición por cue.
+- Colapso inicial, cuatro Semillas, primera muerte, respawn, detección/reconciliación de Incertidumbre, cuenta atrás y final se conectan por IDs tipados; progresión y respawn ya no contienen copy narrativo disperso.
+- `NarrativeDirector` valida unicidad, orden, prioridades y fallback, emite subtítulo/audio con la misma duración y conserva una historia determinista para tests y replay.
+
 ## Registro cronológico
 
 ### 2026-08-09 — Issue #73 — Calibración, música y legibilidad del recorrido

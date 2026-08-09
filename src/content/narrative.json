@@ -1,10 +1,113 @@
 {
-  "start": "Mira. Lo que permanezca bajo tu atención tendrá derecho a existir.",
-  "unlockWater": "El agua no estaba ausente. Todavía no era posible.",
-  "unlockForest": "El bosque aprende la forma de tu paciencia.",
-  "unlockRuin": "Una ruina no recuerda: espera una mirada.",
-  "unlockStorm": "La tormenta también era una forma posible.",
-  "firstDeath": "El mundo recuerda mejor que tú.",
-  "lastThirtySeconds": "No queda tiempo para verlo todo. Elige qué merece terminar.",
-  "final": "No encontraste este mundo. Lo separaste de todos los demás."
+  "locale": "es-ES",
+  "cues": {
+    "start": {
+      "event": "CALIBRATION_COMPLETE",
+      "speaker": "LA_MEDIDA",
+      "text": "Mira. Lo que permanezca bajo tu atención tendrá derecho a existir.",
+      "fallbackText": "Mira. La Cámara está preparada.",
+      "priority": 70,
+      "durationMs": 4600,
+      "once": true
+    },
+    "firstCollapse": {
+      "event": "FIRST_COLLAPSE",
+      "speaker": "LA_MEDIDA",
+      "text": "Resultado experimentado. Sus expectativas anteriores han sido archivadas.",
+      "fallbackText": "Resultado incorporado al expediente.",
+      "priority": 55,
+      "durationMs": 3900,
+      "once": true
+    },
+    "unlockWater": {
+      "event": "UNLOCK_WATER",
+      "speaker": "LA_MEDIDA",
+      "text": "El agua no estaba ausente. Todavía no era posible. Nueva familia de experiencias autorizada: humedad.",
+      "fallbackText": "Nueva familia autorizada: agua.",
+      "priority": 80,
+      "durationMs": 5800,
+      "once": true
+    },
+    "unlockForest": {
+      "event": "UNLOCK_FOREST",
+      "speaker": "LA_MEDIDA",
+      "text": "Intervenciones de raíz y crecimiento autorizadas. La paciencia ya dispone de formulario.",
+      "fallbackText": "Nueva familia autorizada: bosque.",
+      "priority": 80,
+      "durationMs": 5200,
+      "once": true
+    },
+    "unlockRuin": {
+      "event": "UNLOCK_RUIN",
+      "speaker": "LA_MEDIDA",
+      "text": "Intervenciones de memoria mineral autorizadas. La Agencia no garantiza que el pasado haya ocurrido.",
+      "fallbackText": "Nueva familia autorizada: ruina.",
+      "priority": 80,
+      "durationMs": 5600,
+      "once": true
+    },
+    "unlockStorm": {
+      "event": "UNLOCK_STORM",
+      "speaker": "LA_MEDIDA",
+      "text": "Intervenciones de alta energía autorizadas. El riesgo adjunto se considera una preferencia del usuario.",
+      "fallbackText": "Nueva familia autorizada: tormenta.",
+      "priority": 80,
+      "durationMs": 5700,
+      "once": true
+    },
+    "firstDeath": {
+      "event": "FIRST_DEATH",
+      "speaker": "LA_MEDIDA",
+      "text": "El mundo recuerda mejor que tú. Su fallecimiento ha sido clasificado como experiencia formativa; se asignará otro cuerpo de campo.",
+      "fallbackText": "El mundo recuerda mejor que tú.",
+      "priority": 100,
+      "durationMs": 6000,
+      "once": true
+    },
+    "respawn": {
+      "event": "RESPAWN",
+      "speaker": "LA_MEDIDA",
+      "text": "Cuerpo de campo reemplazado. El expediente y las Semillas permanecen.",
+      "fallbackText": "El expediente permanece.",
+      "priority": 90,
+      "durationMs": 3800,
+      "once": false
+    },
+    "uncertaintyDetected": {
+      "event": "UNCERTAINTY_DETECTED",
+      "speaker": "LA_MEDIDA",
+      "text": "Advertencia: este resultado parece pertenecer a otra persona.",
+      "fallbackText": "Incidencia de actualización pendiente.",
+      "priority": 75,
+      "durationMs": 4200,
+      "once": true
+    },
+    "uncertaintyFixed": {
+      "event": "UNCERTAINTY_FIXED",
+      "speaker": "LA_MEDIDA",
+      "text": "Descripción estable incorporada al registro común. La discrepancia queda reclasificada como variabilidad de usuario.",
+      "fallbackText": "Resultado reconciliado.",
+      "priority": 76,
+      "durationMs": 5400,
+      "once": true
+    },
+    "lastThirtySeconds": {
+      "event": "LAST_THIRTY_SECONDS",
+      "speaker": "LA_MEDIDA",
+      "text": "No queda tiempo para verlo todo. Elige qué merece terminar. La coherencia de la Cámara expira en treinta segundos.",
+      "fallbackText": "No queda tiempo para verlo todo. Elige qué merece terminar.",
+      "priority": 110,
+      "durationMs": 5900,
+      "once": true
+    },
+    "final": {
+      "event": "ENDING_COMPLETE",
+      "speaker": "LA_MEDIDA",
+      "text": "No encontraste este mundo. Lo separaste de todos los demás.",
+      "fallbackText": "El expediente ha terminado.",
+      "priority": 120,
+      "durationMs": 4800,
+      "once": true
+    }
+  }
 }

@@ -1,12 +1,11 @@
 import type { WorldVector3 } from '../contracts/world';
+import type { NarrativeCueId } from './narrative';
 
 export const DEATH_FREEZE_SECONDS = 0.12;
 export const DEATH_DISSOLVE_SECONDS = 0.7;
 export const DEATH_FADE_SECONDS = 0.18;
 export const RESPAWN_INVULNERABILITY_SECONDS = 1.5;
 export const RESPAWN_POSITION: WorldVector3 = [64, 1.7, 64];
-export const FIRST_DEATH_LINE = 'El mundo recuerda mejor que tú.';
-
 export type RespawnPhase =
   'ALIVE' | 'FROZEN' | 'DISSOLVING' | 'FADING' | 'INVULNERABLE';
 
@@ -27,7 +26,7 @@ export type RespawnEvent =
       readonly type: 'DEATH_STARTED';
       readonly cause: DeathRequest['cause'];
       readonly firstDeath: boolean;
-      readonly narrativeLine: string | null;
+      readonly narrativeCueId: NarrativeCueId | null;
     }
   | { readonly type: 'DISSOLVE_STARTED' }
   | { readonly type: 'FADE_STARTED' }
@@ -66,7 +65,7 @@ export class RespawnSystem {
       type: 'DEATH_STARTED',
       cause: request.cause,
       firstDeath: this.deaths === 1,
-      narrativeLine: this.deaths === 1 ? FIRST_DEATH_LINE : null,
+      narrativeCueId: this.deaths === 1 ? 'firstDeath' : null,
     });
     return true;
   }

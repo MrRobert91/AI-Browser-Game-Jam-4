@@ -384,6 +384,7 @@ export function bootstrap(root: HTMLElement): () => void {
       runClock!.notifyFirstCollapse();
       hud.notifyFirstCollapse();
       audioDirector.notifyCollapse();
+      narrative.play('firstCollapse');
     },
     onWarning: (warning) => {
       if (warning.code !== 'ECHO_ONLY') {
@@ -432,6 +433,7 @@ export function bootstrap(root: HTMLElement): () => void {
         hud.setMessage(message);
         hud.showSubtitle(message);
       },
+      onNarrativeCue: (cueId) => narrative.play(cueId),
       onClockReward: (seconds) => {
         runClock!.addTime(seconds);
       },

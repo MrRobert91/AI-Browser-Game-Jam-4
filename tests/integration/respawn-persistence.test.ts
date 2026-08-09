@@ -6,7 +6,6 @@ import {
   DEATH_DISSOLVE_SECONDS,
   DEATH_FADE_SECONDS,
   DEATH_FREEZE_SECONDS,
-  FIRST_DEATH_LINE,
   RESPAWN_INVULNERABILITY_SECONDS,
   RespawnSystem,
 } from '../../src/gameplay/respawn';
@@ -70,7 +69,7 @@ describe('RespawnSystem integration', () => {
     expect(events[0]).toMatchObject({
       type: 'DEATH_STARTED',
       firstDeath: true,
-      narrativeLine: FIRST_DEATH_LINE,
+      narrativeCueId: 'firstDeath',
     });
     respawn.update(deathDuration);
     expect(respawn.isInvulnerable()).toBe(true);
@@ -85,7 +84,7 @@ describe('RespawnSystem integration', () => {
       expect.objectContaining({
         type: 'DEATH_STARTED',
         firstDeath: false,
-        narrativeLine: null,
+        narrativeCueId: null,
       }),
     );
   });
