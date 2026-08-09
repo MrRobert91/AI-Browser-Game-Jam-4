@@ -52,6 +52,11 @@ Actualizado: 2026-08-09 (Europe/Madrid)
 - Cada registro declara hablante, subtítulo, duración, prioridad y umbrales de replay; no añade coleccionables ni interacción obligatoria.
 - La cola admite como máximo dos pendientes, reproduce una vez y omite/interrumpe de forma segura ante muerte, Semilla, últimos 30 s o final. La misma secuencia de métricas produce el mismo orden.
 
+### 2026-08-09 — Issue #80 — La Incertidumbre como resultado no reconciliado
+
+- Copy, HUD y canon presentan las tres siluetas como informes incompatibles de otro Colapsador. La etiqueta “Incidencia de actualización pendiente” evoluciona hasta “Resultado reconciliado” al fijarse como estatua.
+- La línea de detección y la reconciliación ya pertenecen al catálogo tipado. No cambian estados, distancias 18/8 m, 1,2 s de observación, gracia 0,4 s, recompensa +3 s, pathfinding, spawn ni máximo cuatro.
+
 ## Registro cronológico
 
 ### 2026-08-09 — Issue #73 — Calibración, música y legibilidad del recorrido

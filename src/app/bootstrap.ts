@@ -42,6 +42,7 @@ import { GameHud } from '../ui/hud';
 import { loadGameSettings, PauseMenu, type GameSettings } from '../ui/pause';
 import { ProgressionHud } from '../ui/progression-hud';
 import { ResultsPanel } from '../ui/results';
+import { uncertaintyStatusText } from '../ui/uncertainty-status';
 import { SliceCollapseVisuals } from '../world/collapse-visuals';
 import { createOriginDetailField } from '../world/origin-details';
 import { createWorldBoundaryVisual } from '../world/world-boundary';
@@ -113,6 +114,8 @@ const SHELL_MARKUP = `
       WP6 · PRESENTACIÓN LOCAL
     </p>
 
+    <p class="uncertainty-status" data-uncertainty-status role="status" hidden></p>
+
     <section class="slice-result" data-slice-result hidden>
       <p>REGISTRO DE ATENCIÓN</p>
       <h2>No encontraste este mundo.<br />Lo separaste de todos los demás.</h2>
@@ -170,6 +173,9 @@ export function bootstrap(root: HTMLElement): () => void {
   const wp5GateStatus = root.querySelector<HTMLElement>(
     '[data-wp5-gate-status]',
   );
+  const uncertaintyStatus = root.querySelector<HTMLElement>(
+    '[data-uncertainty-status]',
+  );
 
   if (
     !shell ||
@@ -184,7 +190,8 @@ export function bootstrap(root: HTMLElement): () => void {
     !sliceTime ||
     !sliceMessage ||
     !sliceResult ||
-    !wp5GateStatus
+    !wp5GateStatus ||
+    !uncertaintyStatus
   ) {
     throw new Error('La interfaz de observación está incompleta.');
   }
@@ -691,6 +698,12 @@ export function bootstrap(root: HTMLElement): () => void {
     if (wp5Snapshot && progressionHud) {
       progressionHud.update(wp5Snapshot.progression);
       wp5GateStatus.textContent = `WP6 · ${wp5Snapshot.progression.collectedPacks.length}/4 SEMILLAS · ${wp5Snapshot.uncertainty?.state ?? 'SIN ENEMIGO'}`;
+      uncertaintyStatus.hidden = wp5Snapshot.uncertainty === null;
+      if (wp5Snapshot.uncertainty) {
+        uncertaintyStatus.textContent = uncertaintyStatusText(
+          wp5Snapshot.uncertainty.state,
+        );
+      }
       shell.dataset.respawnPhase = wp5Snapshot.respawn.phase;
       for (const packId of wp5Snapshot.progression.collectedPacks) {
         if (announcedPacks.has(packId)) continue;

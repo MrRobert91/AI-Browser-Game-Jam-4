@@ -133,6 +133,28 @@ body {
   display: none;
 }
 
+.uncertainty-status {
+  position: absolute;
+  z-index: 22;
+  right: 2rem;
+  bottom: 7.5rem;
+  max-width: min(28rem, 70vw);
+  margin: 0;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgb(255 126 196 / 24%);
+  color: #ffc5e4;
+  background: rgb(27 4 22 / 66%);
+  font-family: "Courier New", monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-align: right;
+  pointer-events: none;
+}
+
+.uncertainty-status[hidden] {
+  display: none;
+}
+
 button {
   font: inherit;
 }

@@ -529,7 +529,7 @@ Distancia modifica pesos, nunca compatibilidades. La recompensa es ampliar el le
 | Cristal cargado | Pulso cada 2,5 s | Cruzar entre pulsos |
 | Suelo frágil | Rompe 0,8 s tras pisarlo | No detenerse |
 
-**La Incertidumbre** es una silueta de tres formas posibles; solo se mueve fuera de observación directa:
+**La Incertidumbre** es un resultado atribuido a otro Colapsador que La Medida no consigue reconciliar todavía con el expediente actual. Sus tres siluetas representan informes incompatibles, no una criatura cuántica literal. Solo se mueve fuera de observación directa:
 
 ```text
 DORMANT -> STALKING -> SEEN -> PETRIFYING -> FIXED_STATUE
@@ -541,6 +541,7 @@ DORMANT -> STALKING -> SEEN -> PETRIFYING -> FIXED_STATUE
 - Tras 1,2 s de observación continua se vuelve estatua y otorga +3 s una sola vez.
 - Si sale antes, conserva progreso 0,4 s y después lo pierde.
 - Se mueve centro a centro por terreno caminable no visible; no necesita navegación completa.
+- Al observarla no se la mata: una descripción estable se incorpora al registro común y la estatua representa el resultado reconciliado. La interfaz puede denominarla “Incidencia de actualización pendiente”. Esta lectura no cambia ninguna distancia, transición, recompensa, spawn ni límite.
 
 Distribución máxima después de filtros de seguridad:
 
