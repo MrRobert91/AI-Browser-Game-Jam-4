@@ -17,6 +17,7 @@ import { generateHaiku } from '../gameplay/haiku';
 import { AgencyIntroduction } from '../gameplay/introduction';
 import { NarrativeDirector, type NarrativeCueId } from '../gameplay/narrative';
 import { capturePanoramaPng, LocalPanoramaGallery } from '../gameplay/panorama';
+import { configuredRemoteHaikuEndpoint } from '../gameplay/remote-haiku';
 import {
   AttentionPortraitTracker,
   classifyAttentionPortrait,
@@ -426,6 +427,7 @@ export function bootstrap(root: HTMLElement): () => void {
         capturePanoramaPng(gameRenderer.renderer.domElement, result),
       gallery: new LocalPanoramaGallery(),
     },
+    configuredRemoteHaikuEndpoint(import.meta.env.VITE_REMOTE_HAIKU_ENDPOINT),
   );
   observableWorld = new ObservableWorldBridge({
     solver: solverWorker,

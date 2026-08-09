@@ -8,6 +8,7 @@ import {
   type LocalPanoramaGallery,
   type PanoramaRecord,
 } from '../gameplay/panorama';
+import { requestRemoteHaikuWithFallback } from '../gameplay/remote-haiku';
 
 const LAST_RESULT_KEY = 'ultima-observacion:last-result';
 const BEST_PORTRAIT_KEY = 'ultima-observacion:best-portrait';
@@ -61,6 +62,7 @@ export class ResultsPanel {
       readonly capture: (result: RunResult) => Promise<PanoramaRecord>;
       readonly gallery: LocalPanoramaGallery;
     },
+    private readonly remoteHaikuEndpoint: string | null = null,
   ) {}
 
   show(result: RunResult): void {
@@ -105,6 +107,7 @@ export class ResultsPanel {
     }
     const poem = document.createElement('blockquote');
     poem.textContent = result.haiku.lines.join('\n');
+    const remote = this.#createRemoteHaikuControls(result);
     const seed = document.createElement('strong');
     seed.textContent =
       result.seedMode === 'daily' && result.dailyDateKey
@@ -178,6 +181,7 @@ export class ResultsPanel {
       interpretation,
       metrics,
       poem,
+      remote,
       seed,
       note,
       actions,
@@ -185,6 +189,68 @@ export class ResultsPanel {
     );
     this.root.hidden = false;
     this.root.focus();
+  }
+
+  #createRemoteHaikuControls(result: RunResult): HTMLElement {
+    const region = document.createElement('section');
+    region.className = 'slice-result__remote-haiku';
+    if (this.remoteHaikuEndpoint === null) {
+      region.hidden = true;
+      return region;
+    }
+    const consentId = 'remote-haiku-consent';
+    const label = document.createElement('label');
+    const consent = document.createElement('input');
+    consent.type = 'checkbox';
+    consent.id = consentId;
+    consent.dataset.remoteHaikuConsent = 'true';
+    label.htmlFor = consentId;
+    label.append(
+      consent,
+      ' Enviar perfil y estadísticas redondeadas para una variante remota',
+    );
+    const disclosure = document.createElement('p');
+    disclosure.textContent =
+      'No envía seed, ruta, panorama, haiku local ni identificadores. Una petición HTTPS; timeout 4 s. El haiku local sigue siendo el expediente oficial.';
+    const request = document.createElement('button');
+    request.type = 'button';
+    request.disabled = true;
+    request.dataset.remoteHaikuRequest = 'true';
+    request.textContent = 'Crear variante remota';
+    const status = document.createElement('p');
+    status.setAttribute('role', 'status');
+    const variant = document.createElement('blockquote');
+    variant.hidden = true;
+    consent.addEventListener('change', () => {
+      request.disabled = !consent.checked;
+    });
+    request.addEventListener(
+      'click',
+      () => {
+        request.disabled = true;
+        consent.disabled = true;
+        status.textContent = 'Solicitando una variante…';
+        void requestRemoteHaikuWithFallback({
+          endpoint: this.remoteHaikuEndpoint,
+          consent: consent.checked,
+          result,
+          local: result.haiku,
+        }).then((response) => {
+          if (response.source === 'remote') {
+            variant.textContent = response.haiku.lines.join('\n');
+            variant.hidden = false;
+            status.textContent =
+              'Variante remota recibida. No sustituye el haiku local.';
+          } else {
+            status.textContent =
+              'La variante remota no está disponible. El haiku local se conserva.';
+          }
+        });
+      },
+      { once: true },
+    );
+    region.append(label, disclosure, request, status, variant);
+    return region;
   }
 
   async #renderGallery(region: HTMLElement): Promise<void> {

@@ -219,6 +219,8 @@ Una segunda opción convierte la fecha UTC en seed compartida sin servidor. El e
 
 Jardín de Eco amplía el vocabulario exterior de Tormenta sin inventar una quinta Semilla. Tres suelos `OPEN_FLAT` y tres features con LOD entran solo en chunks futuros tras la cuarta Semilla. La gramática queda en 43/22 variantes, sus proxies pesan menos de 10 KiB y una nueva campaña de 10.000 seeds conserva todos los ceros del gate de release.
 
+La última expansión mantiene una frontera más delicada: el poema local sigue siendo el cierre oficial, pero una publicación puede ofrecer una variante remota después del expediente. La opción no existe en la build estándar. Cuando se configura un proxy HTTPS, un checkbox desmarcado explica la transferencia y habilita una sola petición con perfil y estadísticas redondeadas; no viajan seed, ruta, panorama ni haiku local. Cuatro segundos de timeout, respuesta inválida o desconexión devuelven silenciosamente al poema determinista. La red amplía el lenguaje, nunca decide si la partida terminó.
+
 ## Pulido posterior: fallar sin quedar a oscuras
 
 La calibración de mirada escondía un fallo especialmente cruel: si Pointer Lock era rechazado durante el gesto inicial, la interfaz podía retirarse antes de saber si el navegador había concedido el control. Ahora la captura es una transacción observable. Solo se entra en juego al recibir confirmación; ante error, el mundo sigue renderizado, aparece «Reintentar calibración» y el mismo flujo puede completarse sin recargar.

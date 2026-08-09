@@ -94,6 +94,7 @@ test('canonical offline journey reaches the qualitative ending', async ({
   await expect(result).toContainText('Perfil:');
   await expect(result).toContainText('SEED A91F-42C0');
   await expect(result).toContainText('sin reconocimiento de causalidad');
+  await expect(page.locator('[data-remote-haiku-request]')).toHaveCount(0);
   await page.screenshot({ path: testInfo.outputPath('05-final.png') });
   if (testInfo.project.name.startsWith('firefox')) {
     await expect(result).toHaveScreenshot('result-panel.png');

@@ -11,22 +11,29 @@ Actualizado: 2026-08-09 (Europe/Madrid)
 | WP0 — Fundación y contratos | #1–#4 | Completada y promovida | PR #61 fusionada; `main` y `dev` sincronizadas en `7be4649` |
 | WP1 — Solver puro | #5–#11 | Integrada en `dev` | PR #66 fusionada; issues #5–#11 cerradas |
 | WP2 — Render, cámara y física | #12–#14 | Integrada en `dev` | PR #66 fusionada; issues #12–#14 cerradas |
-| WP3 — Gramática y tiles | #15–#22 | Integrada en `dev` salvo #22 | PR #67 fusionada; #22 bloqueada por release #51 |
+| WP3 — Gramática y tiles | #15–#22 | #15–#21 en `dev`; #22 en rama acumulativa | La release #51 ya permite revisar Tormenta |
 | WP4 — Mundo observable | #23–#29 | Integrada en `dev` | PR #68 fusionada; dependencias WP6 cerradas |
 | WP5 — Progresión y peligros | #30–#35 | Integrada en `dev` | PR #68 fusionada; Semillas, peligros y respawn disponibles |
 | WP6 — Presentación | #36–#39 | Integrada en `dev` | PR #69 fusionada; audio, HUD, accesibilidad y narrativa local |
 | WP7 — Final | #40–#43 | Integrada en `dev` | PR #70 fusionada; Reloj, retrato, haiku y ascenso final completos |
 | WP8 — QA y entrega | #44–#51 | Integrada en `dev` | PR #70 fusionada; gates, evidencia y candidata reproducible |
-| POST — Pulido de juego | #73 | En revisión | Calibración recuperable, canción local, límite, probabilidades y movimiento |
-| POST — Expansiones | #52–#56 | Bloqueada | Solo después de la release de jam |
+| POST — Pulido de juego | #73 | Integrada en `dev` | PR #74 fusionada en `922f9e9` |
+| POST — Expansiones | #52–#56 | En rama acumulativa salvo #54 | #54 ya estaba cerrada; #52, #53, #55 y #56 listas para revisión |
 
 ### Estado operativo actual
 
-- Fase actual: pulido posterior a la candidata sobre `origin/dev` `9a82adedb36b67034d461d83e64788c095e78195`; WP7/WP8 y el hotfix Docker ya están integrados.
-- Trabajo en revisión: issue #73, con recuperación de calibración, canción generada y empaquetada localmente, límite esférico, porcentajes de superposición y velocidades reducidas.
-- Arquitectura vigente: el juego sigue siendo offline tras cargar; OpenRouter solo participa en producción de assets y ninguna clave ni llamada de red entra en runtime.
-- Evidencia actual: capturas y WebM reproducibles en [`docs/progress/issue-73-gameplay-polish/`](./progress/issue-73-gameplay-polish/), además de la evidencia acumulada de WP7/WP8 y la documentación de release.
-- Estado remoto: [`v0.1.0-rc.1`](https://github.com/MrRobert91/AI-Browser-Game-Jam-4/releases/tag/v0.1.0-rc.1) permanece como prerelease; la rama de #73 apunta a una PR no draft contra `dev` y no debe fusionarse automáticamente.
+- Fase actual: entrega acumulativa post-jam nacida de `origin/dev` `922f9e9428be25f5d7bb9d964180b474b72bfccf` tras integrar PR #74.
+- Trabajo en revisión: #22, #52, #53, #55, #56 y la revisión narrativa #76–#82, con un commit funcional por issue y una única PR hacia `dev`.
+- Arquitectura vigente: la build de jam sigue siendo offline. #56 solo muestra una variante remota si la publicación configura un proxy HTTPS y el jugador consiente en esa partida; ninguna clave de proveedor entra en el navegador.
+- Evidencia actual: galerías/capturas locales, simulación de 10.000 seeds, WebM narrativo y QA automatizada bajo [`docs/progress/`](./progress/).
+- Gate humano: #83 y el epic #75 permanecen abiertos y **NO-GO 0/5**; la rama no afirma sesiones que no se han realizado.
+
+### 2026-08-09 — Issue #56 — Variante remota de haiku
+
+- La función está ausente por defecto y solo aparece con `VITE_REMOTE_HAIKU_ENDPOINT` HTTPS. El consentimiento es explícito, desmarcado y válido para una única petición al terminar la partida.
+- El payload contiene perfil y métricas redondeadas; excluye seed, ruta, coordenadas, muertes, panorama y haiku local. El transporte omite credenciales/referrer, valida tres líneas y expira a los 4 s.
+- Error, timeout o respuesta inválida conservan el expediente y el haiku local determinista. No hay clave de modelo en el cliente; la política operativa exige proxy, retención declarada y tope de coste.
+- Evidencia y contrato: [`docs/progress/issue-56-remote-haiku/`](./progress/issue-56-remote-haiku/) y [`docs/privacy/REMOTE_HAIKU.md`](./privacy/REMOTE_HAIKU.md).
 
 ### 2026-08-09 — Issue #22 — Pack Tormenta post-release
 

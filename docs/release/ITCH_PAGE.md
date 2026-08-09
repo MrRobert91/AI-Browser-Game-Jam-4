@@ -16,4 +16,4 @@ Walking game 3D de diez minutos. Camina, sostén la mirada para fijar posibilida
 
 Sensibilidad, invertir Y, cabeceo, destellos reducidos, alto contraste, subtítulos, calidad y volúmenes separados.
 
-Build gratuita, autosuficiente y offline después de cargar sus archivos. Escritorio WebGL2; Chrome, Edge y Firefox actuales. No hay telemetría ni generación remota.
+Build gratuita, autosuficiente y offline después de cargar sus archivos. Escritorio WebGL2; Chrome, Edge y Firefox actuales. No hay telemetría. La build de jam no configura la variante remota post-jam.
