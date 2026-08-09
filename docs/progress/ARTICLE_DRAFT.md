@@ -224,3 +224,9 @@ La superposición también cuenta mejor qué está haciendo el algoritmo. Sus ca
 [Ver la recuperación completa de calibración (WebM, 24 s)](./issue-73-gameplay-polish/calibration-recovery.webm)
 
 El cambio sonoro elimina el tono sintético continuo y lo sustituye por una pieza original de casi tres minutos. Primero se generó la letra sobre WFC, superposición y colapso cuántico; después Lyria produjo dos interpretaciones. La toma elegida se validó y se incorporó como MP3 local, de forma que el juego conserva su promesa offline y OpenRouter no participa durante una partida.
+
+## La metáfora cuántica aprende a declarar sus límites
+
+La revisión narrativa posterior no cambia el solver: cambia qué significa para el jugador. QBism ofrece una distinción fértil entre la acción que un agente realiza, la experiencia que recibe y las expectativas que actualiza. El juego toma esa estructura, pero declara dónde termina la referencia científica. La Agencia afirma que una conciencia certificada condensa realidad; la obra nunca confirma esa doctrina ni convierte WFC en física cuántica.
+
+El nuevo canon separa QBism real, ficción institucional y metáfora procedural. Los porcentajes son expectativas de La Medida, las Semillas amplían familias de intervención y una celda fijada entra en el expediente intersubjetivo. Ese marco permite conservar la frase “mirar es construir” sin insinuar que el jugador elige el tile exacto o destruye universos alternativos.

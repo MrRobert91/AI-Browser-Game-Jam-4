@@ -2,7 +2,7 @@
 
 > Fuente de verdad de producto y guía normativa para agentes
 >
-> Versión de diseño: 1.0 — objetivo AI Browser Game Jam 4
+> Versión de diseño: 1.1 — objetivo AI Browser Game Jam 4
 >
 > Duración objetivo: 10 minutos (rango admisible: 5–15)
 >
@@ -43,7 +43,7 @@ La muerte devuelve al jugador al origen sin borrar el mundo observado ni las Sem
 
 > Un walking game de diez minutos donde mirar es construir, explorar amplía las posibilidades y toda elección visual elimina mundos que nunca llegarán a existir.
 
-Tema: **No descubrimos un mundo neutral: nuestra atención selecciona qué posibilidades llegan a ser reales.**
+Tema: **No descubrimos un mundo neutral: cada intervención convierte expectativas personales en una experiencia que el agente debe incorporar.**
 
 Pregunta final: “¿Este era el mundo que encontraste o el mundo que fuiste capaz de mirar?”
 
@@ -71,6 +71,30 @@ El jugador es el último Observador de una estación que orbita un planeta no re
 Una voz breve, **La Medida**, acompaña el comienzo y los cuatro desbloqueos. No explica ciencia ni da órdenes constantes; cada intervención ocupa una o dos líneas.
 
 Giro final: el planeta no se generaba para ser habitado. Era un registro de la atención del jugador, un autorretrato indirecto de prudencia, curiosidad, repetición, riesgo, apego a materiales y capacidad de dejar zonas abiertas.
+
+### 2.1 Canon QBista y licencia poética
+
+La revisión narrativa distingue tres capas que nunca deben confundirse:
+
+1. **QBism real:** un estado cuántico expresa las probabilidades personales de un agente; medir es una acción del agente sobre su mundo; el resultado es una experiencia nueva para ese agente y exige actualizar sus expectativas. La teoría es normativa para sus decisiones, no una descripción de una función de onda objetiva. Esto no demuestra que la conciencia cause un colapso físico ni que existan universos descartados.
+2. **Ficción institucional:** la Agencia de Actualización Cosmológica y Habitabilidad asegura que la conciencia certificada condensa realidad dentro de Cámaras de Silencio. Es doctrina burocrática interesada, no una conclusión científica confirmada por el juego.
+3. **Metáfora jugable:** WFC representa expectativas y compatibilidad mediante dominios, pesos y colapsos deterministas. No simula mecánica cuántica ni convierte sus porcentajes en propiedades ontológicas del planeta.
+
+El jugador elige la intervención —dónde caminar y qué sostener bajo la mirada—, nunca la respuesta exacta. Los porcentajes visibles son expectativas de La Medida condicionadas por la gramática conocida. Una celda `FIXED` es un resultado ya incorporado al expediente intersubjetivo y permanece inmutable.
+
+Vocabulario normativo:
+
+- **Agencia:** Agencia de Actualización Cosmológica y Habitabilidad; organismo ficticio que administra Cámaras, expedientes y certificaciones con humor burocrático seco.
+- **Cámara de Silencio:** recinto ficticio que aísla un Condensado de Posibilidad durante una ventana de observación.
+- **Condensado de Posibilidad:** materia narrativa del planeta aún no incorporada como experiencia; no es un término científico.
+- **Colapsador:** agente humano conectado a un cuerpo de campo. Formula intervenciones mediante recorrido y atención.
+- **Cuerpo de campo:** soporte reemplazable dentro de la Cámara; morir no borra el expediente del agente.
+- **La Medida:** sistema institucional que expresa expectativas, registra experiencias y reconcilia expedientes. No es narrador omnisciente ni conciencia certificada.
+- **Resultado no reconciliado:** experiencia atribuida a otro Colapsador que no encaja todavía en el expediente actual; lectura narrativa de La Incertidumbre.
+
+Guía de tono: La Medida es serena, exacta y ligeramente pasivo-agresiva; la Agencia produce la sátira mediante formularios, clasificaciones y eufemismos. El paisaje conserva belleza y melancolía. Las posibilidades no elegidas no se describen como seres o universos asesinados, y las máquinas no se presentan como agentes conscientes por conclusión científica.
+
+La referencia primaria es C. A. Fuchs, N. D. Mermin y R. Schack, [“An Introduction to QBism with an Application to the Locality of Quantum Mechanics”](https://arxiv.org/abs/1311.5253). La guía ampliada y las licencias narrativas se mantienen en `docs/narrative/QBISM_CANON.md`.
 
 Ritmo objetivo:
 

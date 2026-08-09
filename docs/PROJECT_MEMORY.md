@@ -28,6 +28,12 @@ Actualizado: 2026-08-09 (Europe/Madrid)
 - Evidencia actual: capturas y WebM reproducibles en [`docs/progress/issue-73-gameplay-polish/`](./progress/issue-73-gameplay-polish/), además de la evidencia acumulada de WP7/WP8 y la documentación de release.
 - Estado remoto: [`v0.1.0-rc.1`](https://github.com/MrRobert91/AI-Browser-Game-Jam-4/releases/tag/v0.1.0-rc.1) permanece como prerelease; la rama de #73 apunta a una PR no draft contra `dev` y no debe fusionarse automáticamente.
 
+### 2026-08-09 — Issue #76 — Canon QBista y límites científicos
+
+- La narrativa separa QBism real, doctrina ficticia de la Agencia y WFC como metáfora procedural. El jugador elige una intervención; La Medida expresa expectativas y el resultado se incorpora a un expediente, sin afirmar que la conciencia cause un colapso físico.
+- `AGENTS.md` 1.1 fija Agencia, Cámara de Silencio, Condensado de Posibilidad, Colapsador, cuerpo de campo, La Medida y resultado no reconciliado, además del tono administrativo-poético.
+- [`docs/narrative/QBISM_CANON.md`](./narrative/QBISM_CANON.md) documenta referencias primarias, licencias científicas, glosario editorial y una prueba de consistencia para el copy posterior. No cambia solver, reloj, movimiento ni runtime.
+
 ## Registro cronológico
 
 ### 2026-08-09 — Issue #73 — Calibración, música y legibilidad del recorrido
