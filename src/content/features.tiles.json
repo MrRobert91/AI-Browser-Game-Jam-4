@@ -327,5 +327,55 @@
     "lethal": false,
     "uniquePerChunk": true,
     "neighborBias": { "storm": 1.5, "uncertainty": 1.25 }
+  },
+  {
+    "id": "feature.storm.bell-flower",
+    "numericId": 19,
+    "packId": "storm",
+    "weight": 5,
+    "mesh": "/assets/proxies/storm/bell-flower.proxy.json",
+    "tags": ["storm", "echo_garden", "bell_flower", "detail"],
+    "allowedTerrainTags": ["echo_garden", "echo_moss"],
+    "forbiddenWithinMetersOf": { "origin": 36, "corridor": 1 },
+    "minDistanceFromOrigin": 38,
+    "maxSlopeDegrees": 30,
+    "blocksMovement": false,
+    "lethal": false,
+    "neighborBias": { "echo_garden": 1.4, "bell_flower": 1.45 }
+  },
+  {
+    "id": "feature.storm.mirror-reed",
+    "numericId": 20,
+    "packId": "storm",
+    "weight": 4,
+    "mesh": "/assets/proxies/storm/mirror-reed.proxy.json",
+    "tags": ["storm", "echo_garden", "mirror_reed", "vertical"],
+    "allowedTerrainTags": ["echo_garden", "prism_soil"],
+    "forbiddenWithinMetersOf": { "origin": 36, "corridor": 1.5 },
+    "minDistanceFromOrigin": 40,
+    "maxSlopeDegrees": 25,
+    "blocksMovement": false,
+    "lethal": false,
+    "neighborBias": { "echo_garden": 1.35, "mirror_reed": 1.4 }
+  },
+  {
+    "id": "feature.storm.memory-stone",
+    "numericId": 21,
+    "packId": "storm",
+    "weight": 2,
+    "mesh": "/assets/proxies/storm/memory-stone.proxy.json",
+    "tags": ["storm", "echo_garden", "memory_stone", "monument"],
+    "allowedTerrainTags": ["echo_garden", "echo_moss", "prism_soil"],
+    "forbiddenWithinMetersOf": {
+      "origin": 38,
+      "corridor": 2,
+      "seed_anchor": 2
+    },
+    "minDistanceFromOrigin": 42,
+    "maxSlopeDegrees": 18,
+    "blocksMovement": true,
+    "lethal": false,
+    "uniquePerChunk": true,
+    "neighborBias": { "echo_garden": 1.5, "memory_stone": 1.2 }
   }
 ]

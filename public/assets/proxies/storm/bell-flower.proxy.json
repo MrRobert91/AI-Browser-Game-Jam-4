@@ -1,0 +1,1 @@
+{ "version": 1, "shape": "bell-flower", "color": "#6c5086", "accent": "#d9bcff", "bounds": { "width": 1.3, "height": 1.1, "depth": 1.3 }, "pivot": "center-bottom", "lod": [{ "maxDistance": 18, "shape": "bell-flower" }, { "maxDistance": 36, "shape": "bell-flower-low" }] }

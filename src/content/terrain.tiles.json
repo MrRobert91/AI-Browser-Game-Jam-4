@@ -481,5 +481,80 @@
       [52, 1.35]
     ],
     "neighborBias": { "storm": 1.25, "scorched_meadow": 1.7, "meadow": 1.2 }
+  },
+  {
+    "id": "terrain.storm.echo-moss",
+    "numericId": 23,
+    "packId": "storm",
+    "weight": 4,
+    "mesh": "/assets/proxies/storm/echo-moss.proxy.json",
+    "rotationQuarterTurns": [0],
+    "sockets": {
+      "N": "OPEN_FLAT",
+      "E": "OPEN_FLAT",
+      "S": "OPEN_FLAT",
+      "W": "OPEN_FLAT"
+    },
+    "tags": ["storm", "echo_garden", "echo_moss", "open", "walkable"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "distanceCurve": [
+      [0, 0.1],
+      [42, 0.4],
+      [52, 1.45]
+    ],
+    "neighborBias": { "echo_garden": 1.8, "echo_moss": 1.7, "storm": 1.2 }
+  },
+  {
+    "id": "terrain.storm.prism-soil",
+    "numericId": 24,
+    "packId": "storm",
+    "weight": 3,
+    "mesh": "/assets/proxies/storm/prism-soil.proxy.json",
+    "rotationQuarterTurns": [0],
+    "sockets": {
+      "N": "OPEN_FLAT",
+      "E": "OPEN_FLAT",
+      "S": "OPEN_FLAT",
+      "W": "OPEN_FLAT"
+    },
+    "tags": ["storm", "echo_garden", "prism_soil", "open", "walkable"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "distanceCurve": [
+      [0, 0.1],
+      [42, 0.3],
+      [52, 1.3]
+    ],
+    "neighborBias": { "echo_garden": 1.7, "prism_soil": 1.75, "storm": 1.15 }
+  },
+  {
+    "id": "terrain.storm.echo-clearing",
+    "numericId": 25,
+    "packId": "storm",
+    "weight": 5,
+    "mesh": "/assets/proxies/storm/echo-clearing.proxy.json",
+    "rotationQuarterTurns": [0],
+    "sockets": {
+      "N": "OPEN_FLAT",
+      "E": "OPEN_FLAT",
+      "S": "OPEN_FLAT",
+      "W": "OPEN_FLAT"
+    },
+    "tags": ["storm", "echo_garden", "meadow", "open", "walkable", "adapter"],
+    "walkable": true,
+    "lethal": false,
+    "heightClass": 0,
+    "fallbackRank": 0,
+    "distanceCurve": [
+      [0, 0.15],
+      [42, 0.55],
+      [52, 1.2]
+    ],
+    "neighborBias": { "echo_garden": 1.55, "meadow": 1.25, "storm": 1.15 }
   }
 ]

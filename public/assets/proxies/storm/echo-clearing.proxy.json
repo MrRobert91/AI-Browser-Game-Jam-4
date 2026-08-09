@@ -1,0 +1,1 @@
+{ "version": 1, "shape": "echo-clearing", "color": "#3f5949", "accent": "#b5cfa2", "bounds": { "width": 2, "height": 0.14, "depth": 2 }, "pivot": "center-bottom", "lod": [{ "maxDistance": 22, "shape": "echo-clearing" }, { "maxDistance": 42, "shape": "echo-clearing-low" }] }

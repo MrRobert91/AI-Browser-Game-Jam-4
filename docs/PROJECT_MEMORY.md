@@ -46,6 +46,12 @@ Actualizado: 2026-08-09 (Europe/Madrid)
 - La portada alterna de forma explícita entre diaria UTC y observación estándar aleatoria. Seed explícita y replay canónico tienen rutas deterministas separadas.
 - HUD, expediente y copia etiquetan el modo diario con fecha UTC. Vitest cubre la medianoche y Playwright la recarga/replay. Evidencia: [`docs/progress/issue-53-daily-seed/`](./progress/issue-53-daily-seed/).
 
+### 2026-08-09 — Issue #55 — Bioma Jardín de Eco
+
+- Seis definiciones post-jam amplían Tormenta: Echo Moss, Prism Soil, Echo Clearing, Bell Flower, Mirror Reed y Memory Stone. No añaden quinta Semilla, sockets, peligros ni red.
+- Las tres tiles conectan con `OPEN_FLAT`; la gramática queda en 43 variantes de terreno y 22 de feature. Seis proxies con LOD pesan menos de 10 KiB.
+- El unlock Tormenta solo afecta chunks futuros: la prueba conserva `paletteEpoch`, packs y celdas de un chunk previo. La galería real y la campaña de 10.000 seeds están en [`docs/progress/issue-55-echo-garden/`](./progress/issue-55-echo-garden/).
+
 ### 2026-08-09 — Issue #76 — Canon QBista y límites científicos
 
 - La narrativa separa QBism real, doctrina ficticia de la Agencia y WFC como metáfora procedural. El jugador elige una intervención; La Medida expresa expectativas y el resultado se incorpora a un expediente, sin afirmar que la conciencia cause un colapso físico.

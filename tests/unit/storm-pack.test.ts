@@ -18,16 +18,20 @@ describe('storm stretch pack', () => {
       (tile) => tile.id === 'terrain.storm.scorched-meadow',
     );
 
-    expect(terrainIds).toEqual([
-      'terrain.storm.charged-soil',
-      'terrain.storm.glass-ground',
-      'terrain.storm.scorched-meadow',
-    ]);
-    expect(featureIds).toEqual([
-      'feature.storm.crystal',
-      'feature.storm.spikes',
-      'feature.storm.uncertainty-nest',
-    ]);
+    expect(terrainIds).toEqual(
+      expect.arrayContaining([
+        'terrain.storm.charged-soil',
+        'terrain.storm.glass-ground',
+        'terrain.storm.scorched-meadow',
+      ]),
+    );
+    expect(featureIds).toEqual(
+      expect.arrayContaining([
+        'feature.storm.crystal',
+        'feature.storm.spikes',
+        'feature.storm.uncertainty-nest',
+      ]),
+    );
     expect(new Set(Object.values(adapter?.sockets ?? {}))).toEqual(
       new Set(['OPEN_FLAT']),
     );

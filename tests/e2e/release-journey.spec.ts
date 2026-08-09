@@ -168,6 +168,27 @@ test('daily mode is shared by UTC date while replay keeps its canonical seed', a
   await expect(page.locator('[data-seed-label]')).toHaveText('A91F-42C0');
 });
 
+test('grammar gallery exposes the bounded Echo Garden extension', async ({
+  page,
+}, testInfo) => {
+  await page.goto('/?grammar=1');
+  const app = page.locator('#app');
+  const viewer = page.locator('.grammar-viewer');
+  await expect(app).toHaveAttribute('data-gallery-ready', 'true');
+  await page.locator('[data-pack-filter]').selectOption('storm');
+  const cards = page.locator('.grammar-card[data-pack="storm"]');
+  await expect(cards).toHaveCount(12);
+  await expect(viewer).toContainText('terrain.storm.echo-clearing');
+  await expect(viewer).toContainText('feature.storm.memory-stone');
+  await expect(page.locator('[data-gallery-summary]')).toContainText(
+    '12 tiles',
+  );
+  await page.screenshot({
+    path: testInfo.outputPath('echo-garden-gallery.png'),
+    fullPage: true,
+  });
+});
+
 test('a rejected first calibration stays visible and can be retried', async ({
   page,
 }, testInfo) => {

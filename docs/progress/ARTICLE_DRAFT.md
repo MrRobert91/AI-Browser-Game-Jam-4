@@ -217,6 +217,8 @@ La primera expansión post-jam captura el canvas final como PNG sin retrasar el 
 
 Una segunda opción convierte la fecha UTC en seed compartida sin servidor. El enlace diario y la vuelta a una seed aleatoria estándar viven en la misma portada; el expediente etiqueta fecha y seed. Compartir el día no introduce leaderboard, login ni reloj autoritativo: compartir la seed basta para comparar observaciones.
 
+Jardín de Eco amplía el vocabulario exterior de Tormenta sin inventar una quinta Semilla. Tres suelos `OPEN_FLAT` y tres features con LOD entran solo en chunks futuros tras la cuarta Semilla. La gramática queda en 43/22 variantes, sus proxies pesan menos de 10 KiB y una nueva campaña de 10.000 seeds conserva todos los ceros del gate de release.
+
 ## Pulido posterior: fallar sin quedar a oscuras
 
 La calibración de mirada escondía un fallo especialmente cruel: si Pointer Lock era rechazado durante el gesto inicial, la interfaz podía retirarse antes de saber si el navegador había concedido el control. Ahora la captura es una transacción observable. Solo se entra en juego al recibir confirmación; ante error, el mundo sigue renderizado, aparece «Reintentar calibración» y el mismo flujo puede completarse sin recargar.

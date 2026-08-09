@@ -1,0 +1,1 @@
+{ "version": 1, "shape": "mirror-reed", "color": "#55747a", "accent": "#bdebf1", "bounds": { "width": 1.4, "height": 2.2, "depth": 1.4 }, "pivot": "center-bottom", "lod": [{ "maxDistance": 20, "shape": "mirror-reed" }, { "maxDistance": 40, "shape": "mirror-reed-low" }] }

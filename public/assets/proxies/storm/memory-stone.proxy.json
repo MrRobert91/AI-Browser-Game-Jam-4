@@ -1,0 +1,1 @@
+{ "version": 1, "shape": "memory-stone", "color": "#4c5360", "accent": "#a7c3c9", "bounds": { "width": 1.6, "height": 2.8, "depth": 1.5 }, "pivot": "center-bottom", "lod": [{ "maxDistance": 20, "shape": "memory-stone" }, { "maxDistance": 40, "shape": "memory-stone-low" }] }
