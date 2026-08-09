@@ -1,5 +1,11 @@
 import type { UnlockablePackId } from '../contracts/tiles';
+import type { CollapsadorRecord } from '../gameplay/collapsador-records';
+import type { ResolvedNarrativeCue } from '../gameplay/narrative';
 import { createCustomSongElement } from './custom-song';
+import {
+  collapsadorRecordVoicePath,
+  narrativeVoicePath,
+} from './narrative-voices';
 import { SpatialAudioPool } from './spatial-pool';
 
 export interface AudioVolumes {
@@ -11,6 +17,12 @@ export interface AudioVolumes {
 export interface AudioDirectorOptions {
   readonly createContext?: () => AudioContext;
   readonly createMusicElement?: () => HTMLAudioElement;
+  readonly createVoiceElement?: () => HTMLAudioElement;
+}
+
+interface VoiceRequest {
+  readonly path: string;
+  readonly priority: number;
 }
 
 const DEFAULT_VOLUMES: AudioVolumes = {
@@ -34,16 +46,23 @@ export function countdownPulseInterval(
 export class AudioDirector {
   private readonly createContext: () => AudioContext;
   private readonly createMusicElement: () => HTMLAudioElement;
+  private readonly createVoiceElement: () => HTMLAudioElement;
   private context: AudioContext | null = null;
   private masterBus: GainNode | null = null;
   private musicBus: GainNode | null = null;
   private effectsBus: GainNode | null = null;
+  private voiceBus: GainNode | null = null;
   private musicElement: HTMLAudioElement | null = null;
   private musicSource: MediaElementAudioSourceNode | null = null;
+  private voiceElement: HTMLAudioElement | null = null;
+  private voiceSource: MediaElementAudioSourceNode | null = null;
   private spatialPool: SpatialAudioPool | null = null;
   private volumes: AudioVolumes = DEFAULT_VOLUMES;
   private lastCountdownPulse = Number.NEGATIVE_INFINITY;
   private startPromise: Promise<boolean> | null = null;
+  private voiceEnabled = true;
+  private activeVoice: VoiceRequest | null = null;
+  private readonly voiceQueue: VoiceRequest[] = [];
 
   constructor(options: AudioDirectorOptions = {}) {
     this.createContext =
@@ -54,6 +73,7 @@ export class AudioDirector {
       });
     this.createMusicElement =
       options.createMusicElement ?? createCustomSongElement;
+    this.createVoiceElement = options.createVoiceElement ?? (() => new Audio());
   }
 
   get started(): boolean {
@@ -81,15 +101,38 @@ export class AudioDirector {
     this.masterBus?.gain.setTargetAtTime(this.volumes.master, now, 0.04);
     this.musicBus?.gain.setTargetAtTime(this.volumes.music, now, 0.04);
     this.effectsBus?.gain.setTargetAtTime(this.volumes.effects, now, 0.04);
+    this.voiceBus?.gain.setTargetAtTime(
+      this.voiceEnabled ? this.volumes.effects : 0,
+      now,
+      0.04,
+    );
+  }
+
+  setVoicesEnabled(enabled: boolean): void {
+    this.voiceEnabled = enabled;
+    const now = this.context?.currentTime ?? 0;
+    this.voiceBus?.gain.setTargetAtTime(
+      enabled ? this.volumes.effects : 0,
+      now,
+      0.04,
+    );
+    if (!enabled) {
+      this.voiceElement?.pause();
+      this.activeVoice = null;
+      this.voiceQueue.length = 0;
+      this.restoreMusicAfterVoice();
+    }
   }
 
   setPaused(paused: boolean): void {
     if (paused) {
       this.musicElement?.pause();
+      this.voiceElement?.pause();
       return;
     }
     void this.context?.resume().catch(() => undefined);
     void this.musicElement?.play().catch(() => undefined);
+    if (this.activeVoice) void this.voiceElement?.play().catch(() => undefined);
   }
 
   notifyCollapse(pan = 0): void {
@@ -101,11 +144,18 @@ export class AudioDirector {
     });
   }
 
-  playNarrativeCue(): void {
-    this.spatialPool?.play({
-      frequency: 246.94,
-      durationSeconds: 0.5,
-      gain: 0.08,
+  playNarrativeCue(cue?: ResolvedNarrativeCue): void {
+    if (!cue) return;
+    this.enqueueVoice({
+      path: narrativeVoicePath(cue.id),
+      priority: cue.priority,
+    });
+  }
+
+  playCollapsadorRecord(record: CollapsadorRecord): void {
+    this.enqueueVoice({
+      path: collapsadorRecordVoicePath(record),
+      priority: record.priority,
     });
   }
 
@@ -142,14 +192,21 @@ export class AudioDirector {
   dispose(): void {
     this.spatialPool?.dispose();
     this.musicElement?.pause();
+    this.voiceElement?.pause();
     this.musicSource?.disconnect();
+    this.voiceSource?.disconnect();
     void this.context?.close();
     this.context = null;
     this.masterBus = null;
     this.musicBus = null;
     this.effectsBus = null;
+    this.voiceBus = null;
     this.musicElement = null;
     this.musicSource = null;
+    this.voiceElement = null;
+    this.voiceSource = null;
+    this.activeVoice = null;
+    this.voiceQueue.length = 0;
   }
 
   private async performStart(): Promise<boolean> {
@@ -178,15 +235,61 @@ export class AudioDirector {
     this.masterBus = context.createGain();
     this.musicBus = context.createGain();
     this.effectsBus = context.createGain();
+    this.voiceBus = context.createGain();
     this.musicBus.connect(this.masterBus);
     this.effectsBus.connect(this.masterBus);
+    this.voiceBus.connect(this.masterBus);
     this.masterBus.connect(context.destination);
     this.musicElement = this.createMusicElement();
     this.musicElement.loop = true;
     this.musicElement.preload = 'auto';
     this.musicSource = context.createMediaElementSource(this.musicElement);
     this.musicSource.connect(this.musicBus);
+    this.voiceElement = this.createVoiceElement();
+    this.voiceElement.preload = 'auto';
+    this.voiceElement.onended = () => this.finishVoice();
+    this.voiceElement.onerror = () => this.finishVoice();
+    this.voiceSource = context.createMediaElementSource(this.voiceElement);
+    this.voiceSource.connect(this.voiceBus);
     this.spatialPool = new SpatialAudioPool(context, this.effectsBus);
     this.setVolumes(this.volumes);
+  }
+
+  private enqueueVoice(request: VoiceRequest): void {
+    if (!this.voiceEnabled || !this.voiceElement) return;
+    if (!this.activeVoice) {
+      this.startVoice(request);
+      return;
+    }
+    if (request.priority > this.activeVoice.priority) {
+      this.voiceElement.pause();
+      this.startVoice(request);
+      return;
+    }
+    if (this.voiceQueue.length >= 2) return;
+    this.voiceQueue.push(request);
+    this.voiceQueue.sort((left, right) => right.priority - left.priority);
+  }
+
+  private startVoice(request: VoiceRequest): void {
+    if (!this.voiceElement) return;
+    this.activeVoice = request;
+    this.voiceElement.src = request.path;
+    this.voiceElement.currentTime = 0;
+    const now = this.context?.currentTime ?? 0;
+    this.musicBus?.gain.setTargetAtTime(this.volumes.music * 0.32, now, 0.18);
+    void this.voiceElement.play().catch(() => this.finishVoice());
+  }
+
+  private finishVoice(): void {
+    this.activeVoice = null;
+    const next = this.voiceQueue.shift();
+    if (next) this.startVoice(next);
+    else this.restoreMusicAfterVoice();
+  }
+
+  private restoreMusicAfterVoice(): void {
+    const now = this.context?.currentTime ?? 0;
+    this.musicBus?.gain.setTargetAtTime(this.volumes.music, now, 0.24);
   }
 }

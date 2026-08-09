@@ -8,6 +8,7 @@ export interface GameSettings {
   readonly reducedFlashes: boolean;
   readonly highContrast: boolean;
   readonly subtitles: boolean;
+  readonly voicesEnabled: boolean;
   readonly quality: QualityPreset;
   readonly volumes: AudioVolumes;
 }
@@ -19,6 +20,7 @@ interface MutableGameSettings {
   reducedFlashes: boolean;
   highContrast: boolean;
   subtitles: boolean;
+  voicesEnabled: boolean;
   quality: QualityPreset;
   volumes: { master: number; music: number; effects: number };
 }
@@ -30,6 +32,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   reducedFlashes: true,
   highContrast: false,
   subtitles: true,
+  voicesEnabled: true,
   quality: 'auto',
   volumes: { master: 0.75, music: 0.55, effects: 0.75 },
 };
@@ -79,6 +82,8 @@ export function normalizeGameSettings(value: unknown): GameSettings {
       candidate.reducedFlashes ?? DEFAULT_GAME_SETTINGS.reducedFlashes,
     highContrast: candidate.highContrast ?? DEFAULT_GAME_SETTINGS.highContrast,
     subtitles: candidate.subtitles ?? DEFAULT_GAME_SETTINGS.subtitles,
+    voicesEnabled:
+      candidate.voicesEnabled ?? DEFAULT_GAME_SETTINGS.voicesEnabled,
     quality,
     volumes: {
       master: finiteRange(volumes.master, 0.75, 0, 1),
@@ -147,6 +152,7 @@ export class PauseMenu {
           <label><input data-setting="reducedFlashes" type="checkbox"> Destellos reducidos</label>
           <label><input data-setting="highContrast" type="checkbox"> Superposición de alto contraste</label>
           <label><input data-setting="subtitles" type="checkbox"> Subtítulos</label>
+          <label><input data-setting="voices" type="checkbox"> Voces locales</label>
           <label>Calidad <select data-setting="quality"><option value="auto">Automática</option><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option></select></label>
           <label>Volumen maestro <input data-setting="master" type="range" min="0" max="1" step="0.05"></label>
           <label>Música <input data-setting="music" type="range" min="0" max="1" step="0.05"></label>
@@ -204,6 +210,8 @@ export class PauseMenu {
       next.highContrast = target.checked;
     } else if (key === 'subtitles' && target instanceof HTMLInputElement) {
       next.subtitles = target.checked;
+    } else if (key === 'voices' && target instanceof HTMLInputElement) {
+      next.voicesEnabled = target.checked;
     } else if (key === 'quality' && target instanceof HTMLSelectElement) {
       next.quality = target.value as QualityPreset;
     } else if (key === 'master' && target instanceof HTMLInputElement) {
@@ -260,6 +268,7 @@ export class PauseMenu {
     setInput('reducedFlashes', this.settings.reducedFlashes);
     setInput('highContrast', this.settings.highContrast);
     setInput('subtitles', this.settings.subtitles);
+    setInput('voices', this.settings.voicesEnabled);
     setInput('quality', this.settings.quality);
     setInput('master', this.settings.volumes.master);
     setInput('music', this.settings.volumes.music);

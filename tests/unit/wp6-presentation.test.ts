@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
@@ -12,6 +12,11 @@ import {
   CUSTOM_SONG_PATH,
 } from '../../src/audio/custom-song';
 import { MAX_POSITIONAL_AUDIO_SOURCES } from '../../src/audio/spatial-pool';
+import {
+  NARRATIVE_VOICE_CODEC,
+  NARRATIVE_VOICE_COUNT,
+  NARRATIVE_VOICE_TOTAL_BYTES,
+} from '../../src/audio/narrative-voices';
 import {
   NARRATIVE_CATALOG,
   NARRATIVE_CUE_ORDER,
@@ -64,6 +69,24 @@ describe('WP6 audio contracts', () => {
     expect(audio.subarray(0, 3).toString('ascii')).toBe('ID3');
   });
 
+  it('packages every approved narrative line as bounded local mono MP3', async () => {
+    const directory = resolve('public/assets/audio/narrative');
+    const files = (await readdir(directory)).filter((name) =>
+      name.endsWith('.mp3'),
+    );
+    expect(files).toHaveLength(NARRATIVE_VOICE_COUNT);
+    let totalBytes = 0;
+    for (const file of files) {
+      const audio = await readFile(resolve(directory, file));
+      totalBytes += audio.byteLength;
+      expect(audio.byteLength).toBeGreaterThan(20_000);
+      expect(audio.subarray(0, 3).toString('ascii')).toBe('ID3');
+    }
+    expect(totalBytes).toBe(NARRATIVE_VOICE_TOTAL_BYTES);
+    expect(totalBytes).toBeLessThan(2_000_000);
+    expect(NARRATIVE_VOICE_CODEC).toContain('mono 24 kHz');
+  });
+
   it('does not allocate an AudioContext before a user gesture', () => {
     const createContext = vi.fn();
     const director = new AudioDirector({ createContext });
@@ -72,7 +95,7 @@ describe('WP6 audio contracts', () => {
   });
 
   it('starts the local song without allocating continuous oscillators', async () => {
-    const gainNodes = Array.from({ length: 3 }, () => ({
+    const gainNodes = Array.from({ length: 4 }, () => ({
       gain: { setTargetAtTime: vi.fn() },
       connect: vi.fn(),
       disconnect: vi.fn(),
@@ -89,7 +112,8 @@ describe('WP6 audio contracts', () => {
         .fn()
         .mockReturnValueOnce(gainNodes[0])
         .mockReturnValueOnce(gainNodes[1])
-        .mockReturnValueOnce(gainNodes[2]),
+        .mockReturnValueOnce(gainNodes[2])
+        .mockReturnValueOnce(gainNodes[3]),
       createMediaElementSource: vi.fn(() => mediaSource),
       createOscillator,
       resume: vi.fn(async () => undefined),
@@ -101,14 +125,35 @@ describe('WP6 audio contracts', () => {
       play: vi.fn(async () => undefined),
       pause: vi.fn(),
     } as unknown as HTMLAudioElement;
+    const voice = {
+      preload: '',
+      src: '',
+      currentTime: 0,
+      play: vi.fn(async () => undefined),
+      pause: vi.fn(),
+      onended: null,
+      onerror: null,
+    } as unknown as HTMLAudioElement;
     const director = new AudioDirector({
       createContext: () => context,
       createMusicElement: () => music,
+      createVoiceElement: () => voice,
     });
 
     await expect(director.startFromGesture()).resolves.toBe(true);
     expect(music.play).toHaveBeenCalledOnce();
     expect(createOscillator).not.toHaveBeenCalled();
+    const cue = {
+      ...NARRATIVE_CATALOG.cues.start,
+      id: 'start' as const,
+      locale: 'es-ES',
+      text: NARRATIVE_CATALOG.cues.start.text,
+    };
+    director.playNarrativeCue(cue);
+    expect(voice.src).toContain('/assets/audio/narrative/cue-start.mp3');
+    expect(voice.play).toHaveBeenCalledOnce();
+    director.setVoicesEnabled(false);
+    expect(voice.pause).toHaveBeenCalled();
     director.dispose();
   });
 });
@@ -118,6 +163,7 @@ describe('WP6 accessible settings and narrative', () => {
     expect(DEFAULT_GAME_SETTINGS).toMatchObject({
       subtitles: true,
       reducedFlashes: true,
+      voicesEnabled: true,
     });
     expect(
       normalizeGameSettings({

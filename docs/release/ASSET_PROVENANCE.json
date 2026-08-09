@@ -36,6 +36,14 @@
       "license": "Original generated project content distributed with the game"
     },
     {
+      "path": "public/assets/audio/narrative/*.mp3",
+      "kind": "local Spanish narrative voices",
+      "tool": "Microsoft Helena Desktop es-ES via Windows SAPI; FFmpeg 8.1.2",
+      "process": "20 approved introduction, event and Collapsador lines synthesized offline, high-pass/low-pass filtered and EBU R128 normalized to mono MP3",
+      "editing": "human-directed copy, voice-rate direction, bounded queue integration, subtitle synchronization and browser QA",
+      "license": "Generated locally from the operating-system voice for distribution with this project; verify platform redistribution terms before commercial reuse"
+    },
+    {
       "path": "public/favicon.svg",
       "kind": "interface icon",
       "tool": "manual SVG editing",

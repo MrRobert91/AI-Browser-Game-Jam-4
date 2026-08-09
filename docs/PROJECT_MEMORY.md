@@ -63,6 +63,12 @@ Actualizado: 2026-08-09 (Europe/Madrid)
 - Resultados, formas, familias desbloqueadas y distancia se presentan como decisiones de atención, sin puntuación, ranking ni diagnóstico. La nota final de la Agencia conserva la ambigüedad con humor administrativo.
 - El diálogo recibe foco, nombre accesible y botones de teclado; la copia incluye expediente, lectura, interpretación, seed, perfil, haiku y nota institucional.
 
+### 2026-08-09 — Issue #82 — Voces locales, mezcla y procedencia
+
+- 20 líneas aprobadas de introducción, eventos y Colapsadores se sintetizan reproduciblemente con Microsoft Helena Desktop `es-ES` y se procesan con FFmpeg a MP3 mono 24 kHz/56 kbps. El total es 1.030.044 bytes.
+- `AudioDirector` añade bus de voz, cola máxima de dos, prioridad e interrupción, ducking suave de música y fallback silencioso a subtítulos. Las voces pueden desactivarse sin afectar texto, música ni efectos.
+- [`docs/audio/narrative-voices.md`](./audio/narrative-voices.md), créditos y `ASSET_PROVENANCE` registran fuente, proceso, edición, licencia y verificación FFprobe. No hay TTS ni red en runtime.
+
 ## Registro cronológico
 
 ### 2026-08-09 — Issue #73 — Calibración, música y legibilidad del recorrido

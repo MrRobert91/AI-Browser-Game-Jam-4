@@ -207,10 +207,10 @@ export function bootstrap(root: HTMLElement): () => void {
   };
   renderIntroduction();
   const introductionTimer = window.setInterval(() => {
-    introduction.advance(4_500);
+    introduction.advance(8_000);
     renderIntroduction();
     if (introduction.complete) window.clearInterval(introductionTimer);
-  }, 4_500);
+  }, 8_000);
   const settings = loadGameSettings();
   const search = new URLSearchParams(window.location.search);
   const requestedMode = search.get('mode');
@@ -260,7 +260,7 @@ export function bootstrap(root: HTMLElement): () => void {
   const narrative = new NarrativeDirector({
     onMessage: (message) => hud.setMessage(message),
     onSubtitle: (message) => hud.showSubtitle(message),
-    onAudioCue: () => audioDirector.playNarrativeCue(),
+    onAudioCue: (cue) => audioDirector.playNarrativeCue(cue),
   });
   const collapsadorRecords = new CollapsadorRecordDirector({
     onPlay: (record) => {
@@ -268,7 +268,7 @@ export function bootstrap(root: HTMLElement): () => void {
       shell.dataset.recordingId = record.id;
       hud.setMessage(message);
       hud.showSubtitle(message);
-      audioDirector.playNarrativeCue();
+      audioDirector.playCollapsadorRecord(record);
     },
     onInterrupt: () => {
       delete shell.dataset.recordingId;
@@ -318,6 +318,7 @@ export function bootstrap(root: HTMLElement): () => void {
     hud.setSubtitlesEnabled(nextSettings.subtitles);
     hud.setHighContrast(nextSettings.highContrast);
     audioDirector.setVolumes(nextSettings.volumes);
+    audioDirector.setVoicesEnabled(nextSettings.voicesEnabled);
     shell.dataset.reducedFlashes = String(nextSettings.reducedFlashes);
   };
   pauseMenu = new PauseMenu(shell, settings, {

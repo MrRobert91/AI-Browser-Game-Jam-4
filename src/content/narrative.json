@@ -7,7 +7,7 @@
       "text": "Mira. Lo que permanezca bajo tu atención tendrá derecho a existir.",
       "fallbackText": "Mira. La Cámara está preparada.",
       "priority": 70,
-      "durationMs": 4600,
+      "durationMs": 6000,
       "once": true
     },
     "firstCollapse": {
@@ -16,7 +16,7 @@
       "text": "Resultado experimentado. Sus expectativas anteriores han sido archivadas.",
       "fallbackText": "Resultado incorporado al expediente.",
       "priority": 55,
-      "durationMs": 3900,
+      "durationMs": 6800,
       "once": true
     },
     "unlockWater": {
@@ -25,7 +25,7 @@
       "text": "El agua no estaba ausente. Todavía no era posible. Nueva familia de experiencias autorizada: humedad.",
       "fallbackText": "Nueva familia autorizada: agua.",
       "priority": 80,
-      "durationMs": 5800,
+      "durationMs": 9500,
       "once": true
     },
     "unlockForest": {
@@ -34,7 +34,7 @@
       "text": "Intervenciones de raíz y crecimiento autorizadas. La paciencia ya dispone de formulario.",
       "fallbackText": "Nueva familia autorizada: bosque.",
       "priority": 80,
-      "durationMs": 5200,
+      "durationMs": 7400,
       "once": true
     },
     "unlockRuin": {
@@ -43,7 +43,7 @@
       "text": "Intervenciones de memoria mineral autorizadas. La Agencia no garantiza que el pasado haya ocurrido.",
       "fallbackText": "Nueva familia autorizada: ruina.",
       "priority": 80,
-      "durationMs": 5600,
+      "durationMs": 7800,
       "once": true
     },
     "unlockStorm": {
@@ -52,7 +52,7 @@
       "text": "Intervenciones de alta energía autorizadas. El riesgo adjunto se considera una preferencia del usuario.",
       "fallbackText": "Nueva familia autorizada: tormenta.",
       "priority": 80,
-      "durationMs": 5700,
+      "durationMs": 8300,
       "once": true
     },
     "firstDeath": {
@@ -61,7 +61,7 @@
       "text": "El mundo recuerda mejor que tú. Su fallecimiento ha sido clasificado como experiencia formativa; se asignará otro cuerpo de campo.",
       "fallbackText": "El mundo recuerda mejor que tú.",
       "priority": 100,
-      "durationMs": 6000,
+      "durationMs": 10200,
       "once": true
     },
     "respawn": {
@@ -70,7 +70,7 @@
       "text": "Cuerpo de campo reemplazado. El expediente y las Semillas permanecen.",
       "fallbackText": "El expediente permanece.",
       "priority": 90,
-      "durationMs": 3800,
+      "durationMs": 6400,
       "once": false
     },
     "uncertaintyDetected": {
@@ -79,7 +79,7 @@
       "text": "Advertencia: este resultado parece pertenecer a otra persona.",
       "fallbackText": "Incidencia de actualización pendiente.",
       "priority": 75,
-      "durationMs": 4200,
+      "durationMs": 5500,
       "once": true
     },
     "uncertaintyFixed": {
@@ -88,7 +88,7 @@
       "text": "Descripción estable incorporada al registro común. La discrepancia queda reclasificada como variabilidad de usuario.",
       "fallbackText": "Resultado reconciliado.",
       "priority": 76,
-      "durationMs": 5400,
+      "durationMs": 9000,
       "once": true
     },
     "lastThirtySeconds": {
@@ -97,7 +97,7 @@
       "text": "No queda tiempo para verlo todo. Elige qué merece terminar. La coherencia de la Cámara expira en treinta segundos.",
       "fallbackText": "No queda tiempo para verlo todo. Elige qué merece terminar.",
       "priority": 110,
-      "durationMs": 5900,
+      "durationMs": 9300,
       "once": true
     },
     "final": {
@@ -106,7 +106,7 @@
       "text": "No encontraste este mundo. Lo separaste de todos los demás.",
       "fallbackText": "El expediente ha terminado.",
       "priority": 120,
-      "durationMs": 4800,
+      "durationMs": 5600,
       "once": true
     }
   }

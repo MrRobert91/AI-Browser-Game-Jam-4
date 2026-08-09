@@ -6,7 +6,7 @@ export interface IntroductionBeat {
   readonly text: string;
 }
 
-export const INTRODUCTION_BEAT_MS = 4_500;
+export const INTRODUCTION_BEAT_MS = 8_000;
 export const INTRODUCTION_MAX_MS = INTRODUCTION_BEAT_MS * introduction.length;
 
 export const INTRODUCTION_BEATS: readonly IntroductionBeat[] = introduction;
