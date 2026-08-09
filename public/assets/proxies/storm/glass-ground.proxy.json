@@ -1,0 +1,1 @@
+{ "version": 1, "shape": "glass-ground", "color": "#2e4250", "accent": "#aa9cff", "bounds": { "width": 2, "height": 0.12, "depth": 2 }, "pivot": "center-bottom", "lod": [{ "maxDistance": 22, "shape": "glass-ground" }, { "maxDistance": 42, "shape": "glass-ground-low" }], "emissivePulseSeconds": 2.5 }

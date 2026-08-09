@@ -1,0 +1,1 @@
+{ "version": 1, "shape": "storm-spikes", "color": "#713e52", "accent": "#ff7898", "bounds": { "width": 1.7, "height": 1.3, "depth": 1.7 }, "pivot": "center-bottom", "lod": [{ "maxDistance": 18, "shape": "storm-spikes" }, { "maxDistance": 38, "shape": "storm-spikes-low" }] }

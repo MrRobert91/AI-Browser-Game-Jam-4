@@ -1,0 +1,1 @@
+{ "version": 1, "shape": "charged-soil", "color": "#4c344f", "accent": "#d68cff", "bounds": { "width": 2, "height": 0.16, "depth": 2 }, "pivot": "center-bottom", "lod": [{ "maxDistance": 22, "shape": "charged-soil" }, { "maxDistance": 42, "shape": "charged-soil-low" }], "emissivePulseSeconds": 2.5 }

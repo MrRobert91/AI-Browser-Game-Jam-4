@@ -434,7 +434,11 @@ export function bootstrap(root: HTMLElement): () => void {
   let progressionHud: ProgressionHud | null = null;
   if (wp5PreviewEnabled) {
     const plan = planSeedAnchors(worldSeed);
-    wp5Visuals = new Wp5PreviewVisuals(gameRenderer.scene, plan);
+    wp5Visuals = new Wp5PreviewVisuals(
+      gameRenderer.scene,
+      plan,
+      settings.reducedFlashes,
+    );
     progressionHud = new ProgressionHud(shell);
     shell.dataset.wp5Preview = 'true';
     wp5Preview = new Wp5PreviewRuntime({

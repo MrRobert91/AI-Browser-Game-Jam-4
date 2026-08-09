@@ -20,6 +20,8 @@ import type { HazardInstance } from '../gameplay/hazards';
 import type { RespawnPhase } from '../gameplay/respawn';
 import type { UncertaintySnapshot } from '../gameplay/uncertainty-enemy';
 
+import { stormEmissiveIntensity } from './storm-visual';
+
 const PACK_COLORS: Readonly<Record<UnlockablePackId, number>> = {
   water: 0x65d9ff,
   forest: 0x8fe397,
@@ -52,7 +54,11 @@ export class Wp5PreviewVisuals {
   private readonly previews: { object: Object3D; age: number }[] = [];
   private uncertainty: Group | null = null;
 
-  constructor(scene: Scene, plan: MacroPlan) {
+  constructor(
+    scene: Scene,
+    plan: MacroPlan,
+    private readonly reducedFlashes = false,
+  ) {
     this.root.name = 'wp5-gated-preview';
     for (const anchor of plan.anchors) {
       const [x, z] = positionOf(anchor.cellId);
@@ -204,6 +210,20 @@ export class Wp5PreviewVisuals {
       this.uncertainty?.children.forEach((child, index) => {
         child.visible = Math.floor(elapsedSeconds * 5 + index) % 3 === index;
       });
+    }
+    const stormIntensity = stormEmissiveIntensity(
+      elapsedSeconds,
+      this.reducedFlashes,
+    );
+    for (const object of this.hazardObjects.values()) {
+      if (
+        object.name !== 'hazard-charged_crystal' ||
+        !(object instanceof Mesh) ||
+        !(object.material instanceof MeshStandardMaterial)
+      ) {
+        continue;
+      }
+      object.material.emissiveIntensity = stormIntensity;
     }
     for (let index = this.previews.length - 1; index >= 0; index -= 1) {
       const preview = this.previews[index]!;

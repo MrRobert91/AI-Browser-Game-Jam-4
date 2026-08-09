@@ -124,7 +124,7 @@ La PR acumulativa #66 conserva un commit por issue, de #9 a #14, y apunta a `dev
 
 El mundo observable necesitaba algo más preciso que una colección de modelos. WP3 formaliza sockets, rotaciones, pesos, tags, seguridad y adaptadores como contenido validable. Meadow A y B comparten encaje pero no apariencia; Agua conserva la cadena Deep–Shallow–Shore–Marsh hasta volver a `OPEN_FLAT`; Bosque y Ruina amplían el lenguaje sin romper el terreno base. El visor offline permite inspeccionar las 36 definiciones autorizadas sin ejecutar una partida completa.
 
-Tormenta queda fuera de esta entrega de forma deliberada. Su issue depende del gate de 10.000 seeds de la release candidate; activarla antes convertiría una dependencia explícita en deuda invisible. La gramática que sí entra en `dev` pasa reciprocidad, dos salidas, seguridad, assets locales y el límite de 64 variantes por capa.
+Tormenta quedó fuera de la entrega de jam hasta publicar la candidata y superar su gate de 10.000 seeds. Ya en la fase post-release, Charged Soil, Glass Ground, Scorched Meadow, Crystal, Spikes y Uncertainty Nest amplían la zona exterior con proxies locales y LOD. Scorched Meadow vuelve a `OPEN_FLAT`, los peligros empiezan a 38 m y el pulso de Cristal dura 2,5 s o queda estático con destellos reducidos. La campaña completa conserva 0 vacíos, 0 divergencias y 0 fallbacks.
 
 ## WP4 hace visible el acto de decidir
 

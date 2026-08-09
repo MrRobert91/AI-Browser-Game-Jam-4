@@ -1,0 +1,1 @@
+{ "version": 1, "shape": "uncertainty-nest", "color": "#39283f", "accent": "#c78cff", "bounds": { "width": 1.8, "height": 1.6, "depth": 1.8 }, "pivot": "center-bottom", "lod": [{ "maxDistance": 20, "shape": "uncertainty-nest" }, { "maxDistance": 40, "shape": "uncertainty-nest-low" }] }
