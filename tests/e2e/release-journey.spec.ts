@@ -98,6 +98,17 @@ test('canonical offline journey reaches the qualitative ending', async ({
   if (testInfo.project.name.startsWith('firefox')) {
     await expect(result).toHaveScreenshot('result-panel.png');
   }
+  const panorama = page.locator('[data-panorama-download]');
+  await expect(panorama).toBeEnabled();
+  await expect(panorama).toHaveAttribute('data-gallery-saved', 'true');
+  const downloadEvent = page.waitForEvent('download');
+  await panorama.click();
+  const download = await downloadEvent;
+  await download.saveAs(testInfo.outputPath('panorama.png'));
+  await page.locator('[data-panorama-gallery]').click();
+  await expect(page.locator('.slice-result__gallery')).toContainText(
+    'A91F-42C0',
+  );
   expect(consoleErrors).toEqual([]);
   expect(externalRequests).toEqual([]);
   expect(failedRequests).toEqual([]);

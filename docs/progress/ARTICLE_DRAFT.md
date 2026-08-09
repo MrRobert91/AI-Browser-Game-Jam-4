@@ -211,6 +211,10 @@ El perfil automatizado mantiene worker y main por debajo de 4 y 12 ms p95, estim
 
 La candidata termina como ZIP estático con manifest SHA-256, favicon y assets locales, créditos, procedencia de contenido asistido, privacidad y texto listo para itch.io. Después de cargar sus archivos no hace llamadas de red ni envía datos a modelos. El artefacto final no demuestra que todo mundo posible sea bello; demuestra algo más útil para la jam: que el mundo observado puede terminar, explicarse y volver a reproducirse sin esconder sus límites.
 
+## Conservar una observación sin convertirla en cuenta
+
+La primera expansión post-jam captura el canvas final como PNG sin retrasar el expediente. Seed, perfil y haiku se guardan con la imagen en IndexedDB: cinco entradas como máximo, 5 MiB por entrada, descarga y borrado local. No hay cuenta, nube ni galería pública; conservar un mundo sigue siendo una decisión privada del jugador.
+
 ## Pulido posterior: fallar sin quedar a oscuras
 
 La calibración de mirada escondía un fallo especialmente cruel: si Pointer Lock era rechazado durante el gesto inicial, la interfaz podía retirarse antes de saber si el navegador había concedido el control. Ahora la captura es una transacción observable. Solo se entra en juego al recibir confirmación; ante error, el mundo sigue renderizado, aparece «Reintentar calibración» y el mismo flujo puede completarse sin recargar.

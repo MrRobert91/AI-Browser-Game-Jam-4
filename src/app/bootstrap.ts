@@ -15,6 +15,7 @@ import {
 import { generateHaiku } from '../gameplay/haiku';
 import { AgencyIntroduction } from '../gameplay/introduction';
 import { NarrativeDirector, type NarrativeCueId } from '../gameplay/narrative';
+import { capturePanoramaPng, LocalPanoramaGallery } from '../gameplay/panorama';
 import {
   AttentionPortraitTracker,
   classifyAttentionPortrait,
@@ -390,8 +391,14 @@ export function bootstrap(root: HTMLElement): () => void {
     },
     { mode: runMode, startAtSeconds },
   );
-  const resultsPanel = new ResultsPanel(sliceResult, () =>
-    window.location.reload(),
+  const resultsPanel = new ResultsPanel(
+    sliceResult,
+    () => window.location.reload(),
+    {
+      capture: (result) =>
+        capturePanoramaPng(gameRenderer.renderer.domElement, result),
+      gallery: new LocalPanoramaGallery(),
+    },
   );
   observableWorld = new ObservableWorldBridge({
     solver: solverWorker,

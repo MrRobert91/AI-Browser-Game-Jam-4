@@ -34,6 +34,12 @@ Actualizado: 2026-08-09 (Europe/Madrid)
 - Scorched Meadow conecta por `OPEN_FLAT`; los peligros solo aparecen desde 38 m y respetan corredores/anclas. Cristal usa un pulso suave de 2,5 s y queda estático con destellos reducidos.
 - `validate:tiles`, `validate:assets` y la campaña de 10.000 seeds pasan sin vacíos, divergencias, commits fuera de radio, fallbacks, `quantum_void_debug` ni anclas inaccesibles. Evidencia: [`docs/progress/issue-22-storm-pack/`](./progress/issue-22-storm-pack/).
 
+### 2026-08-09 — Issue #52 — Panorama PNG y galería local
+
+- El panel final no espera a la captura: tras el render, el canvas produce un PNG descargable con seed, perfil y haiku asociados.
+- IndexedDB conserva como máximo cinco panoramas de hasta 5 MiB, elimina el más antiguo y ofrece descarga/borrado. No hay subida, telemetría ni permiso externo.
+- Playwright descargó y validó una captura real 1216×68 de 228.167 bytes y reabrió sus metadatos desde la galería. Evidencia: [`docs/progress/issue-52-local-panorama/`](./progress/issue-52-local-panorama/).
+
 ### 2026-08-09 — Issue #76 — Canon QBista y límites científicos
 
 - La narrativa separa QBism real, doctrina ficticia de la Agencia y WFC como metáfora procedural. El jugador elige una intervención; La Medida expresa expectativas y el resultado se incorpora a un expediente, sin afirmar que la conciencia cause un colapso físico.

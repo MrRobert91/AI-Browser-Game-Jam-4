@@ -3,6 +3,11 @@ import {
   formatRunResult,
   type RunResult,
 } from '../gameplay/ending';
+import {
+  downloadPanorama,
+  type LocalPanoramaGallery,
+  type PanoramaRecord,
+} from '../gameplay/panorama';
 
 const LAST_RESULT_KEY = 'ultima-observacion:last-result';
 const BEST_PORTRAIT_KEY = 'ultima-observacion:best-portrait';
@@ -52,6 +57,10 @@ export class ResultsPanel {
   constructor(
     private readonly root: HTMLElement,
     private readonly onRestart: () => void,
+    private readonly panorama?: {
+      readonly capture: (result: RunResult) => Promise<PanoramaRecord>;
+      readonly gallery: LocalPanoramaGallery;
+    },
   ) {}
 
   show(result: RunResult): void {
@@ -116,7 +125,44 @@ export class ResultsPanel {
     restart.type = 'button';
     restart.textContent = 'Nueva observación';
     restart.addEventListener('click', this.onRestart);
-    actions.append(copy, restart);
+    actions.append(copy);
+    const galleryRegion = document.createElement('section');
+    galleryRegion.className = 'slice-result__gallery';
+    galleryRegion.hidden = true;
+    galleryRegion.setAttribute('aria-live', 'polite');
+    if (this.panorama) {
+      const download = document.createElement('button');
+      download.type = 'button';
+      download.disabled = true;
+      download.dataset.panoramaDownload = 'true';
+      download.textContent = 'Preparando panorama…';
+      const gallery = document.createElement('button');
+      gallery.type = 'button';
+      gallery.dataset.panoramaGallery = 'true';
+      gallery.textContent = 'Galería local';
+      gallery.addEventListener('click', () => {
+        galleryRegion.hidden = !galleryRegion.hidden;
+        if (!galleryRegion.hidden) void this.#renderGallery(galleryRegion);
+      });
+      actions.append(download, gallery);
+      void this.panorama
+        .capture(result)
+        .then(async (record) => {
+          download.disabled = false;
+          download.textContent = 'Descargar panorama PNG';
+          download.addEventListener('click', () => downloadPanorama(record));
+          const persisted = await this.panorama!.gallery.save(record).catch(
+            () => false,
+          );
+          download.dataset.gallerySaved = String(persisted);
+          if (!galleryRegion.hidden) await this.#renderGallery(galleryRegion);
+        })
+        .catch(() => {
+          download.textContent = 'Panorama no disponible';
+          download.dataset.panoramaError = 'true';
+        });
+    }
+    actions.append(restart);
     this.root.setAttribute('role', 'dialog');
     this.root.setAttribute('aria-modal', 'true');
     this.root.setAttribute('aria-labelledby', title.id);
@@ -132,8 +178,40 @@ export class ResultsPanel {
       seed,
       note,
       actions,
+      galleryRegion,
     );
     this.root.hidden = false;
     this.root.focus();
+  }
+
+  async #renderGallery(region: HTMLElement): Promise<void> {
+    if (!this.panorama) return;
+    const records = await this.panorama.gallery.list();
+    const title = document.createElement('h3');
+    title.textContent = `Galería local · ${records.length}/5`;
+    const note = document.createElement('p');
+    note.textContent =
+      'Solo en este navegador. Cada entrada conserva PNG, seed, perfil y haiku.';
+    const list = document.createElement('ol');
+    for (const record of records) {
+      const item = document.createElement('li');
+      const summary = document.createElement('span');
+      summary.textContent = `${record.seedLabel} · ${record.profile} · ${record.haiku.join(' / ')}`;
+      const download = document.createElement('button');
+      download.type = 'button';
+      download.textContent = 'Descargar';
+      download.addEventListener('click', () => downloadPanorama(record));
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.textContent = 'Borrar';
+      remove.addEventListener('click', () => {
+        void this.panorama!.gallery.remove(record.id).then(() =>
+          this.#renderGallery(region),
+        );
+      });
+      item.append(summary, download, remove);
+      list.append(item);
+    }
+    region.replaceChildren(title, note, list);
   }
 }
