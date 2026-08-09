@@ -276,9 +276,12 @@ export function bootstrap(root: HTMLElement): () => void {
   });
   const portraitTracker = new AttentionPortraitTracker();
   const endingDirector = new EndingDirector();
+  const evidenceMode =
+    new URLSearchParams(window.location.search).get('evidence') === '1';
   let pauseMenu: PauseMenu | null = null;
   let runClock: RunClock | null = null;
   const playerInput = new PlayerInput(shell, {
+    keepRunningWithoutPointerLock: evidenceMode,
     onPauseChange: (paused) => {
       runClock?.setPaused('MENU', paused);
       shell.dataset.paused = String(paused);
@@ -377,8 +380,8 @@ export function bootstrap(root: HTMLElement): () => void {
         if (remainingSeconds === 30) narrative.play('lastThirtySeconds');
       },
       onEnding: () => {
-        playerInput.setEnabled(false);
         shell.dataset.ending = 'true';
+        playerInput.setEnabled(false);
         superposition.root.visible = false;
         fixedVisuals.setEndingMode(true);
         narrative.play('lastThirtySeconds');
@@ -781,6 +784,8 @@ export function bootstrap(root: HTMLElement): () => void {
           haiku,
           ...closure,
         };
+        pauseMenu?.setOpen(false);
+        shell.dataset.paused = 'false';
         narrative.play('final');
         resultsPanel.show(result);
         shell.dataset.complete = 'true';
@@ -810,7 +815,9 @@ export function bootstrap(root: HTMLElement): () => void {
     // Audio is optional; Pointer Lock is the transactional calibration gate.
     const audioStart = audioDirector.startFromGesture();
     shell.dataset.audioStarted = 'pending';
-    const pointerLockAcquired = await playerInput.resume();
+    const pointerLockAcquired = evidenceMode
+      ? playerInput.resumeForEvidence()
+      : await playerInput.resume();
 
     void audioStart.then((audioStarted) => {
       shell.dataset.audioStarted = String(audioStarted);

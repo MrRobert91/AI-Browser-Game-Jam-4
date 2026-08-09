@@ -69,6 +69,14 @@ Actualizado: 2026-08-09 (Europe/Madrid)
 - `AudioDirector` añade bus de voz, cola máxima de dos, prioridad e interrupción, ducking suave de música y fallback silencioso a subtítulos. Las voces pueden desactivarse sin afectar texto, música ni efectos.
 - [`docs/audio/narrative-voices.md`](./audio/narrative-voices.md), créditos y `ASSET_PROVENANCE` registran fuente, proceso, edición, licencia y verificación FFprobe. No hay TTS ni red en runtime.
 
+### 2026-08-09 — Issue #83 — QA automatizada y gate humano
+
+- La suite cubre catálogo, disparadores, introducción/omisión/reintento, Semillas, muerte, registros, Incertidumbre, expediente final, voces locales, consola y orígenes de red.
+- El navegador embebido verificó visualmente introducción y recuperación real ante rechazo de Pointer Lock; Playwright ejecuta el recorrido determinista en Chromium y Firefox.
+- La transición de cierre marca `ending` antes de deshabilitar el input para impedir que una pérdida de Pointer Lock abra la pausa durante el ascenso. El modo de evidencia evita solicitar Pointer Lock sin alterar la ruta normal.
+- [`docs/progress/qbism-narrative/`](./progress/qbism-narrative/) conserva cuatro capturas reales y un WebM/VP8 verificado con FFprobe (800×450, 25 fps, 62,560 s, 3.641.437 bytes).
+- El gate humano permanece **NO-GO 0/5** en [`docs/playtests/qbism-narrative/REPORT.md`](./playtests/qbism-narrative/REPORT.md). No se cierra #83 ni el epic #75 hasta alcanzar los umbrales con sesiones reales.
+
 ## Registro cronológico
 
 ### 2026-08-09 — Issue #73 — Calibración, música y legibilidad del recorrido

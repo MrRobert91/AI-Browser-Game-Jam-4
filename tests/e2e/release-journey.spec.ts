@@ -26,10 +26,30 @@ test('canonical offline journey reaches the qualitative ending', async ({
   test.slow();
   const consoleErrors: string[] = [];
   const failedRequests: string[] = [];
+  const externalRequests: string[] = [];
+  const loadedNarrativeVoices: string[] = [];
   page.on('console', (message) => {
     if (message.type() === 'error') consoleErrors.push(message.text());
   });
-  page.on('requestfailed', (request) => failedRequests.push(request.url()));
+  page.on('request', (request) => {
+    const url = new URL(request.url());
+    if (url.origin !== 'http://127.0.0.1:4173')
+      externalRequests.push(request.url());
+  });
+  page.on('response', (response) => {
+    if (response.ok() && response.url().includes('/assets/audio/narrative/')) {
+      loadedNarrativeVoices.push(response.url());
+    }
+  });
+  page.on('requestfailed', (request) => {
+    const failure = request.failure()?.errorText ?? 'unknown';
+    const isBenignLocalMediaAbort =
+      request.url().startsWith('http://127.0.0.1:4173/assets/audio/') &&
+      failure.includes('ERR_ABORTED');
+    if (!isBenignLocalMediaAbort) {
+      failedRequests.push(`${request.url()} :: ${failure}`);
+    }
+  });
 
   await page.goto('/?wp5=preview&replay=wp5&speed=8&evidence=1&start=590');
   await page.addStyleTag({
@@ -74,12 +94,14 @@ test('canonical offline journey reaches the qualitative ending', async ({
   await expect(result).toContainText('Perfil:');
   await expect(result).toContainText('SEED A91F-42C0');
   await expect(result).toContainText('sin reconocimiento de causalidad');
+  await page.screenshot({ path: testInfo.outputPath('05-final.png') });
   if (testInfo.project.name.startsWith('firefox')) {
-    await page.screenshot({ path: testInfo.outputPath('05-final.png') });
     await expect(result).toHaveScreenshot('result-panel.png');
   }
   expect(consoleErrors).toEqual([]);
+  expect(externalRequests).toEqual([]);
   expect(failedRequests).toEqual([]);
+  expect(loadedNarrativeVoices.length).toBeGreaterThan(0);
 });
 
 test('pointer lock and pause recover after user gestures', async ({ page }) => {
