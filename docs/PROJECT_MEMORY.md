@@ -23,10 +23,11 @@ Actualizado: 2026-08-09 (Europe/Madrid)
 ### Estado operativo actual
 
 - Fase actual: entrega acumulativa post-jam nacida de `origin/dev` `922f9e9428be25f5d7bb9d964180b474b72bfccf` tras integrar PR #74.
-- Trabajo en revisión: #22, #52, #53, #55, #56 y la revisión narrativa #76–#82, con un commit funcional por issue y una única PR hacia `dev`.
+- Trabajo en revisión: PR #84 reúne #22, #52, #53, #55, #56 y la revisión narrativa #76–#82, con un commit funcional por issue y destino `dev`.
 - Arquitectura vigente: la build de jam sigue siendo offline. #56 solo muestra una variante remota si la publicación configura un proxy HTTPS y el jugador consiente en esa partida; ninguna clave de proveedor entra en el navegador.
 - Evidencia actual: galerías/capturas locales, simulación de 10.000 seeds, WebM narrativo y QA automatizada bajo [`docs/progress/`](./progress/).
 - Gate humano: #83 y el epic #75 permanecen abiertos y **NO-GO 0/5**; la rama no afirma sesiones que no se han realizado.
+- Estado remoto verificado: PR #84 abierta y no draft; sus palabras de cierre excluyen deliberadamente #75 y #83.
 
 ### 2026-08-09 — Issue #56 — Variante remota de haiku
 
