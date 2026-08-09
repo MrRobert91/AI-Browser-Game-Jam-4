@@ -11,7 +11,7 @@ export default defineConfig({
     locale: 'es-ES',
     viewport: { width: 1440, height: 900 },
     trace: 'retain-on-failure',
-    video: 'retain-on-failure',
+    video: process.env.PLAYWRIGHT_EVIDENCE === '1' ? 'on' : 'retain-on-failure',
   },
   projects: [
     { name: 'chromium-16x10', use: { ...devices['Desktop Chrome'] } },

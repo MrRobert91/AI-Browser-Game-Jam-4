@@ -1,10 +1,16 @@
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import {
   AudioDirector,
   countdownPulseInterval,
 } from '../../src/audio/audio-director';
-import { STEM_DEFINITIONS } from '../../src/audio/music-stems';
+import {
+  CUSTOM_SONG_MODEL,
+  CUSTOM_SONG_PATH,
+} from '../../src/audio/custom-song';
 import { MAX_POSITIONAL_AUDIO_SOURCES } from '../../src/audio/spatial-pool';
 import { NarrativeDirector } from '../../src/gameplay/narrative';
 import { createStylizedMaterialLibrary } from '../../src/render/materials';
@@ -36,17 +42,21 @@ describe('WP6 final art direction', () => {
 });
 
 describe('WP6 audio contracts', () => {
-  it('keeps four local stems, eight positional voices and 60/30 s cadence', () => {
-    expect(Object.keys(STEM_DEFINITIONS)).toEqual([
-      'water',
-      'forest',
-      'ruin',
-      'storm',
-    ]);
+  it('uses one local generated song, eight positional voices and 60/30 s cadence', () => {
+    expect(CUSTOM_SONG_PATH).toBe('/assets/audio/la-funcion-que-nos-mira.mp3');
+    expect(CUSTOM_SONG_MODEL).toBe('google/lyria-3-pro-preview');
     expect(MAX_POSITIONAL_AUDIO_SOURCES).toBe(8);
     expect(countdownPulseInterval(61)).toBeNull();
     expect(countdownPulseInterval(60)).toBe(2.5);
     expect(countdownPulseInterval(30)).toBe(1);
+  });
+
+  it('packages the selected generated song as a real local MP3 asset', async () => {
+    const audio = await readFile(
+      resolve('public/assets/audio/la-funcion-que-nos-mira.mp3'),
+    );
+    expect(audio.byteLength).toBeGreaterThan(1_000_000);
+    expect(audio.subarray(0, 3).toString('ascii')).toBe('ID3');
   });
 
   it('does not allocate an AudioContext before a user gesture', () => {
@@ -54,6 +64,47 @@ describe('WP6 audio contracts', () => {
     const director = new AudioDirector({ createContext });
     expect(createContext).not.toHaveBeenCalled();
     expect(director.started).toBe(false);
+  });
+
+  it('starts the local song without allocating continuous oscillators', async () => {
+    const gainNodes = Array.from({ length: 3 }, () => ({
+      gain: { setTargetAtTime: vi.fn() },
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+    }));
+    const mediaSource = { connect: vi.fn(), disconnect: vi.fn() };
+    const createOscillator = vi.fn(() => {
+      throw new Error('continuous oscillator should not be allocated');
+    });
+    const context = {
+      state: 'running',
+      currentTime: 0,
+      destination: {},
+      createGain: vi
+        .fn()
+        .mockReturnValueOnce(gainNodes[0])
+        .mockReturnValueOnce(gainNodes[1])
+        .mockReturnValueOnce(gainNodes[2]),
+      createMediaElementSource: vi.fn(() => mediaSource),
+      createOscillator,
+      resume: vi.fn(async () => undefined),
+      close: vi.fn(async () => undefined),
+    } as unknown as AudioContext;
+    const music = {
+      loop: false,
+      preload: '',
+      play: vi.fn(async () => undefined),
+      pause: vi.fn(),
+    } as unknown as HTMLAudioElement;
+    const director = new AudioDirector({
+      createContext: () => context,
+      createMusicElement: () => music,
+    });
+
+    await expect(director.startFromGesture()).resolves.toBe(true);
+    expect(music.play).toHaveBeenCalledOnce();
+    expect(createOscillator).not.toHaveBeenCalled();
+    director.dispose();
   });
 });
 

@@ -9,8 +9,8 @@ import type { PerspectiveCamera } from 'three';
 
 import type { LookDelta, MovementIntent, PlayerInputSettings } from './input';
 
-export const WALK_SPEED_METERS_PER_SECOND = 4.2;
-export const RUN_SPEED_METERS_PER_SECOND = 6.2;
+export const WALK_SPEED_METERS_PER_SECOND = 2.52;
+export const RUN_SPEED_METERS_PER_SECOND = 3.72;
 export const MAX_SLOPE_DEGREES = 38;
 export const PLAYER_HEIGHT_METERS = 1.7;
 export const PLAYER_CAPSULE_RADIUS_METERS = 0.35;

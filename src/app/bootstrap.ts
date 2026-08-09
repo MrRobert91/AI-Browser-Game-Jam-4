@@ -35,12 +35,14 @@ import { FinalArtDirector } from '../render/final-art-director';
 import { SuperpositionRenderer } from '../render/superposition';
 import { Wp5PreviewVisuals } from '../render/wp5-preview-visuals';
 import { ObservationReticle } from '../ui/observation-reticle';
+import { PossibilityProbabilities } from '../ui/possibility-probabilities';
 import { GameHud } from '../ui/hud';
 import { loadGameSettings, PauseMenu, type GameSettings } from '../ui/pause';
 import { ProgressionHud } from '../ui/progression-hud';
 import { ResultsPanel } from '../ui/results';
 import { SliceCollapseVisuals } from '../world/collapse-visuals';
 import { createOriginDetailField } from '../world/origin-details';
+import { createWorldBoundaryVisual } from '../world/world-boundary';
 import {
   WorldState,
   cellCenterToWorld,
@@ -210,11 +212,14 @@ export function bootstrap(root: HTMLElement): () => void {
   const audioDirector = new AudioDirector();
   audioDirector.setVolumes(settings.volumes);
   const originDetails = createOriginDetailField(gameRenderer.scene);
+  const worldBoundary = createWorldBoundaryVisual();
+  gameRenderer.scene.add(worldBoundary.root);
   const superposition = new SuperpositionRenderer(
     gameRenderer.quality.preset === 'low' ? 'low' : 'medium',
   );
   gameRenderer.scene.add(superposition.root);
   const reticle = new ObservationReticle(shell);
+  const possibilityProbabilities = new PossibilityProbabilities(shell);
   const hud = new GameHud(shell, { time: sliceTime, message: sliceMessage });
   hud.setSubtitlesEnabled(settings.subtitles);
   hud.setHighContrast(settings.highContrast);
@@ -232,6 +237,7 @@ export function bootstrap(root: HTMLElement): () => void {
       runClock?.setPaused('MENU', paused);
       shell.dataset.paused = String(paused);
       if (shell.dataset.calibrated === 'true') {
+        audioDirector.setPaused(paused);
         systemState.textContent =
           shell.dataset.playerState === 'death'
             ? 'RECONSTRUYENDO'
@@ -555,9 +561,24 @@ export function bootstrap(root: HTMLElement): () => void {
           center: cellCenterToWorld(cellId, 0),
           observationCharge: cell.observationCharge,
           candidates: [
-            { tileId: 0, family: 'ground' as const, weight: 14 },
-            { tileId: 1, family: 'organic' as const, weight: 9 },
-            { tileId: 2, family: 'mineral' as const, weight: 5 },
+            {
+              tileId: 0,
+              family: 'ground' as const,
+              weight: 14,
+              label: 'Pradera',
+            },
+            {
+              tileId: 1,
+              family: 'organic' as const,
+              weight: 9,
+              label: 'Vegetación',
+            },
+            {
+              tileId: 2,
+              family: 'mineral' as const,
+              weight: 5,
+              label: 'Roca',
+            },
           ],
         },
       ];
@@ -596,16 +617,16 @@ export function bootstrap(root: HTMLElement): () => void {
           : selected,
       null,
     );
+    possibilityProbabilities.update(
+      shell.dataset.calibrated === 'true' ? focusedCell : null,
+      gameRenderer.quality.preset === 'low'
+        ? 'low'
+        : gameRenderer.quality.preset,
+    );
     if (focusedCell && focusedCell.observationCharge > 0) {
       portraitTracker.recordGaze(focusedCell.cellId, deltaSeconds);
     }
     reticle.setCharge(maximumCharge);
-    audioDirector.setObservationCharge(maximumCharge);
-    const fixedRatio = Math.min(1, worldState.countFixedCells() / 60);
-    audioDirector.setEnvironmentMix({
-      fixed: fixedRatio,
-      unresolved: 1 - fixedRatio,
-    });
     superposition.update(superposedCells, elapsedSeconds * 1_000);
     fixedVisuals.updateFrame(deltaSeconds);
 
@@ -634,16 +655,9 @@ export function bootstrap(root: HTMLElement): () => void {
         if (announcedPacks.has(packId)) continue;
         announcedPacks.add(packId);
         portraitTracker.recordUnlock(packId);
-        audioDirector.unlockStem(packId);
+        audioDirector.playUnlockCue(packId);
         narrative.play(narrativeCueByPack[packId]);
       }
-      const uncertaintyState = wp5Snapshot.uncertainty?.state;
-      audioDirector.setUncertaintyObserved(
-        uncertaintyState === undefined ||
-          uncertaintyState === 'SEEN' ||
-          uncertaintyState === 'PETRIFYING' ||
-          uncertaintyState === 'FIXED_STATUE',
-      );
       if (wp5Snapshot.respawn.deaths > portraitTracker.snapshot().deaths) {
         portraitTracker.recordDeath();
       }
@@ -708,21 +722,55 @@ export function bootstrap(root: HTMLElement): () => void {
 
   observationButton.addEventListener(
     'click',
-    () => {
+    async () => {
+      if (shell.dataset.calibration === 'pending') return;
+      shell.dataset.calibration = 'pending';
+      systemState.textContent = 'CALIBRANDO';
+      shellStatus.textContent = 'Solicitando control de mirada…';
+      observationButton.disabled = true;
+      observationButton
+        .querySelector('span')
+        ?.replaceChildren('Calibrando mirada…');
+      playerInput.setEnabled(true);
+
+      // Start both privileged operations synchronously from the same gesture.
+      // Audio is optional; Pointer Lock is the transactional calibration gate.
+      const audioStart = audioDirector.startFromGesture();
+      shell.dataset.audioStarted = 'pending';
+      const pointerLockAcquired = await playerInput.resume();
+
+      void audioStart.then((audioStarted) => {
+        shell.dataset.audioStarted = String(audioStarted);
+        if (shell.dataset.calibration === 'error') {
+          audioDirector.setPaused(true);
+        } else if (!audioStarted) {
+          shellStatus.textContent = 'Shell lista · audio no disponible';
+        }
+      });
+
+      if (!pointerLockAcquired) {
+        playerInput.setEnabled(false);
+        shell.dataset.calibration = 'error';
+        shell.dataset.calibrated = 'false';
+        systemState.textContent = 'EN ESPERA';
+        shellStatus.textContent =
+          'No se pudo capturar la mirada. Haz clic para reintentar.';
+        observationButton.disabled = false;
+        observationButton
+          .querySelector('span')
+          ?.replaceChildren('Reintentar calibración');
+        return;
+      }
+
+      shell.dataset.calibration = 'ready';
       shell.dataset.calibrated = 'true';
       systemState.textContent = 'CALIBRADA';
       shellStatus.textContent =
         'Shell lista · el primer colapso iniciará el reloj';
-      observationButton.disabled = true;
       observationButton
         .querySelector('span')
         ?.replaceChildren('Mirada calibrada');
-      playerInput.setEnabled(true);
-      void audioDirector.startFromGesture().then((started) => {
-        shell.dataset.audioStarted = String(started);
-      });
       narrative.play('start');
-      void playerInput.resume();
     },
     { signal: abortController.signal },
   );
@@ -731,9 +779,11 @@ export function bootstrap(root: HTMLElement): () => void {
     if (document.hidden) {
       runClock!.setPaused('HIDDEN', true);
       playerInput.pause();
+      audioDirector.setPaused(true);
       gameLoop.stop();
     } else {
       runClock!.setPaused('HIDDEN', false);
+      if (shell.dataset.calibrated === 'true') audioDirector.setPaused(false);
       gameLoop.start();
     }
   };
@@ -753,6 +803,7 @@ export function bootstrap(root: HTMLElement): () => void {
     gameLoop.stop();
     solverWorker.dispose();
     reticle.destroy();
+    possibilityProbabilities.destroy();
     hud.destroy();
     debugOverlay?.destroy();
     pauseMenu?.destroy();
@@ -762,6 +813,7 @@ export function bootstrap(root: HTMLElement): () => void {
     wp5Visuals?.dispose();
     progressionHud?.destroy();
     originDetails.dispose();
+    worldBoundary.dispose();
     finalArt.dispose();
     gameRenderer.dispose();
     playerInput.dispose();

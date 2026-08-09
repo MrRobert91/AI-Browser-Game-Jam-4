@@ -7,6 +7,8 @@ La Última Observación fue diseñada y construida para AI Browser Game Jam 4.
 - Motor 3D: Three.js.
 - Física: Rapier (`@dimforge/rapier3d-compat`).
 - Tooling: TypeScript, Vite, Vitest y Playwright.
-- Modelos, materiales y audio durante la partida: proxies y síntesis procedural local; no se llama a APIs generativas.
+- Modelos y materiales durante la partida: proxies y generación procedural local.
+- Canción original «La función que nos mira»: letra con `openai/gpt-5.4-mini` y música con `google/lyria-3-pro-preview`, generadas previamente mediante OpenRouter y distribuidas como MP3 local.
+- Efectos: síntesis local de eventos breves con Web Audio API; no existen osciladores continuos de ambiente.
 
-La procedencia detallada está en `ASSET_PROVENANCE.json`. El juego no recopila telemetría ni envía datos a modelos.
+La procedencia detallada está en `ASSET_PROVENANCE.json`. El juego no recopila telemetría, no contiene credenciales y no envía datos a modelos durante la partida.

@@ -14,6 +14,11 @@ import {
   PlayerController,
 } from '../../src/player/controller';
 import { movementIntentFromKeys } from '../../src/player/input';
+import {
+  WORLD_BOUNDARY_RADIUS_METERS,
+  WORLD_CENTER_METERS,
+  createWorldBoundaryColliders,
+} from '../../src/world/world-boundary';
 
 describe('player movement contract', () => {
   it('normalizes diagonal WASD and arrow input', () => {
@@ -26,9 +31,9 @@ describe('player movement contract', () => {
     expect(wasd.sprint).toBe(true);
   });
 
-  it('uses normative walk/run speeds and a 1.1 m ballistic jump', () => {
-    expect(WALK_SPEED_METERS_PER_SECOND).toBe(4.2);
-    expect(RUN_SPEED_METERS_PER_SECOND).toBe(6.2);
+  it('uses the reduced walk/run speeds and a 1.1 m ballistic jump', () => {
+    expect(WALK_SPEED_METERS_PER_SECOND).toBe(2.52);
+    expect(RUN_SPEED_METERS_PER_SECOND).toBe(3.72);
     expect(JUMP_SPEED_METERS_PER_SECOND ** 2 / (2 * 22)).toBeCloseTo(
       JUMP_HEIGHT_METERS,
       12,
@@ -92,6 +97,42 @@ describe('player movement contract', () => {
     for (let frame = 0; frame < 120; frame += 1) controller.update(1 / 60);
     expect(camera.position.x).toBeLessThan(64.56);
     expect(controller.grounded).toBe(true);
+
+    controller.dispose();
+    world.free();
+  });
+
+  it('cannot cross the wide spherical world boundary', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await rapier.init();
+    warn.mockRestore();
+    const world = new rapier.World({ x: 0, y: -22, z: 0 });
+    const ground = world.createRigidBody(
+      rapier.RigidBodyDesc.fixed().setTranslation(64, -0.1, 64),
+    );
+    world.createCollider(rapier.ColliderDesc.cuboid(64, 0.1, 64), ground);
+    createWorldBoundaryColliders(world, rapier);
+    const camera = new PerspectiveCamera();
+    const input = {
+      paused: false,
+      settings: {
+        mouseSensitivity: 0.002,
+        invertY: false,
+        headBobEnabled: false,
+      },
+      movementIntent: () => ({ x: 1, forward: 0, sprint: true }),
+      consumeLookDelta: () => ({ x: 0, y: 0 }),
+      consumeJump: () => false,
+    };
+    const controller = new PlayerController(world, camera, input, rapier);
+    controller.respawn({ x: 124.5, y: 0.85, z: WORLD_CENTER_METERS });
+
+    for (let frame = 0; frame < 180; frame += 1) controller.update(1 / 60);
+    const distance = Math.hypot(
+      camera.position.x - WORLD_CENTER_METERS,
+      camera.position.z - WORLD_CENTER_METERS,
+    );
+    expect(distance).toBeLessThan(WORLD_BOUNDARY_RADIUS_METERS);
 
     controller.dispose();
     world.free();

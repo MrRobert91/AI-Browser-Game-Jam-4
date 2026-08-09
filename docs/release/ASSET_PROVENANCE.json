@@ -21,11 +21,19 @@
     },
     {
       "path": "src/audio/**",
-      "kind": "procedural local audio",
+      "kind": "local audio runtime and bounded sound effects",
       "tool": "Web Audio API",
-      "process": "oscillators, gains and filters synthesized after a user gesture",
-      "editing": "human-directed implementation and accessibility tuning",
+      "process": "a local generated song is routed through separate master/music buses; oscillators are allocated only for short event cues after a user gesture",
+      "editing": "human-directed implementation, removal of continuous tones and accessibility tuning",
       "license": "Original project source under repository license"
+    },
+    {
+      "path": "public/assets/audio/la-funcion-que-nos-mira.mp3",
+      "kind": "original generated Spanish song",
+      "tool": "OpenRouter: openai/gpt-5.4-mini for lyrics, then google/lyria-3-pro-preview for music",
+      "process": "lyrics were generated first from the game design; two full-song candidates were generated and the more faithful take was selected after ffprobe, loudness and speech-transcription checks",
+      "editing": "human-directed brief, deterministic seed, candidate comparison and local runtime integration",
+      "license": "Original generated project content distributed with the game"
     },
     {
       "path": "public/favicon.svg",

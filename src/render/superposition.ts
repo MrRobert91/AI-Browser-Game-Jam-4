@@ -24,6 +24,7 @@ export interface SuperpositionCandidate {
   readonly tileId: number;
   readonly family: ProxyFamily;
   readonly weight: number;
+  readonly label?: string;
 }
 
 export interface SuperpositionCell {
@@ -40,6 +41,10 @@ export interface ProxySelection {
   readonly opacity: number;
 }
 
+export interface CandidatePercentage extends SuperpositionCandidate {
+  readonly percentage: number;
+}
+
 function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
@@ -49,6 +54,53 @@ function hashCell(cellId: CellId): number {
   value = Math.imul(value ^ (value >>> 16), 0x45d9f3b);
   value = Math.imul(value ^ (value >>> 16), 0x45d9f3b);
   return (value ^ (value >>> 16)) >>> 0;
+}
+
+/**
+ * Converts the visible relative weights into deterministic whole percentages.
+ * The largest-remainder pass guarantees that the displayed values total 100.
+ */
+export function normalizeCandidatePercentages(
+  candidates: readonly SuperpositionCandidate[],
+  quality: SuperpositionQuality,
+): readonly CandidatePercentage[] {
+  const maximumCandidates = quality === 'low' ? 2 : 3;
+  const ranked = [...candidates]
+    .filter((candidate) => candidate.weight > 0)
+    .sort(
+      (left, right) => right.weight - left.weight || left.tileId - right.tileId,
+    )
+    .slice(0, maximumCandidates);
+  const totalWeight = ranked.reduce(
+    (total, candidate) => total + candidate.weight,
+    0,
+  );
+  if (totalWeight <= 0) return [];
+
+  const allocations = ranked.map((candidate) => {
+    const exact = (candidate.weight / totalWeight) * 100;
+    return {
+      candidate,
+      percentage: Math.floor(exact),
+      remainder: exact - Math.floor(exact),
+    };
+  });
+  let remaining =
+    100 - allocations.reduce((total, item) => total + item.percentage, 0);
+  const remainderOrder = [...allocations].sort(
+    (left, right) =>
+      right.remainder - left.remainder ||
+      left.candidate.tileId - right.candidate.tileId,
+  );
+  for (const item of remainderOrder) {
+    if (remaining <= 0) break;
+    item.percentage += 1;
+    remaining -= 1;
+  }
+  return allocations.map(({ candidate, percentage }) => ({
+    ...candidate,
+    percentage,
+  }));
 }
 
 export function selectSuperpositionProxy(

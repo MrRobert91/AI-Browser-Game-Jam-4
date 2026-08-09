@@ -36,7 +36,7 @@ export class PlayerInput {
   #jumpQueued = false;
   #enabled = false;
   #paused = true;
-  #resumePromise: Promise<void> | null = null;
+  #resumePromise: Promise<boolean> | null = null;
 
   constructor(pointerTarget: HTMLElement, handlers: PlayerInputHandlers = {}) {
     this.#pointerTarget = pointerTarget;
@@ -105,23 +105,51 @@ export class PlayerInput {
     return queued;
   }
 
-  resume(): Promise<void> {
-    if (!this.#enabled) return Promise.resolve();
+  resume(): Promise<boolean> {
+    if (!this.#enabled) return Promise.resolve(false);
     this.#resumePromise ??= this.#performResume().finally(() => {
       this.#resumePromise = null;
     });
     return this.#resumePromise;
   }
 
-  async #performResume(): Promise<void> {
-    try {
-      if (document.pointerLockElement !== this.#pointerTarget) {
-        await this.#pointerTarget.requestPointerLock();
-      }
+  async #performResume(): Promise<boolean> {
+    if (document.pointerLockElement === this.#pointerTarget) {
       this.#setPaused(false);
-    } catch {
-      this.#setPaused(true);
+      return true;
     }
+
+    const acquired = await new Promise<boolean>((resolve) => {
+      let settled = false;
+      const finish = (value: boolean): void => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeoutId);
+        document.removeEventListener('pointerlockchange', handleChange);
+        document.removeEventListener('pointerlockerror', handleError);
+        resolve(value);
+      };
+      const handleChange = (): void => {
+        finish(document.pointerLockElement === this.#pointerTarget);
+      };
+      const handleError = (): void => finish(false);
+      const timeoutId = window.setTimeout(() => finish(false), 2_000);
+
+      document.addEventListener('pointerlockchange', handleChange);
+      document.addEventListener('pointerlockerror', handleError);
+      try {
+        // Firefox may return before pointerLockElement is updated, while
+        // Chromium returns a promise. The events are the cross-browser gate.
+        void Promise.resolve(this.#pointerTarget.requestPointerLock()).catch(
+          handleError,
+        );
+      } catch {
+        handleError();
+      }
+    });
+
+    this.#setPaused(!acquired);
+    return acquired;
   }
 
   pause(): void {
