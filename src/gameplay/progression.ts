@@ -21,7 +21,7 @@ export interface SeedCollectionEvent {
   readonly pauseSeconds: number;
   readonly previewSilhouettes: readonly [string, string, string];
   readonly narrativeCueId: NarrativeCueId;
-  readonly musicStemId: string;
+  readonly ambienceLayerId: string;
 }
 
 export interface ProgressionSnapshot {
@@ -43,29 +43,29 @@ const PACK_PRESENTATION: Readonly<
     {
       readonly preview: readonly [string, string, string];
       readonly narrativeCueId: NarrativeCueId;
-      readonly stem: string;
+      readonly ambience: string;
     }
   >
 > = {
   water: {
     preview: ['shore', 'reeds', 'spring'],
     narrativeCueId: 'unlockWater',
-    stem: 'stem-water',
+    ambience: 'ambience-water',
   },
   forest: {
     preview: ['young-tree', 'old-tree', 'mushrooms'],
     narrativeCueId: 'unlockForest',
-    stem: 'stem-forest',
+    ambience: 'ambience-base',
   },
   ruin: {
     preview: ['arch', 'column', 'statue'],
     narrativeCueId: 'unlockRuin',
-    stem: 'stem-ruin',
+    ambience: 'ambience-ruin',
   },
   storm: {
     preview: ['crystal', 'spikes', 'uncertainty-nest'],
     narrativeCueId: 'unlockStorm',
-    stem: 'stem-storm',
+    ambience: 'ambience-storm',
   },
 };
 
@@ -116,7 +116,7 @@ export class ProgressionSystem {
       pauseSeconds: SEED_COLLECTION_PAUSE_SECONDS,
       previewSilhouettes: presentation.preview,
       narrativeCueId: presentation.narrativeCueId,
-      musicStemId: presentation.stem,
+      ambienceLayerId: presentation.ambience,
     };
     this.options.onSeedCollected?.(event);
     return event;

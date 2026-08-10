@@ -38,6 +38,9 @@ export interface UiCopy {
   readonly calibrationFailed: string;
   readonly retryCalibration: string;
   readonly audioUnavailable: string;
+  readonly audioRetry: string;
+  readonly audioBlocked: string;
+  readonly audioError: string;
   readonly physicsUnavailable: string;
   readonly firstCollapseStartsClock: string;
   readonly observing: string;
@@ -113,6 +116,7 @@ export const UI_COPY: LocalizedCatalog<UiCopy> = {
     possibilities: 'POSSIBILITIES', superposed: 'SUPERPOSED', undetermined: 'UNDETERMINED', workerInitializing: 'CONTRACT // INITIALIZING',
     buildLocal: 'BUILD LOCAL', window: 'WINDOW', dailySeed: 'DAILY UTC', randomObservation: 'New random observation', look: 'LOOK',
     calibrationFailed: 'Gaze capture failed. Click to retry.', retryCalibration: 'Retry calibration', audioUnavailable: 'Audio unavailable · subtitles remain active',
+    audioRetry: 'Retry voice', audioBlocked: 'Voice playback blocked', audioError: 'Voice asset error',
     physicsUnavailable: 'The field body could not initialize. Reload to retry.', firstCollapseStartsClock: 'Ready · the first collapse starts the clock',
     observing: 'OBSERVING', pause: 'PAUSED', ending: 'CLOSING', rebuilding: 'RECONSTRUCTING',
     pauseAria: 'Pause and options', pauseInstrument: 'INSTRUMENT PAUSED', continueObservation: 'Continue observation',
@@ -150,6 +154,7 @@ export const UI_COPY: LocalizedCatalog<UiCopy> = {
     possibilities: 'POSIBILIDADES', superposed: 'SUPERPUESTA', undetermined: 'INDETERMINADA', workerInitializing: 'CONTRATO // INICIALIZANDO',
     buildLocal: 'BUILD LOCAL', window: 'VENTANA', dailySeed: 'DIARIA UTC', randomObservation: 'Nueva observación aleatoria', look: 'MIRA',
     calibrationFailed: 'No se pudo capturar la mirada. Haz clic para reintentar.', retryCalibration: 'Reintentar calibración', audioUnavailable: 'Audio no disponible · los subtítulos siguen activos',
+    audioRetry: 'Reintentar voz', audioBlocked: 'Reproducción de voz bloqueada', audioError: 'Error en el asset de voz',
     physicsUnavailable: 'El cuerpo de campo no pudo iniciar. Recarga para reintentar.', firstCollapseStartsClock: 'Lista · el primer colapso iniciará el reloj',
     observing: 'OBSERVANDO', pause: 'PAUSA', ending: 'CIERRE', rebuilding: 'RECONSTRUYENDO',
     pauseAria: 'Pausa y opciones', pauseInstrument: 'INSTRUMENTO EN PAUSA', continueObservation: 'Continuar observación',

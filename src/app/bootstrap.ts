@@ -8,7 +8,6 @@ import { AudioDirector } from '../audio/audio-director';
 import type { Locale } from '../contracts/localization';
 import type { UnlockablePackId } from '../contracts/tiles';
 import { planSeedAnchors } from '../gameplay/anchors';
-import { CollapsadorRecordDirector } from '../gameplay/collapsador-records';
 import { resolveWorldSeed } from '../gameplay/daily-seed';
 import {
   closureForSeedCount,
@@ -18,7 +17,11 @@ import {
 } from '../gameplay/ending';
 import { generateHaiku } from '../gameplay/haiku';
 import { AgencyIntroduction } from '../gameplay/introduction';
-import { NarrativeDirector, type NarrativeCueId } from '../gameplay/narrative';
+import {
+  narrativeCatalog,
+  NarrativeDirector,
+  type NarrativeCueId,
+} from '../gameplay/narrative';
 import { capturePanoramaPng, LocalPanoramaGallery } from '../gameplay/panorama';
 import { configuredRemoteHaikuEndpoint } from '../gameplay/remote-haiku';
 import {
@@ -137,6 +140,11 @@ function shellMarkup(locale: Locale): string {
     </p>
 
     <p class="uncertainty-status" data-uncertainty-status role="status" hidden></p>
+
+    <section class="audio-diagnostic" data-audio-diagnostic hidden>
+      <span data-audio-diagnostic-status role="status"></span>
+      <button type="button" data-audio-retry>${copy.audioRetry}</button>
+    </section>
 
     <section class="slice-result" data-slice-result hidden>
       <p>${copy.resultEyebrow}</p>
@@ -280,6 +288,13 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
   const uncertaintyStatus = root.querySelector<HTMLElement>(
     '[data-uncertainty-status]',
   );
+  const audioDiagnostic = root.querySelector<HTMLElement>(
+    '[data-audio-diagnostic]',
+  );
+  const audioDiagnosticStatus = root.querySelector<HTMLElement>(
+    '[data-audio-diagnostic-status]',
+  );
+  const audioRetry = root.querySelector<HTMLButtonElement>('[data-audio-retry]');
 
   if (
     !shell ||
@@ -297,7 +312,10 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
     !seedModeLabel ||
     !seedValueLabel ||
     !wp5GateStatus ||
-    !uncertaintyStatus
+    !uncertaintyStatus ||
+    !audioDiagnostic ||
+    !audioDiagnosticStatus ||
+    !audioRetry
   ) {
     throw new Error(
       locale === 'en'
@@ -370,8 +388,29 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
     gameRenderer.scene,
     gameRenderer.quality,
   );
-  const audioDirector = new AudioDirector();
+  const audioDirector = new AudioDirector({
+    onStateChange: (snapshot) => {
+      shell.dataset.audioState = snapshot.status;
+      if (snapshot.activeClipId) shell.dataset.audioClip = snapshot.activeClipId;
+      else delete shell.dataset.audioClip;
+      if (snapshot.error) shell.dataset.audioError = snapshot.error;
+      else delete shell.dataset.audioError;
+      const failed = snapshot.status === 'blocked' || snapshot.status === 'error';
+      audioDiagnostic.hidden = !failed;
+      audioDiagnosticStatus.textContent =
+        snapshot.status === 'blocked' ? copy.audioBlocked : copy.audioError;
+    },
+  });
   audioDirector.setVolumes(settings.volumes);
+  audioRetry.addEventListener(
+    'click',
+    () => {
+      void audioDirector.startFromGesture().then(() =>
+        audioDirector.retryActiveVoice(),
+      );
+    },
+    { signal: abortController.signal },
+  );
   const originDetails = createOriginDetailField(gameRenderer.scene);
   const worldBoundary = createWorldBoundaryVisual();
   gameRenderer.scene.add(worldBoundary.root);
@@ -391,18 +430,7 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
     onMessage: () => undefined,
     onSubtitle: (message) => hud.showSubtitle(message),
     onAudioCue: (cue) => audioDirector.playNarrativeCue(cue),
-  });
-  const collapsadorRecords = new CollapsadorRecordDirector({
-    onPlay: (record) => {
-      const message = `${record.speaker} // ${record.subtitle}`;
-      shell.dataset.recordingId = record.id;
-      hud.showSubtitle(message);
-      audioDirector.playCollapsadorRecord(record);
-    },
-    onInterrupt: () => {
-      delete shell.dataset.recordingId;
-    },
-  });
+  }, narrativeCatalog(locale));
   const portraitTracker = new AttentionPortraitTracker();
   const endingDirector = new EndingDirector();
   const evidenceMode =
@@ -517,6 +545,7 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
   runClock = new RunClock(
     {
       onCountdown: (remainingSeconds) => {
+        if (remainingSeconds === 60) narrative.play('lastSixtySeconds');
         if (remainingSeconds === 30) narrative.play('lastThirtySeconds');
       },
       onEnding: () => {
@@ -696,6 +725,9 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
   let maximumCharge = 0;
   let lastWorldVisualSampleSeconds = Number.NEGATIVE_INFINITY;
   let recordedDeaths = 0;
+  let firstDangerAnnounced = false;
+  let lastContextualSlot = 0;
+  let contextualFixedCells = 0;
 
   const gameLoop = new GameLoop(({ deltaSeconds, elapsedSeconds }) => {
     const previousClock = runClock!.snapshot();
@@ -860,6 +892,10 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
           uncertaintyStatus.textContent = statusText;
         }
       }
+      if (!firstDangerAnnounced && wp5Snapshot.hazardCount > 0) {
+        firstDangerAnnounced = true;
+        narrative.play('firstDanger');
+      }
       if (shell.dataset.respawnPhase !== wp5Snapshot.respawn.phase) {
         shell.dataset.respawnPhase = wp5Snapshot.respawn.phase;
       }
@@ -868,6 +904,9 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
         announcedPacks.add(packId);
         portraitTracker.recordUnlock(packId);
         audioDirector.playUnlockCue(packId);
+        audioDirector.setAmbienceScene(
+          packId === 'forest' ? 'base' : packId,
+        );
         narrative.play(narrativeCueByPack[packId]);
       }
       if (wp5Snapshot.respawn.deaths > recordedDeaths) {
@@ -885,23 +924,32 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
     );
     hud.setTime(clock.remainingSeconds);
     audioDirector.updateCountdown(clock.remainingSeconds, clock.elapsedSeconds);
-    const distanceFromOrigin = Math.hypot(
-      playerPosition[0] - 64,
-      playerPosition[2] - 64,
-    );
-    collapsadorRecords.update({
-      deltaMs: deltaSeconds * replaySpeed * 1_000,
-      fixedCells: worldState.countFixedCells(),
-      seeds: wp5Snapshot?.progression.collectedPacks.length ?? 0,
-      maxDistance: distanceFromOrigin,
-      blocked:
-        (wp5Snapshot?.respawn.phase ?? 'ALIVE') !== 'ALIVE' ||
-        (wp5Snapshot?.progression.pauseRemainingSeconds ?? 0) > 0 ||
-        clock.remainingSeconds <= 30 ||
-        clock.phase === 'ENDING' ||
-        clock.phase === 'COMPLETE',
-    });
-
+    const contextualSlot = Math.floor(clock.elapsedSeconds / 30);
+    if (
+      clock.phase === 'RUNNING' &&
+      clock.remainingSeconds > 60 &&
+      contextualSlot > lastContextualSlot
+    ) {
+      const portrait = portraitTracker.snapshot();
+      const fixedCells = worldState.countFixedCells();
+      const category =
+        recordedDeaths > 1
+          ? 'death'
+          : fixedCells <= contextualFixedCells
+            ? 'stalled'
+            : portrait.dangerExposureSeconds >= 12
+              ? 'risk'
+              : portrait.revisitRatio >= 0.25
+                ? 'revisit'
+                : portrait.averageGazeDwell >= 1.4
+                  ? 'attention'
+                  : portrait.maxDistance >= 18
+                    ? 'distance'
+                    : 'ambient';
+      narrative.playPool(category, worldSeed ^ contextualSlot);
+      lastContextualSlot = contextualSlot;
+      contextualFixedCells = fixedCells;
+    }
     if (
       !canonicalReplay &&
       !wp5PreviewEnabled &&
@@ -1019,6 +1067,7 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
       return;
     }
     readyPlayerPhysics.controller.respawn();
+    audioDirector.setAmbienceScene('base');
 
     shell.dataset.calibration = 'ready';
     shell.dataset.calibrated = 'true';

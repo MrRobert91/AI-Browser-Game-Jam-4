@@ -24,7 +24,7 @@ interface MutableGameSettings {
   subtitles: boolean;
   voicesEnabled: boolean;
   quality: QualityPreset;
-  volumes: { master: number; music: number; effects: number };
+  volumes: { master: number; voice: number; ambience: number; effects: number };
 }
 
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
@@ -36,10 +36,11 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   subtitles: true,
   voicesEnabled: true,
   quality: 'auto',
-  volumes: { master: 0.75, music: 0.55, effects: 0.75 },
+  volumes: { master: 0.75, voice: 0.78, ambience: 0.55, effects: 0.75 },
 };
 
-const STORAGE_KEY = 'ultima-observacion.settings.v1';
+export const SETTINGS_STORAGE_KEY = 'ultima-observacion.settings.v2';
+export const LEGACY_SETTINGS_STORAGE_KEY = 'ultima-observacion.settings.v1';
 const QUALITY_PRESETS = new Set<QualityPreset>([
   'auto',
   'low',
@@ -53,9 +54,9 @@ function finiteRange(
   minimum: number,
   maximum: number,
 ): number {
-  return typeof value === 'number' && Number.isFinite(value)
-    ? Math.max(minimum, Math.min(maximum, value))
-    : fallback;
+  const candidate =
+    typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  return Math.max(minimum, Math.min(maximum, candidate));
 }
 
 export function normalizeGameSettings(value: unknown): GameSettings {
@@ -67,6 +68,9 @@ export function normalizeGameSettings(value: unknown): GameSettings {
     typeof candidate.volumes === 'object' && candidate.volumes !== null
       ? candidate.volumes
       : DEFAULT_GAME_SETTINGS.volumes;
+  const legacyVolumes = volumes as Partial<AudioVolumes> & {
+    readonly music?: number;
+  };
   const quality = QUALITY_PRESETS.has(candidate.quality as QualityPreset)
     ? (candidate.quality as QualityPreset)
     : DEFAULT_GAME_SETTINGS.quality;
@@ -89,7 +93,13 @@ export function normalizeGameSettings(value: unknown): GameSettings {
     quality,
     volumes: {
       master: finiteRange(volumes.master, 0.75, 0, 1),
-      music: finiteRange(volumes.music, 0.55, 0, 1),
+      voice: finiteRange(legacyVolumes.voice, legacyVolumes.effects ?? 0.78, 0, 1),
+      ambience: finiteRange(
+        legacyVolumes.ambience,
+        legacyVolumes.music ?? 0.55,
+        0,
+        1,
+      ),
       effects: finiteRange(volumes.effects, 0.75, 0, 1),
     },
   };
@@ -99,7 +109,9 @@ export function loadGameSettings(
   storage: Storage = window.localStorage,
 ): GameSettings {
   try {
-    const serialized = storage.getItem(STORAGE_KEY);
+    const serialized =
+      storage.getItem(SETTINGS_STORAGE_KEY) ??
+      storage.getItem(LEGACY_SETTINGS_STORAGE_KEY);
     return serialized
       ? normalizeGameSettings(JSON.parse(serialized) as unknown)
       : DEFAULT_GAME_SETTINGS;
@@ -113,7 +125,7 @@ export function saveGameSettings(
   storage: Storage = window.localStorage,
 ): void {
   try {
-    storage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    storage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
   } catch {
     // Storage can be unavailable in privacy contexts; settings still apply in memory.
   }
@@ -159,7 +171,8 @@ export class PauseMenu {
           <label><input data-setting="voices" type="checkbox"> ${copy.localVoices}</label>
           <label>${copy.quality} <select data-setting="quality"><option value="auto">${copy.qualityAuto}</option><option value="low">${copy.qualityLow}</option><option value="medium">${copy.qualityMedium}</option><option value="high">${copy.qualityHigh}</option></select></label>
           <label>${copy.masterVolume} <input data-setting="master" type="range" min="0" max="1" step="0.05"></label>
-          <label>${copy.ambienceVolume} <input data-setting="music" type="range" min="0" max="1" step="0.05"></label>
+          <label>${copy.voiceVolume} <input data-setting="voice" type="range" min="0" max="1" step="0.05"></label>
+          <label>${copy.ambienceVolume} <input data-setting="ambience" type="range" min="0" max="1" step="0.05"></label>
           <label>${copy.effectsVolume} <input data-setting="effects" type="range" min="0" max="1" step="0.05"></label>
         </div>
         <button class="pause-menu__restart" type="button" data-restart>${copy.restartHold}</button>
@@ -220,8 +233,10 @@ export class PauseMenu {
       next.quality = target.value as QualityPreset;
     } else if (key === 'master' && target instanceof HTMLInputElement) {
       next.volumes.master = Number(target.value);
-    } else if (key === 'music' && target instanceof HTMLInputElement) {
-      next.volumes.music = Number(target.value);
+    } else if (key === 'voice' && target instanceof HTMLInputElement) {
+      next.volumes.voice = Number(target.value);
+    } else if (key === 'ambience' && target instanceof HTMLInputElement) {
+      next.volumes.ambience = Number(target.value);
     } else if (key === 'effects' && target instanceof HTMLInputElement) {
       next.volumes.effects = Number(target.value);
     } else {
@@ -275,7 +290,8 @@ export class PauseMenu {
     setInput('voices', this.settings.voicesEnabled);
     setInput('quality', this.settings.quality);
     setInput('master', this.settings.volumes.master);
-    setInput('music', this.settings.volumes.music);
+    setInput('voice', this.settings.volumes.voice);
+    setInput('ambience', this.settings.volumes.ambience);
     setInput('effects', this.settings.volumes.effects);
   }
 }

@@ -1,33 +1,67 @@
 import type { UnlockablePackId } from '../contracts/tiles';
-import type { CollapsadorRecord } from '../gameplay/collapsador-records';
 import type { ResolvedNarrativeCue } from '../gameplay/narrative';
-import { createCustomSongElement } from './custom-song';
-import {
-  collapsadorRecordVoicePath,
-  narrativeVoicePath,
-} from './narrative-voices';
+import { narrativeVoicePath } from './narrative-voices';
 import { SpatialAudioPool } from './spatial-pool';
 
 export interface AudioVolumes {
   readonly master: number;
-  readonly music: number;
+  readonly voice: number;
+  readonly ambience: number;
   readonly effects: number;
+}
+
+export type AudioPlaybackStatus =
+  | 'idle'
+  | 'ready'
+  | 'playing'
+  | 'blocked'
+  | 'error';
+
+export type AmbienceScene = 'room' | 'base' | 'water' | 'ruin' | 'storm';
+
+export interface AudioPlaybackSnapshot {
+  readonly status: AudioPlaybackStatus;
+  readonly activeClipId: string | null;
+  readonly error: string | null;
 }
 
 export interface AudioDirectorOptions {
   readonly createContext?: () => AudioContext;
-  readonly createMusicElement?: () => HTMLAudioElement;
   readonly createVoiceElement?: () => HTMLAudioElement;
+  readonly createAmbienceElement?: (
+    scene: AmbienceScene,
+    path: string,
+  ) => HTMLAudioElement;
+  readonly onStateChange?: (snapshot: AudioPlaybackSnapshot) => void;
 }
 
 interface VoiceRequest {
+  readonly id: string;
   readonly path: string;
   readonly priority: number;
+  readonly isContextValid: () => boolean;
 }
+
+interface AmbienceTrack {
+  readonly element: HTMLAudioElement;
+  readonly source: MediaElementAudioSourceNode;
+  readonly gain: GainNode;
+}
+
+const AMBIENCE_PATHS: Readonly<Record<AmbienceScene, string>> = {
+  room: '/assets/audio/ambience/room.mp3',
+  base: '/assets/audio/ambience/base.mp3',
+  water: '/assets/audio/ambience/water.mp3',
+  ruin: '/assets/audio/ambience/ruin.mp3',
+  storm: '/assets/audio/ambience/storm.mp3',
+};
+
+export const MAX_VOICE_QUEUE = 2;
 
 const DEFAULT_VOLUMES: AudioVolumes = {
   master: 0.75,
-  music: 0.55,
+  voice: 0.78,
+  ambience: 0.55,
   effects: 0.75,
 };
 
@@ -42,27 +76,35 @@ export function countdownPulseInterval(
   return remainingSeconds <= 30 ? 1 : 2.5;
 }
 
-/** Local generated score. It allocates no AudioContext before a user gesture. */
+/** Local-only Web Audio graph. Authorization depends solely on AudioContext. */
 export class AudioDirector {
   private readonly createContext: () => AudioContext;
-  private readonly createMusicElement: () => HTMLAudioElement;
   private readonly createVoiceElement: () => HTMLAudioElement;
+  private readonly createAmbienceElement: NonNullable<
+    AudioDirectorOptions['createAmbienceElement']
+  >;
+  private readonly onStateChange?: AudioDirectorOptions['onStateChange'];
   private context: AudioContext | null = null;
   private masterBus: GainNode | null = null;
-  private musicBus: GainNode | null = null;
+  private ambienceBus: GainNode | null = null;
   private effectsBus: GainNode | null = null;
   private voiceBus: GainNode | null = null;
-  private musicElement: HTMLAudioElement | null = null;
-  private musicSource: MediaElementAudioSourceNode | null = null;
   private voiceElement: HTMLAudioElement | null = null;
   private voiceSource: MediaElementAudioSourceNode | null = null;
   private spatialPool: SpatialAudioPool | null = null;
+  private readonly ambienceTracks = new Map<AmbienceScene, AmbienceTrack>();
+  private activeAmbience: AmbienceScene = 'room';
   private volumes: AudioVolumes = DEFAULT_VOLUMES;
   private lastCountdownPulse = Number.NEGATIVE_INFINITY;
   private startPromise: Promise<boolean> | null = null;
   private voiceEnabled = true;
   private activeVoice: VoiceRequest | null = null;
   private readonly voiceQueue: VoiceRequest[] = [];
+  private playback: AudioPlaybackSnapshot = {
+    status: 'idle',
+    activeClipId: null,
+    error: null,
+  };
 
   constructor(options: AudioDirectorOptions = {}) {
     this.createContext =
@@ -71,9 +113,16 @@ export class AudioDirector {
         const Context = window.AudioContext;
         return new Context();
       });
-    this.createMusicElement =
-      options.createMusicElement ?? createCustomSongElement;
     this.createVoiceElement = options.createVoiceElement ?? (() => new Audio());
+    this.createAmbienceElement =
+      options.createAmbienceElement ??
+      ((_scene, path) => {
+        const element = new Audio(path);
+        element.loop = true;
+        element.preload = 'auto';
+        return element;
+      });
+    this.onStateChange = options.onStateChange;
   }
 
   get started(): boolean {
@@ -82,6 +131,10 @@ export class AudioDirector {
 
   get activeSpatialSources(): number {
     return this.spatialPool?.activeCount ?? 0;
+  }
+
+  get snapshot(): AudioPlaybackSnapshot {
+    return this.playback;
   }
 
   startFromGesture(): Promise<boolean> {
@@ -94,15 +147,16 @@ export class AudioDirector {
   setVolumes(volumes: AudioVolumes): void {
     this.volumes = {
       master: clamp01(volumes.master),
-      music: clamp01(volumes.music),
+      voice: clamp01(volumes.voice),
+      ambience: clamp01(volumes.ambience),
       effects: clamp01(volumes.effects),
     };
     const now = this.context?.currentTime ?? 0;
     this.masterBus?.gain.setTargetAtTime(this.volumes.master, now, 0.04);
-    this.musicBus?.gain.setTargetAtTime(this.volumes.music, now, 0.04);
+    this.ambienceBus?.gain.setTargetAtTime(this.volumes.ambience, now, 0.08);
     this.effectsBus?.gain.setTargetAtTime(this.volumes.effects, now, 0.04);
     this.voiceBus?.gain.setTargetAtTime(
-      this.voiceEnabled ? this.volumes.effects : 0,
+      this.voiceEnabled ? this.volumes.voice : 0,
       now,
       0.04,
     );
@@ -112,7 +166,7 @@ export class AudioDirector {
     this.voiceEnabled = enabled;
     const now = this.context?.currentTime ?? 0;
     this.voiceBus?.gain.setTargetAtTime(
-      enabled ? this.volumes.effects : 0,
+      enabled ? this.volumes.voice : 0,
       now,
       0.04,
     );
@@ -120,19 +174,29 @@ export class AudioDirector {
       this.voiceElement?.pause();
       this.activeVoice = null;
       this.voiceQueue.length = 0;
-      this.restoreMusicAfterVoice();
+      this.setPlayback('ready', null, null);
+    }
+  }
+
+  setAmbienceScene(scene: AmbienceScene): void {
+    this.activeAmbience = scene;
+    const now = this.context?.currentTime ?? 0;
+    for (const [candidate, track] of this.ambienceTracks) {
+      track.gain.gain.setTargetAtTime(candidate === scene ? 1 : 0, now, 0.8);
     }
   }
 
   setPaused(paused: boolean): void {
     if (paused) {
-      this.musicElement?.pause();
       this.voiceElement?.pause();
+      for (const track of this.ambienceTracks.values()) track.element.pause();
       return;
     }
     void this.context?.resume().catch(() => undefined);
-    void this.musicElement?.play().catch(() => undefined);
-    if (this.activeVoice) void this.voiceElement?.play().catch(() => undefined);
+    for (const track of this.ambienceTracks.values()) {
+      void track.element.play().catch(() => undefined);
+    }
+    if (this.activeVoice) void this.playActiveVoice();
   }
 
   notifyCollapse(pan = 0): void {
@@ -144,19 +208,22 @@ export class AudioDirector {
     });
   }
 
-  playNarrativeCue(cue?: ResolvedNarrativeCue): void {
+  playNarrativeCue(
+    cue?: ResolvedNarrativeCue,
+    isContextValid: () => boolean = () => true,
+  ): void {
     if (!cue) return;
     this.enqueueVoice({
-      path: narrativeVoicePath(cue.id),
+      id: cue.id,
+      path: narrativeVoicePath(cue.locale, cue.id),
       priority: cue.priority,
+      isContextValid,
     });
   }
 
-  playCollapsadorRecord(record: CollapsadorRecord): void {
-    this.enqueueVoice({
-      path: collapsadorRecordVoicePath(record),
-      priority: record.priority,
-    });
+  retryActiveVoice(): void {
+    if (!this.activeVoice || !this.voiceElement) return;
+    void this.playActiveVoice();
   }
 
   playUnlockCue(packId: UnlockablePackId): void {
@@ -191,72 +258,87 @@ export class AudioDirector {
 
   dispose(): void {
     this.spatialPool?.dispose();
-    this.musicElement?.pause();
     this.voiceElement?.pause();
-    this.musicSource?.disconnect();
     this.voiceSource?.disconnect();
+    for (const track of this.ambienceTracks.values()) {
+      track.element.pause();
+      track.source.disconnect();
+      track.gain.disconnect();
+    }
+    this.ambienceTracks.clear();
     void this.context?.close();
     this.context = null;
     this.masterBus = null;
-    this.musicBus = null;
+    this.ambienceBus = null;
     this.effectsBus = null;
     this.voiceBus = null;
-    this.musicElement = null;
-    this.musicSource = null;
     this.voiceElement = null;
     this.voiceSource = null;
     this.activeVoice = null;
     this.voiceQueue.length = 0;
+    this.setPlayback('idle', null, null);
   }
 
   private async performStart(): Promise<boolean> {
     if (!this.context) {
       try {
         this.initialize(this.createContext());
-      } catch {
+      } catch (error) {
+        this.setPlayback('error', null, errorMessage(error));
         return false;
       }
     }
-    const contextStart = this.context!.resume()
-      .then(() => this.context!.state === 'running')
-      .catch(() => false);
-    const musicStart = this.musicElement!.play()
-      .then(() => true)
-      .catch(() => false);
-    const [contextStarted, musicStarted] = await Promise.all([
-      contextStart,
-      musicStart,
-    ]);
-    return contextStarted && musicStarted;
+    try {
+      await this.context!.resume();
+      const ready = this.context!.state === 'running';
+      this.setPlayback(ready ? 'ready' : 'blocked', null, ready ? null : 'AudioContext suspended');
+      if (ready) {
+        for (const track of this.ambienceTracks.values()) {
+          void track.element.play().catch(() => undefined);
+        }
+      }
+      return ready;
+    } catch (error) {
+      this.setPlayback('blocked', null, errorMessage(error));
+      return false;
+    }
   }
 
   private initialize(context: AudioContext): void {
     this.context = context;
     this.masterBus = context.createGain();
-    this.musicBus = context.createGain();
+    this.ambienceBus = context.createGain();
     this.effectsBus = context.createGain();
     this.voiceBus = context.createGain();
-    this.musicBus.connect(this.masterBus);
+    this.ambienceBus.connect(this.masterBus);
     this.effectsBus.connect(this.masterBus);
     this.voiceBus.connect(this.masterBus);
     this.masterBus.connect(context.destination);
-    this.musicElement = this.createMusicElement();
-    this.musicElement.loop = true;
-    this.musicElement.preload = 'auto';
-    this.musicSource = context.createMediaElementSource(this.musicElement);
-    this.musicSource.connect(this.musicBus);
     this.voiceElement = this.createVoiceElement();
     this.voiceElement.preload = 'auto';
     this.voiceElement.onended = () => this.finishVoice();
-    this.voiceElement.onerror = () => this.finishVoice();
+    this.voiceElement.onerror = () => {
+      this.setPlayback('error', this.activeVoice?.id ?? null, 'Voice asset failed');
+    };
     this.voiceSource = context.createMediaElementSource(this.voiceElement);
     this.voiceSource.connect(this.voiceBus);
+    for (const scene of Object.keys(AMBIENCE_PATHS) as AmbienceScene[]) {
+      const element = this.createAmbienceElement(scene, AMBIENCE_PATHS[scene]);
+      element.loop = true;
+      element.preload = 'auto';
+      const source = context.createMediaElementSource(element);
+      const gain = context.createGain();
+      gain.gain.value = scene === this.activeAmbience ? 1 : 0;
+      source.connect(gain);
+      gain.connect(this.ambienceBus);
+      this.ambienceTracks.set(scene, { element, source, gain });
+    }
     this.spatialPool = new SpatialAudioPool(context, this.effectsBus);
     this.setVolumes(this.volumes);
   }
 
   private enqueueVoice(request: VoiceRequest): void {
-    if (!this.voiceEnabled || !this.voiceElement) return;
+    if (!this.voiceEnabled || !this.voiceElement || !request.isContextValid()) return;
     if (!this.activeVoice) {
       this.startVoice(request);
       return;
@@ -266,30 +348,55 @@ export class AudioDirector {
       this.startVoice(request);
       return;
     }
-    if (this.voiceQueue.length >= 2) return;
+    if (this.voiceQueue.length >= MAX_VOICE_QUEUE) return;
     this.voiceQueue.push(request);
     this.voiceQueue.sort((left, right) => right.priority - left.priority);
   }
 
   private startVoice(request: VoiceRequest): void {
-    if (!this.voiceElement) return;
+    if (!this.voiceElement || !request.isContextValid()) return;
     this.activeVoice = request;
     this.voiceElement.src = request.path;
     this.voiceElement.currentTime = 0;
-    const now = this.context?.currentTime ?? 0;
-    this.musicBus?.gain.setTargetAtTime(this.volumes.music * 0.32, now, 0.18);
-    void this.voiceElement.play().catch(() => this.finishVoice());
+    void this.playActiveVoice();
+  }
+
+  private async playActiveVoice(): Promise<void> {
+    if (!this.voiceElement || !this.activeVoice) return;
+    const request = this.activeVoice;
+    try {
+      await this.voiceElement.play();
+      if (this.activeVoice === request) {
+        this.setPlayback('playing', request.id, null);
+      }
+    } catch (error) {
+      const name = error instanceof DOMException ? error.name : '';
+      this.setPlayback(
+        name === 'NotAllowedError' ? 'blocked' : 'error',
+        request.id,
+        errorMessage(error),
+      );
+    }
   }
 
   private finishVoice(): void {
     this.activeVoice = null;
-    const next = this.voiceQueue.shift();
+    let next = this.voiceQueue.shift();
+    while (next && !next.isContextValid()) next = this.voiceQueue.shift();
     if (next) this.startVoice(next);
-    else this.restoreMusicAfterVoice();
+    else this.setPlayback('ready', null, null);
   }
 
-  private restoreMusicAfterVoice(): void {
-    const now = this.context?.currentTime ?? 0;
-    this.musicBus?.gain.setTargetAtTime(this.volumes.music, now, 0.24);
+  private setPlayback(
+    status: AudioPlaybackStatus,
+    activeClipId: string | null,
+    error: string | null,
+  ): void {
+    this.playback = { status, activeClipId, error };
+    this.onStateChange?.(this.playback);
   }
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

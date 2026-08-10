@@ -1,21 +1,14 @@
-import { readdir, readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-
 import { describe, expect, it, vi } from 'vitest';
 
 import {
   AudioDirector,
   countdownPulseInterval,
 } from '../../src/audio/audio-director';
-import {
-  CUSTOM_SONG_MODEL,
-  CUSTOM_SONG_PATH,
-} from '../../src/audio/custom-song';
 import { MAX_POSITIONAL_AUDIO_SOURCES } from '../../src/audio/spatial-pool';
 import {
   NARRATIVE_VOICE_CODEC,
-  NARRATIVE_VOICE_COUNT,
-  NARRATIVE_VOICE_TOTAL_BYTES,
+  NARRATIVE_VOICE_COUNT_PER_LOCALE,
+  NARRATIVE_VOICE_TOTAL_COUNT,
 } from '../../src/audio/narrative-voices';
 import {
   NARRATIVE_CATALOG,
@@ -52,39 +45,18 @@ describe('WP6 final art direction', () => {
 });
 
 describe('WP6 audio contracts', () => {
-  it('uses one local generated song, eight positional voices and 60/30 s cadence', () => {
-    expect(CUSTOM_SONG_PATH).toBe('/assets/audio/la-funcion-que-nos-mira.mp3');
-    expect(CUSTOM_SONG_MODEL).toBe('google/lyria-3-pro-preview');
+  it('uses local bilingual voices, eight positional sources and 60/30 s cadence', () => {
+    expect(NARRATIVE_VOICE_COUNT_PER_LOCALE).toBe(44);
+    expect(NARRATIVE_VOICE_TOTAL_COUNT).toBe(88);
     expect(MAX_POSITIONAL_AUDIO_SOURCES).toBe(8);
     expect(countdownPulseInterval(61)).toBeNull();
     expect(countdownPulseInterval(60)).toBe(2.5);
     expect(countdownPulseInterval(30)).toBe(1);
   });
 
-  it('packages the selected generated song as a real local MP3 asset', async () => {
-    const audio = await readFile(
-      resolve('public/assets/audio/la-funcion-que-nos-mira.mp3'),
-    );
-    expect(audio.byteLength).toBeGreaterThan(1_000_000);
-    expect(audio.subarray(0, 3).toString('ascii')).toBe('ID3');
-  });
-
-  it('packages every approved narrative line as bounded local mono MP3', async () => {
-    const directory = resolve('public/assets/audio/narrative');
-    const files = (await readdir(directory)).filter((name) =>
-      name.endsWith('.mp3'),
-    );
-    expect(files).toHaveLength(NARRATIVE_VOICE_COUNT);
-    let totalBytes = 0;
-    for (const file of files) {
-      const audio = await readFile(resolve(directory, file));
-      totalBytes += audio.byteLength;
-      expect(audio.byteLength).toBeGreaterThan(20_000);
-      expect(audio.subarray(0, 3).toString('ascii')).toBe('ID3');
-    }
-    expect(totalBytes).toBe(NARRATIVE_VOICE_TOTAL_BYTES);
-    expect(totalBytes).toBeLessThan(2_000_000);
-    expect(NARRATIVE_VOICE_CODEC).toContain('mono 24 kHz');
+  it('declares normalized mono MP3 delivery', () => {
+    expect(NARRATIVE_VOICE_CODEC).toContain('mono 44.1 kHz');
+    expect(NARRATIVE_VOICE_CODEC).toContain('-16 LUFS');
   });
 
   it('does not allocate an AudioContext before a user gesture', () => {
@@ -94,9 +66,9 @@ describe('WP6 audio contracts', () => {
     expect(director.started).toBe(false);
   });
 
-  it('starts the local song without allocating continuous oscillators', async () => {
-    const gainNodes = Array.from({ length: 4 }, () => ({
-      gain: { setTargetAtTime: vi.fn() },
+  it('authorizes AudioContext independently from media playback', async () => {
+    const gainNodes = Array.from({ length: 9 }, () => ({
+      gain: { value: 0, setTargetAtTime: vi.fn() },
       connect: vi.fn(),
       disconnect: vi.fn(),
     }));
@@ -108,23 +80,12 @@ describe('WP6 audio contracts', () => {
       state: 'running',
       currentTime: 0,
       destination: {},
-      createGain: vi
-        .fn()
-        .mockReturnValueOnce(gainNodes[0])
-        .mockReturnValueOnce(gainNodes[1])
-        .mockReturnValueOnce(gainNodes[2])
-        .mockReturnValueOnce(gainNodes[3]),
+      createGain: vi.fn(() => gainNodes.shift()!),
       createMediaElementSource: vi.fn(() => mediaSource),
       createOscillator,
       resume: vi.fn(async () => undefined),
       close: vi.fn(async () => undefined),
     } as unknown as AudioContext;
-    const music = {
-      loop: false,
-      preload: '',
-      play: vi.fn(async () => undefined),
-      pause: vi.fn(),
-    } as unknown as HTMLAudioElement;
     const voice = {
       preload: '',
       src: '',
@@ -134,23 +95,30 @@ describe('WP6 audio contracts', () => {
       onended: null,
       onerror: null,
     } as unknown as HTMLAudioElement;
+    const ambience = Array.from({ length: 5 }, () => ({
+      loop: false,
+      preload: '',
+      play: vi.fn(async () => undefined),
+      pause: vi.fn(),
+    })) as unknown as HTMLAudioElement[];
+    let ambienceIndex = 0;
     const director = new AudioDirector({
       createContext: () => context,
-      createMusicElement: () => music,
       createVoiceElement: () => voice,
+      createAmbienceElement: () => ambience[ambienceIndex++]!,
     });
 
     await expect(director.startFromGesture()).resolves.toBe(true);
-    expect(music.play).toHaveBeenCalledOnce();
+    expect(director.snapshot.status).toBe('ready');
     expect(createOscillator).not.toHaveBeenCalled();
     const cue = {
       ...NARRATIVE_CATALOG.cues.start,
       id: 'start' as const,
-      locale: 'es-ES',
+      locale: 'es-ES' as const,
       text: NARRATIVE_CATALOG.cues.start.text,
     };
     director.playNarrativeCue(cue);
-    expect(voice.src).toContain('/assets/audio/narrative/cue-start.mp3');
+    expect(voice.src).toContain('/assets/audio/voice/es/start.mp3');
     expect(voice.play).toHaveBeenCalledOnce();
     director.setVoicesEnabled(false);
     expect(voice.pause).toHaveBeenCalled();
@@ -174,7 +142,7 @@ describe('WP6 accessible settings and narrative', () => {
     ).toMatchObject({
       mouseSensitivity: 0.02,
       quality: 'auto',
-      volumes: { master: 0, music: 1, effects: 0.4 },
+      volumes: { master: 0, voice: 0.4, ambience: 1, effects: 0.4 },
     });
   });
 
@@ -213,7 +181,11 @@ describe('WP6 accessible settings and narrative', () => {
       ...NARRATIVE_CATALOG,
       cues: {
         ...NARRATIVE_CATALOG.cues,
-        start: { ...NARRATIVE_CATALOG.cues.start, text: '' },
+        start: {
+          ...NARRATIVE_CATALOG.cues.start,
+          text: '',
+          fallbackText: 'Mira. La Cámara está preparada.',
+        },
       },
     };
     const onMessage = vi.fn();
