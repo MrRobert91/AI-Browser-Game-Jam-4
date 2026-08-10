@@ -71,6 +71,14 @@ test('canonical offline journey reaches the qualitative ending', async ({
   const shell = page.locator('.observation-shell');
   await expect(shell).toHaveAttribute('data-calibrated', 'true');
   await expect(shell).toHaveAttribute('data-audio-started', 'true');
+  await expect(page.locator('.possibility-probabilities')).toHaveCount(0);
+  await expect(page.locator('[data-slice-message]')).toHaveCount(0);
+  await expect(page.locator('.slice-hud > p')).toHaveCount(2);
+  const subtitle = page.locator('.narrative-subtitle');
+  await expect(subtitle).toBeVisible();
+  const subtitleBox = await subtitle.boundingBox();
+  expect(subtitleBox).not.toBeNull();
+  expect(subtitleBox!.y).toBeGreaterThan(page.viewportSize()!.height / 2);
   await expect(page.locator('.onboarding-prompt')).toHaveAttribute(
     'data-complete',
     'true',

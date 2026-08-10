@@ -18,17 +18,25 @@ Actualizado: 2026-08-10 (Europe/Madrid)
 | WP7 — Final | #40–#43 | Integrada en `dev` | PR #70 fusionada; Reloj, retrato, haiku y ascenso final completos |
 | WP8 — QA y entrega | #44–#51 | Integrada en `dev` | PR #70 fusionada; gates, evidencia y candidata reproducible |
 | POST — Pulido de juego | #73 | Integrada en `dev` | PR #74 fusionada en `922f9e9` |
-| POST — Seguridad física | #85 | En implementación | Rama `codex/issue-85-player-physics-safety` desde `origin/dev` `5cf120b` |
+| POST — Seguridad física | #85 | Integrada en `dev` | `origin/dev` incluye `e7181d3` |
+| POST — Limpieza del HUD | #87 | En revisión | Rama `codex/remove-center-overlay-message` desde `origin/dev` `e7181d3` |
 | POST — Expansiones | #52–#56 | En rama acumulativa salvo #54 | #54 ya estaba cerrada; #52, #53, #55 y #56 listas para revisión |
 
 ### Estado operativo actual
 
-- Fase actual: corrección de seguridad física #85 nacida de `origin/dev` `5cf120b67ed9c83cf942206aaad1bb729bcf48b5` tras integrar la rama acumulativa post-jam.
+- Fase actual: limpieza visual del HUD #87 nacida de `origin/dev` `e7181d3419187922db1d1748d72e040c5117049b` tras integrar la seguridad física #85.
 - Trabajo en revisión: PR #84 reúne #22, #52, #53, #55, #56 y la revisión narrativa #76–#82, con un commit funcional por issue y destino `dev`.
 - Arquitectura vigente: la build de jam sigue siendo offline. #56 solo muestra una variante remota si la publicación configura un proxy HTTPS y el jugador consiente en esa partida; ninguna clave de proveedor entra en el navegador.
 - Evidencia actual: galerías/capturas locales, simulación de 10.000 seeds, WebM narrativo y QA automatizada bajo [`docs/progress/`](./progress/).
 - Gate humano: #83 y el epic #75 permanecen abiertos y **NO-GO 0/5**; la rama no afirma sesiones que no se han realizado.
 - Estado remoto verificado: PR #84 abierta y no draft; sus palabras de cierre excluyen deliberadamente #75 y #83.
+
+### 2026-08-10 — Issue #87 — Mensajes solo abajo y centro despejado
+
+- El panel de candidatos `SUPERPOSICIÓN` deja de ocupar la retícula. La carga y los proxies del mundo siguen comunicando el estado procedural sin cubrir el punto de atención.
+- El HUD superior conserva únicamente tiempo y seed. Narrativa, registros del Colapsador y mensajes breves de gameplay comparten ahora un único subtítulo en la franja inferior, respetando la opción de subtítulos.
+- La regresión de navegador exige cero paneles `.possibility-probabilities`, cero slots `[data-slice-message]`, dos bloques superiores y un subtítulo visible por debajo de la mitad del viewport.
+- Evidencia: [`docs/progress/issue-87-hud-cleanup/hud-messages-bottom.jpg`](./progress/issue-87-hud-cleanup/hud-messages-bottom.jpg).
 
 ### 2026-08-10 — Issue #85 — Suelo y contención física continua
 
