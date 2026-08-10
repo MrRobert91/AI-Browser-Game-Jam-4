@@ -12,6 +12,14 @@
       "license": "Original project content; CC BY 4.0 for jam distribution"
     },
     {
+      "path": "public/assets/proxies/storm/{echo-moss,prism-soil,echo-clearing,bell-flower,mirror-reed,memory-stone}.proxy.json",
+      "kind": "Echo Garden post-jam biome proxy definitions",
+      "tool": "manual JSON editing with Codex",
+      "process": "authored as a human-directed Storm vocabulary extension, constrained to OPEN_FLAT, 2x2m cells and two LOD levels",
+      "editing": "grammar, asset, 10,000-seed and browser gallery validation",
+      "license": "Original project content; CC BY 4.0 for jam distribution"
+    },
+    {
       "path": "src/render/**",
       "kind": "procedural materials, atmosphere, vegetation and VFX",
       "tool": "Three.js and authored shaders/material parameters",
@@ -34,6 +42,14 @@
       "process": "lyrics were generated first from the game design; two full-song candidates were generated and the more faithful take was selected after ffprobe, loudness and speech-transcription checks",
       "editing": "human-directed brief, deterministic seed, candidate comparison and local runtime integration",
       "license": "Original generated project content distributed with the game"
+    },
+    {
+      "path": "public/assets/audio/narrative/*.mp3",
+      "kind": "local Spanish narrative voices",
+      "tool": "Microsoft Helena Desktop es-ES via Windows SAPI; FFmpeg 8.1.2",
+      "process": "20 approved introduction, event and Collapsador lines synthesized offline, high-pass/low-pass filtered and EBU R128 normalized to mono MP3",
+      "editing": "human-directed copy, voice-rate direction, bounded queue integration, subtitle synchronization and browser QA",
+      "license": "Generated locally from the operating-system voice for distribution with this project; verify platform redistribution terms before commercial reuse"
     },
     {
       "path": "public/favicon.svg",

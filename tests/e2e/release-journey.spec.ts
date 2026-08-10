@@ -26,10 +26,30 @@ test('canonical offline journey reaches the qualitative ending', async ({
   test.slow();
   const consoleErrors: string[] = [];
   const failedRequests: string[] = [];
+  const externalRequests: string[] = [];
+  const loadedNarrativeVoices: string[] = [];
   page.on('console', (message) => {
     if (message.type() === 'error') consoleErrors.push(message.text());
   });
-  page.on('requestfailed', (request) => failedRequests.push(request.url()));
+  page.on('request', (request) => {
+    const url = new URL(request.url());
+    if (url.origin !== 'http://127.0.0.1:4173')
+      externalRequests.push(request.url());
+  });
+  page.on('response', (response) => {
+    if (response.ok() && response.url().includes('/assets/audio/narrative/')) {
+      loadedNarrativeVoices.push(response.url());
+    }
+  });
+  page.on('requestfailed', (request) => {
+    const failure = request.failure()?.errorText ?? 'unknown';
+    const isBenignLocalMediaAbort =
+      request.url().startsWith('http://127.0.0.1:4173/assets/audio/') &&
+      failure.includes('ERR_ABORTED');
+    if (!isBenignLocalMediaAbort) {
+      failedRequests.push(`${request.url()} :: ${failure}`);
+    }
+  });
 
   await page.goto('/?wp5=preview&replay=wp5&speed=8&evidence=1&start=590');
   await page.addStyleTag({
@@ -68,14 +88,32 @@ test('canonical offline journey reaches the qualitative ending', async ({
 
   const result = page.locator('[data-slice-result]');
   await expect(result).toBeVisible({ timeout: 20_000 });
+  await expect(result).toHaveAttribute('role', 'dialog');
+  await expect(result).toBeFocused();
+  await expect(result).toContainText('EXPEDIENTE DE ACTUALIZACIÓN DEL AGENTE');
   await expect(result).toContainText('Perfil:');
   await expect(result).toContainText('SEED A91F-42C0');
+  await expect(result).toContainText('sin reconocimiento de causalidad');
+  await expect(page.locator('[data-remote-haiku-request]')).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath('05-final.png') });
   if (testInfo.project.name.startsWith('firefox')) {
-    await page.screenshot({ path: testInfo.outputPath('05-final.png') });
     await expect(result).toHaveScreenshot('result-panel.png');
   }
+  const panorama = page.locator('[data-panorama-download]');
+  await expect(panorama).toBeEnabled();
+  await expect(panorama).toHaveAttribute('data-gallery-saved', 'true');
+  const downloadEvent = page.waitForEvent('download');
+  await panorama.click();
+  const download = await downloadEvent;
+  await download.saveAs(testInfo.outputPath('panorama.png'));
+  await page.locator('[data-panorama-gallery]').click();
+  await expect(page.locator('.slice-result__gallery')).toContainText(
+    'A91F-42C0',
+  );
   expect(consoleErrors).toEqual([]);
+  expect(externalRequests).toEqual([]);
   expect(failedRequests).toEqual([]);
+  expect(loadedNarrativeVoices.length).toBeGreaterThan(0);
 });
 
 test('pointer lock and pause recover after user gestures', async ({ page }) => {
@@ -89,6 +127,67 @@ test('pointer lock and pause recover after user gestures', async ({ page }) => {
   await expect(pauseMenu).toBeVisible();
   await pauseMenu.locator('[data-resume]').click();
   await expect(shell).toHaveAttribute('data-paused', 'false');
+});
+
+test('the Agency introduction can play or be skipped into one-gesture calibration', async ({
+  page,
+}) => {
+  await page.goto('/?wp5=preview&replay=wp5&speed=8');
+  const shell = page.locator('.observation-shell');
+  await expect(shell).toHaveAttribute('data-intro-step', 'chamber');
+  await expect(page.locator('[data-intro-copy]')).toContainText(
+    'Condensado de Posibilidad',
+  );
+  await page.locator('[data-intro-skip]').click();
+  await expect(shell).toHaveAttribute('data-intro-skipped', 'true');
+  await expect(shell).toHaveAttribute('data-calibrated', 'true');
+  await expect(page.locator('[data-intro-copy]')).toContainText(
+    'Mira. Lo que permanezca',
+  );
+});
+
+test('daily mode is shared by UTC date while replay keeps its canonical seed', async ({
+  page,
+}) => {
+  await page.goto('/?daily=1&wp5=off');
+  const shell = page.locator('.observation-shell');
+  await expect(shell).toHaveAttribute('data-seed-mode', 'daily');
+  await expect(shell).toHaveAttribute(
+    'data-daily-date',
+    /^\d{4}-\d{2}-\d{2}$/u,
+  );
+  await expect(page.locator('[data-seed-mode-label]')).toHaveText('DIARIA UTC');
+  const first = await page.locator('[data-seed-label]').textContent();
+  await page.reload();
+  await expect(page.locator('[data-seed-label]')).toHaveText(first ?? '');
+  await expect(page.locator('[data-seed-mode-link]')).toHaveText(
+    'Nueva observación aleatoria',
+  );
+
+  await page.goto('/?replay=wp5&wp5=preview');
+  await expect(shell).toHaveAttribute('data-seed-mode', 'replay');
+  await expect(page.locator('[data-seed-label]')).toHaveText('A91F-42C0');
+});
+
+test('grammar gallery exposes the bounded Echo Garden extension', async ({
+  page,
+}, testInfo) => {
+  await page.goto('/?grammar=1');
+  const app = page.locator('#app');
+  const viewer = page.locator('.grammar-viewer');
+  await expect(app).toHaveAttribute('data-gallery-ready', 'true');
+  await page.locator('[data-pack-filter]').selectOption('storm');
+  const cards = page.locator('.grammar-card[data-pack="storm"]');
+  await expect(cards).toHaveCount(12);
+  await expect(viewer).toContainText('terrain.storm.echo-clearing');
+  await expect(viewer).toContainText('feature.storm.memory-stone');
+  await expect(page.locator('[data-gallery-summary]')).toContainText(
+    '12 tiles',
+  );
+  await page.screenshot({
+    path: testInfo.outputPath('echo-garden-gallery.png'),
+    fullPage: true,
+  });
 });
 
 test('a rejected first calibration stays visible and can be retried', async ({

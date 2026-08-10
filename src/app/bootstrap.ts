@@ -5,6 +5,8 @@ import { Wp5PreviewRuntime } from './wp5-preview-runtime';
 import { AudioDirector } from '../audio/audio-director';
 import type { UnlockablePackId } from '../contracts/tiles';
 import { planSeedAnchors } from '../gameplay/anchors';
+import { CollapsadorRecordDirector } from '../gameplay/collapsador-records';
+import { resolveWorldSeed } from '../gameplay/daily-seed';
 import {
   closureForSeedCount,
   EndingDirector,
@@ -12,7 +14,10 @@ import {
   type RunResult,
 } from '../gameplay/ending';
 import { generateHaiku } from '../gameplay/haiku';
+import { AgencyIntroduction } from '../gameplay/introduction';
 import { NarrativeDirector, type NarrativeCueId } from '../gameplay/narrative';
+import { capturePanoramaPng, LocalPanoramaGallery } from '../gameplay/panorama';
+import { configuredRemoteHaikuEndpoint } from '../gameplay/remote-haiku';
 import {
   AttentionPortraitTracker,
   classifyAttentionPortrait,
@@ -40,6 +45,7 @@ import { GameHud } from '../ui/hud';
 import { loadGameSettings, PauseMenu, type GameSettings } from '../ui/pause';
 import { ProgressionHud } from '../ui/progression-hud';
 import { ResultsPanel } from '../ui/results';
+import { uncertaintyStatusText } from '../ui/uncertainty-status';
 import { SliceCollapseVisuals } from '../world/collapse-visuals';
 import { createOriginDetailField } from '../world/origin-details';
 import { createWorldBoundaryVisual } from '../world/world-boundary';
@@ -67,15 +73,23 @@ const SHELL_MARKUP = `
     </header>
 
     <section class="intro-panel">
-      <p class="intro-panel__eyebrow">LA MEDIDA // REGISTRO 01</p>
+      <p class="intro-panel__eyebrow" data-intro-eyebrow>AGENCIA // CÁMARA DE SILENCIO 7-C</p>
       <h1 id="game-title">La Última<br /><span>Observación</span></h1>
-      <p class="intro-panel__statement">
-        <strong>Mira.</strong> Lo que permanezca bajo tu atención tendrá derecho a existir.
+      <p class="intro-panel__statement" data-intro-copy aria-live="polite">
+        Condensado de Posibilidad estable. Se ha asignado un cuerpo de campo al Colapsador remoto.
       </p>
-      <button class="observation-button" type="button" data-observation-button>
-        <span>Calibrar mirada</span>
-        <span aria-hidden="true">↗</span>
-      </button>
+      <div class="intro-panel__actions">
+        <button class="observation-button" type="button" data-observation-button>
+          <span>Aceptar y calibrar</span>
+          <span aria-hidden="true">↗</span>
+        </button>
+        <button class="intro-panel__skip" type="button" data-intro-skip>
+          Omitir introducción y calibrar
+        </button>
+        <a class="intro-panel__daily" href="?daily=1" data-seed-mode-link>
+          Observación diaria UTC
+        </a>
+      </div>
       <p class="intro-panel__hint" data-shell-status role="status" aria-live="polite">
         Instrumento local · sin conexión de runtime
       </p>
@@ -99,12 +113,14 @@ const SHELL_MARKUP = `
     <section class="slice-hud" aria-live="polite">
       <p><span>VENTANA</span><strong data-slice-time>10:00</strong></p>
       <p data-slice-message>Mira para iniciar el registro.</p>
-      <p><span>SEED</span><strong>A91F-42C0</strong></p>
+      <p><span data-seed-mode-label>SEED</span><strong data-seed-label>A91F-42C0</strong></p>
     </section>
 
     <p class="wp5-gate-status" data-wp5-gate-status>
       WP6 · PRESENTACIÓN LOCAL
     </p>
+
+    <p class="uncertainty-status" data-uncertainty-status role="status" hidden></p>
 
     <section class="slice-result" data-slice-result hidden>
       <p>REGISTRO DE ATENCIÓN</p>
@@ -150,6 +166,12 @@ export function bootstrap(root: HTMLElement): () => void {
   const observationButton = root.querySelector<HTMLButtonElement>(
     '[data-observation-button]',
   );
+  const introSkip = root.querySelector<HTMLButtonElement>('[data-intro-skip]');
+  const seedModeLink = root.querySelector<HTMLAnchorElement>(
+    '[data-seed-mode-link]',
+  );
+  const introEyebrow = root.querySelector<HTMLElement>('[data-intro-eyebrow]');
+  const introCopy = root.querySelector<HTMLElement>('[data-intro-copy]');
   const systemState = root.querySelector<HTMLElement>('[data-system-state]');
   const shellStatus = root.querySelector<HTMLElement>('[data-shell-status]');
   const workerState = root.querySelector<HTMLElement>('[data-worker-state]');
@@ -157,13 +179,24 @@ export function bootstrap(root: HTMLElement): () => void {
   const sliceTime = root.querySelector<HTMLElement>('[data-slice-time]');
   const sliceMessage = root.querySelector<HTMLElement>('[data-slice-message]');
   const sliceResult = root.querySelector<HTMLElement>('[data-slice-result]');
+  const seedModeLabel = root.querySelector<HTMLElement>(
+    '[data-seed-mode-label]',
+  );
+  const seedValueLabel = root.querySelector<HTMLElement>('[data-seed-label]');
   const wp5GateStatus = root.querySelector<HTMLElement>(
     '[data-wp5-gate-status]',
+  );
+  const uncertaintyStatus = root.querySelector<HTMLElement>(
+    '[data-uncertainty-status]',
   );
 
   if (
     !shell ||
     !observationButton ||
+    !introSkip ||
+    !seedModeLink ||
+    !introEyebrow ||
+    !introCopy ||
     !systemState ||
     !shellStatus ||
     !workerState ||
@@ -171,12 +204,29 @@ export function bootstrap(root: HTMLElement): () => void {
     !sliceTime ||
     !sliceMessage ||
     !sliceResult ||
-    !wp5GateStatus
+    !seedModeLabel ||
+    !seedValueLabel ||
+    !wp5GateStatus ||
+    !uncertaintyStatus
   ) {
     throw new Error('La interfaz de observación está incompleta.');
   }
 
   const abortController = new AbortController();
+  const introduction = new AgencyIntroduction();
+  const renderIntroduction = (): void => {
+    introEyebrow.textContent = introduction.current.eyebrow;
+    introCopy.textContent = introduction.current.text;
+    shell.dataset.introStep = introduction.current.id;
+    shell.dataset.introComplete = String(introduction.complete);
+    shell.dataset.introSkipped = String(introduction.wasSkipped);
+  };
+  renderIntroduction();
+  const introductionTimer = window.setInterval(() => {
+    introduction.advance(8_000);
+    renderIntroduction();
+    if (introduction.complete) window.clearInterval(introductionTimer);
+  }, 8_000);
   const settings = loadGameSettings();
   const search = new URLSearchParams(window.location.search);
   const requestedMode = search.get('mode');
@@ -184,13 +234,26 @@ export function bootstrap(root: HTMLElement): () => void {
     requestedMode === 'brief' || requestedMode === 'contemplative'
       ? requestedMode
       : 'standard';
-  const requestedSeed = search.get('seed');
-  const parsedSeed = requestedSeed
-    ? Number.parseInt(requestedSeed.replace('-', ''), 16)
-    : Number.NaN;
-  const worldSeed = Number.isInteger(parsedSeed)
-    ? parsedSeed >>> 0
-    : 0xa91f42c0;
+  const seedSelection = resolveWorldSeed(search);
+  const worldSeed = seedSelection.worldSeed;
+  seedModeLabel.textContent =
+    seedSelection.mode === 'daily' ? 'DIARIA UTC' : 'SEED';
+  seedValueLabel.textContent = formatSeed(worldSeed);
+  shell.dataset.seedMode = seedSelection.mode;
+  if (seedSelection.dateKey) shell.dataset.dailyDate = seedSelection.dateKey;
+  const alternateSeedUrl = new URL(window.location.href);
+  alternateSeedUrl.searchParams.delete('seed');
+  alternateSeedUrl.searchParams.delete('replay');
+  alternateSeedUrl.searchParams.delete('evidence');
+  alternateSeedUrl.searchParams.delete('start');
+  if (seedSelection.mode === 'daily') {
+    alternateSeedUrl.searchParams.delete('daily');
+    seedModeLink.textContent = 'Nueva observación aleatoria';
+  } else {
+    alternateSeedUrl.searchParams.set('daily', '1');
+    seedModeLink.textContent = 'Observación diaria UTC';
+  }
+  seedModeLink.href = `${alternateSeedUrl.pathname}${alternateSeedUrl.search}`;
   const requestedStart = Number(search.get('start') ?? '0');
   const startAtSeconds =
     search.get('evidence') === '1' && Number.isFinite(requestedStart)
@@ -226,13 +289,28 @@ export function bootstrap(root: HTMLElement): () => void {
   const narrative = new NarrativeDirector({
     onMessage: (message) => hud.setMessage(message),
     onSubtitle: (message) => hud.showSubtitle(message),
-    onAudioCue: () => audioDirector.playNarrativeCue(),
+    onAudioCue: (cue) => audioDirector.playNarrativeCue(cue),
+  });
+  const collapsadorRecords = new CollapsadorRecordDirector({
+    onPlay: (record) => {
+      const message = `${record.speaker} // ${record.subtitle}`;
+      shell.dataset.recordingId = record.id;
+      hud.setMessage(message);
+      hud.showSubtitle(message);
+      audioDirector.playCollapsadorRecord(record);
+    },
+    onInterrupt: () => {
+      delete shell.dataset.recordingId;
+    },
   });
   const portraitTracker = new AttentionPortraitTracker();
   const endingDirector = new EndingDirector();
+  const evidenceMode =
+    new URLSearchParams(window.location.search).get('evidence') === '1';
   let pauseMenu: PauseMenu | null = null;
   let runClock: RunClock | null = null;
   const playerInput = new PlayerInput(shell, {
+    keepRunningWithoutPointerLock: evidenceMode,
     onPauseChange: (paused) => {
       runClock?.setPaused('MENU', paused);
       shell.dataset.paused = String(paused);
@@ -272,6 +350,7 @@ export function bootstrap(root: HTMLElement): () => void {
     hud.setSubtitlesEnabled(nextSettings.subtitles);
     hud.setHighContrast(nextSettings.highContrast);
     audioDirector.setVolumes(nextSettings.volumes);
+    audioDirector.setVoicesEnabled(nextSettings.voicesEnabled);
     shell.dataset.reducedFlashes = String(nextSettings.reducedFlashes);
   };
   pauseMenu = new PauseMenu(shell, settings, {
@@ -330,8 +409,8 @@ export function bootstrap(root: HTMLElement): () => void {
         if (remainingSeconds === 30) narrative.play('lastThirtySeconds');
       },
       onEnding: () => {
-        playerInput.setEnabled(false);
         shell.dataset.ending = 'true';
+        playerInput.setEnabled(false);
         superposition.root.visible = false;
         fixedVisuals.setEndingMode(true);
         narrative.play('lastThirtySeconds');
@@ -340,8 +419,15 @@ export function bootstrap(root: HTMLElement): () => void {
     },
     { mode: runMode, startAtSeconds },
   );
-  const resultsPanel = new ResultsPanel(sliceResult, () =>
-    window.location.reload(),
+  const resultsPanel = new ResultsPanel(
+    sliceResult,
+    () => window.location.reload(),
+    {
+      capture: (result) =>
+        capturePanoramaPng(gameRenderer.renderer.domElement, result),
+      gallery: new LocalPanoramaGallery(),
+    },
+    configuredRemoteHaikuEndpoint(import.meta.env.VITE_REMOTE_HAIKU_ENDPOINT),
   );
   observableWorld = new ObservableWorldBridge({
     solver: solverWorker,
@@ -358,6 +444,7 @@ export function bootstrap(root: HTMLElement): () => void {
       runClock!.notifyFirstCollapse();
       hud.notifyFirstCollapse();
       audioDirector.notifyCollapse();
+      narrative.play('firstCollapse');
     },
     onWarning: (warning) => {
       if (warning.code !== 'ECHO_ONLY') {
@@ -383,7 +470,11 @@ export function bootstrap(root: HTMLElement): () => void {
   let progressionHud: ProgressionHud | null = null;
   if (wp5PreviewEnabled) {
     const plan = planSeedAnchors(worldSeed);
-    wp5Visuals = new Wp5PreviewVisuals(gameRenderer.scene, plan);
+    wp5Visuals = new Wp5PreviewVisuals(
+      gameRenderer.scene,
+      plan,
+      settings.reducedFlashes,
+    );
     progressionHud = new ProgressionHud(shell);
     shell.dataset.wp5Preview = 'true';
     wp5Preview = new Wp5PreviewRuntime({
@@ -406,6 +497,7 @@ export function bootstrap(root: HTMLElement): () => void {
         hud.setMessage(message);
         hud.showSubtitle(message);
       },
+      onNarrativeCue: (cueId) => narrative.play(cueId),
       onClockReward: (seconds) => {
         runClock!.addTime(seconds);
       },
@@ -650,6 +742,12 @@ export function bootstrap(root: HTMLElement): () => void {
     if (wp5Snapshot && progressionHud) {
       progressionHud.update(wp5Snapshot.progression);
       wp5GateStatus.textContent = `WP6 · ${wp5Snapshot.progression.collectedPacks.length}/4 SEMILLAS · ${wp5Snapshot.uncertainty?.state ?? 'SIN ENEMIGO'}`;
+      uncertaintyStatus.hidden = wp5Snapshot.uncertainty === null;
+      if (wp5Snapshot.uncertainty) {
+        uncertaintyStatus.textContent = uncertaintyStatusText(
+          wp5Snapshot.uncertainty.state,
+        );
+      }
       shell.dataset.respawnPhase = wp5Snapshot.respawn.phase;
       for (const packId of wp5Snapshot.progression.collectedPacks) {
         if (announcedPacks.has(packId)) continue;
@@ -672,6 +770,22 @@ export function bootstrap(root: HTMLElement): () => void {
     );
     hud.setTime(clock.remainingSeconds);
     audioDirector.updateCountdown(clock.remainingSeconds, clock.elapsedSeconds);
+    const distanceFromOrigin = Math.hypot(
+      playerPosition[0] - 64,
+      playerPosition[2] - 64,
+    );
+    collapsadorRecords.update({
+      deltaMs: deltaSeconds * replaySpeed * 1_000,
+      fixedCells: worldState.countFixedCells(),
+      seeds: wp5Snapshot?.progression.collectedPacks.length ?? 0,
+      maxDistance: distanceFromOrigin,
+      blocked:
+        (wp5Snapshot?.respawn.phase ?? 'ALIVE') !== 'ALIVE' ||
+        (wp5Snapshot?.progression.pauseRemainingSeconds ?? 0) > 0 ||
+        clock.remainingSeconds <= 30 ||
+        clock.phase === 'ENDING' ||
+        clock.phase === 'COMPLETE',
+    });
 
     if (
       !canonicalReplay &&
@@ -705,11 +819,15 @@ export function bootstrap(root: HTMLElement): () => void {
         const result: RunResult = {
           worldSeed,
           seedLabel: formatSeed(worldSeed),
+          seedMode: seedSelection.mode,
+          dailyDateKey: seedSelection.dateKey,
           profile,
           portrait,
           haiku,
           ...closure,
         };
+        pauseMenu?.setOpen(false);
+        shell.dataset.paused = 'false';
         narrative.play('final');
         resultsPanel.show(result);
         shell.dataset.complete = 'true';
@@ -720,60 +838,72 @@ export function bootstrap(root: HTMLElement): () => void {
     gameRenderer.render();
   });
 
+  const startCalibration = async (skipIntroduction: boolean): Promise<void> => {
+    if (shell.dataset.calibration === 'pending') return;
+    window.clearInterval(introductionTimer);
+    if (skipIntroduction) introduction.skip();
+    renderIntroduction();
+    shell.dataset.calibration = 'pending';
+    systemState.textContent = 'CALIBRANDO';
+    shellStatus.textContent = 'Solicitando control de mirada…';
+    observationButton.disabled = true;
+    introSkip.disabled = true;
+    observationButton
+      .querySelector('span')
+      ?.replaceChildren('Calibrando mirada…');
+    playerInput.setEnabled(true);
+
+    // Start both privileged operations synchronously from the same gesture.
+    // Audio is optional; Pointer Lock is the transactional calibration gate.
+    const audioStart = audioDirector.startFromGesture();
+    shell.dataset.audioStarted = 'pending';
+    const pointerLockAcquired = evidenceMode
+      ? playerInput.resumeForEvidence()
+      : await playerInput.resume();
+
+    void audioStart.then((audioStarted) => {
+      shell.dataset.audioStarted = String(audioStarted);
+      if (shell.dataset.calibration === 'error') {
+        audioDirector.setPaused(true);
+      } else if (!audioStarted) {
+        shellStatus.textContent = 'Shell lista · audio no disponible';
+      }
+    });
+
+    if (!pointerLockAcquired) {
+      playerInput.setEnabled(false);
+      shell.dataset.calibration = 'error';
+      shell.dataset.calibrated = 'false';
+      systemState.textContent = 'EN ESPERA';
+      shellStatus.textContent =
+        'No se pudo capturar la mirada. Haz clic para reintentar.';
+      observationButton.disabled = false;
+      introSkip.hidden = true;
+      observationButton
+        .querySelector('span')
+        ?.replaceChildren('Reintentar calibración');
+      return;
+    }
+
+    shell.dataset.calibration = 'ready';
+    shell.dataset.calibrated = 'true';
+    systemState.textContent = 'CALIBRADA';
+    shellStatus.textContent =
+      'Shell lista · el primer colapso iniciará el reloj';
+    observationButton
+      .querySelector('span')
+      ?.replaceChildren('Mirada calibrada');
+    narrative.play('start');
+  };
+
   observationButton.addEventListener(
     'click',
-    async () => {
-      if (shell.dataset.calibration === 'pending') return;
-      shell.dataset.calibration = 'pending';
-      systemState.textContent = 'CALIBRANDO';
-      shellStatus.textContent = 'Solicitando control de mirada…';
-      observationButton.disabled = true;
-      observationButton
-        .querySelector('span')
-        ?.replaceChildren('Calibrando mirada…');
-      playerInput.setEnabled(true);
-
-      // Start both privileged operations synchronously from the same gesture.
-      // Audio is optional; Pointer Lock is the transactional calibration gate.
-      const audioStart = audioDirector.startFromGesture();
-      shell.dataset.audioStarted = 'pending';
-      const pointerLockAcquired = await playerInput.resume();
-
-      void audioStart.then((audioStarted) => {
-        shell.dataset.audioStarted = String(audioStarted);
-        if (shell.dataset.calibration === 'error') {
-          audioDirector.setPaused(true);
-        } else if (!audioStarted) {
-          shellStatus.textContent = 'Shell lista · audio no disponible';
-        }
-      });
-
-      if (!pointerLockAcquired) {
-        playerInput.setEnabled(false);
-        shell.dataset.calibration = 'error';
-        shell.dataset.calibrated = 'false';
-        systemState.textContent = 'EN ESPERA';
-        shellStatus.textContent =
-          'No se pudo capturar la mirada. Haz clic para reintentar.';
-        observationButton.disabled = false;
-        observationButton
-          .querySelector('span')
-          ?.replaceChildren('Reintentar calibración');
-        return;
-      }
-
-      shell.dataset.calibration = 'ready';
-      shell.dataset.calibrated = 'true';
-      systemState.textContent = 'CALIBRADA';
-      shellStatus.textContent =
-        'Shell lista · el primer colapso iniciará el reloj';
-      observationButton
-        .querySelector('span')
-        ?.replaceChildren('Mirada calibrada');
-      narrative.play('start');
-    },
+    () => void startCalibration(false),
     { signal: abortController.signal },
   );
+  introSkip.addEventListener('click', () => void startCalibration(true), {
+    signal: abortController.signal,
+  });
 
   const handleVisibilityChange = (): void => {
     if (document.hidden) {
@@ -799,6 +929,7 @@ export function bootstrap(root: HTMLElement): () => void {
 
   return () => {
     disposed = true;
+    window.clearInterval(introductionTimer);
     abortController.abort();
     gameLoop.stop();
     solverWorker.dispose();

@@ -1,4 +1,5 @@
 import type { AttentionPortrait, AttentionProfile } from './portrait';
+import type { WorldSeedMode } from './daily-seed';
 import type { GeneratedHaiku } from './haiku';
 
 export const ENDING_ASCENT_SECONDS = 8;
@@ -8,6 +9,8 @@ export type EndingPhase = 'IDLE' | 'ASCENDING' | 'COMPLETE';
 export interface RunResult {
   readonly worldSeed: number;
   readonly seedLabel: string;
+  readonly seedMode?: WorldSeedMode;
+  readonly dailyDateKey?: string | null;
   readonly profile: AttentionProfile;
   readonly portrait: AttentionPortrait;
   readonly haiku: GeneratedHaiku;
@@ -55,14 +58,39 @@ export function closureForSeedCount(
 }
 
 export function formatRunResult(result: RunResult): string {
+  const mode =
+    result.seedMode === 'daily' && result.dailyDateKey
+      ? [`Modo: Diaria UTC ${result.dailyDateKey}`]
+      : [];
   return [
     'LA ÚLTIMA OBSERVACIÓN',
+    'EXPEDIENTE DE ACTUALIZACIÓN DEL AGENTE',
     `Seed: ${result.seedLabel}`,
+    ...mode,
     `Perfil: ${result.profile}`,
+    `Lectura: ${result.closure} · ${result.reading}`,
+    `Atención: ${describeAgentUpdate(result)}`,
     `Haiku: ${result.haiku.lines[0]}`,
     result.haiku.lines[1],
     result.haiku.lines[2],
+    'Nota de la Agencia: expediente cerrado sin reconocimiento de causalidad cosmológica.',
   ].join('\n');
+}
+
+export function describeAgentUpdate(result: RunResult): string {
+  const portrait = result.portrait;
+  const breadth = `${portrait.fixedCells} resultados, ${portrait.uniqueTerrainTiles + portrait.uniqueFeatureTiles} formas`;
+  const route =
+    portrait.maxDistance >= 36
+      ? 'intervenciones lejanas'
+      : portrait.revisitRatio >= 0.25
+        ? 'intervenciones revisitadas'
+        : 'intervenciones concentradas';
+  const risk =
+    portrait.dangerExposureSeconds >= 20
+      ? 'con exposición al riesgo'
+      : 'con atención al resguardo';
+  return `${breadth}; ${route}; ${risk}.`;
 }
 
 export class EndingDirector {

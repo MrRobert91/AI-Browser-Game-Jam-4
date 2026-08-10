@@ -1,6 +1,7 @@
 import type { UnlockablePackId } from '../contracts/tiles';
 import type { CellId } from '../contracts/world';
 import type { MacroPlan } from './anchors';
+import type { NarrativeCueId } from './narrative';
 
 export const SEED_PACK_ORDER = [
   'water',
@@ -19,7 +20,7 @@ export interface SeedCollectionEvent {
   readonly paletteEpoch: number;
   readonly pauseSeconds: number;
   readonly previewSilhouettes: readonly [string, string, string];
-  readonly narrativeLine: string;
+  readonly narrativeCueId: NarrativeCueId;
   readonly musicStemId: string;
 }
 
@@ -41,29 +42,29 @@ const PACK_PRESENTATION: Readonly<
     UnlockablePackId,
     {
       readonly preview: readonly [string, string, string];
-      readonly narrative: string;
+      readonly narrativeCueId: NarrativeCueId;
       readonly stem: string;
     }
   >
 > = {
   water: {
     preview: ['shore', 'reeds', 'spring'],
-    narrative: 'El agua no estaba ausente. Todavía no era posible.',
+    narrativeCueId: 'unlockWater',
     stem: 'stem-water',
   },
   forest: {
     preview: ['young-tree', 'old-tree', 'mushrooms'],
-    narrative: 'Una forma aprendida permite que otra eche raíces.',
+    narrativeCueId: 'unlockForest',
     stem: 'stem-forest',
   },
   ruin: {
     preview: ['arch', 'column', 'statue'],
-    narrative: 'La piedra recuerda posibilidades anteriores a ti.',
+    narrativeCueId: 'unlockRuin',
     stem: 'stem-ruin',
   },
   storm: {
     preview: ['crystal', 'spikes', 'uncertainty-nest'],
-    narrative: 'También el peligro necesitaba una forma para existir.',
+    narrativeCueId: 'unlockStorm',
     stem: 'stem-storm',
   },
 };
@@ -114,7 +115,7 @@ export class ProgressionSystem {
       paletteEpoch: this.paletteEpoch,
       pauseSeconds: SEED_COLLECTION_PAUSE_SECONDS,
       previewSilhouettes: presentation.preview,
-      narrativeLine: presentation.narrative,
+      narrativeCueId: presentation.narrativeCueId,
       musicStemId: presentation.stem,
     };
     this.options.onSeedCollected?.(event);

@@ -20,6 +20,7 @@ describe('Wp5PreviewRuntime', () => {
     const visualAdapter = visuals();
     const teleportPlayer = vi.fn();
     const clockReward = vi.fn();
+    const narrativeCues: string[] = [];
     const runtime = new Wp5PreviewRuntime({
       worldSeed: 0xa91f42c0,
       unlockPack: (packId) =>
@@ -30,6 +31,7 @@ describe('Wp5PreviewRuntime', () => {
       ensureRespawnGround: () => undefined,
       isRespawnWalkable: () => true,
       onClockReward: clockReward,
+      onNarrativeCue: (cueId) => narrativeCues.push(cueId),
     });
     const frame = {
       deltaSeconds: 1,
@@ -54,5 +56,15 @@ describe('Wp5PreviewRuntime', () => {
     expect(clockReward).toHaveBeenCalledWith(3);
     expect(visualAdapter.collectSeed).toHaveBeenCalledTimes(4);
     expect(visualAdapter.addHazard).toHaveBeenCalledTimes(4);
+    expect(narrativeCues).toEqual([
+      'unlockWater',
+      'unlockForest',
+      'unlockRuin',
+      'unlockStorm',
+      'uncertaintyDetected',
+      'firstDeath',
+      'respawn',
+      'uncertaintyFixed',
+    ]);
   });
 });

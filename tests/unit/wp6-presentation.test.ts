@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
@@ -12,7 +12,17 @@ import {
   CUSTOM_SONG_PATH,
 } from '../../src/audio/custom-song';
 import { MAX_POSITIONAL_AUDIO_SOURCES } from '../../src/audio/spatial-pool';
-import { NarrativeDirector } from '../../src/gameplay/narrative';
+import {
+  NARRATIVE_VOICE_CODEC,
+  NARRATIVE_VOICE_COUNT,
+  NARRATIVE_VOICE_TOTAL_BYTES,
+} from '../../src/audio/narrative-voices';
+import {
+  NARRATIVE_CATALOG,
+  NARRATIVE_CUE_ORDER,
+  NarrativeDirector,
+  validateNarrativeCatalog,
+} from '../../src/gameplay/narrative';
 import { createStylizedMaterialLibrary } from '../../src/render/materials';
 import { resolveQualityProfile } from '../../src/render/quality';
 import {
@@ -59,6 +69,24 @@ describe('WP6 audio contracts', () => {
     expect(audio.subarray(0, 3).toString('ascii')).toBe('ID3');
   });
 
+  it('packages every approved narrative line as bounded local mono MP3', async () => {
+    const directory = resolve('public/assets/audio/narrative');
+    const files = (await readdir(directory)).filter((name) =>
+      name.endsWith('.mp3'),
+    );
+    expect(files).toHaveLength(NARRATIVE_VOICE_COUNT);
+    let totalBytes = 0;
+    for (const file of files) {
+      const audio = await readFile(resolve(directory, file));
+      totalBytes += audio.byteLength;
+      expect(audio.byteLength).toBeGreaterThan(20_000);
+      expect(audio.subarray(0, 3).toString('ascii')).toBe('ID3');
+    }
+    expect(totalBytes).toBe(NARRATIVE_VOICE_TOTAL_BYTES);
+    expect(totalBytes).toBeLessThan(2_000_000);
+    expect(NARRATIVE_VOICE_CODEC).toContain('mono 24 kHz');
+  });
+
   it('does not allocate an AudioContext before a user gesture', () => {
     const createContext = vi.fn();
     const director = new AudioDirector({ createContext });
@@ -67,7 +95,7 @@ describe('WP6 audio contracts', () => {
   });
 
   it('starts the local song without allocating continuous oscillators', async () => {
-    const gainNodes = Array.from({ length: 3 }, () => ({
+    const gainNodes = Array.from({ length: 4 }, () => ({
       gain: { setTargetAtTime: vi.fn() },
       connect: vi.fn(),
       disconnect: vi.fn(),
@@ -84,7 +112,8 @@ describe('WP6 audio contracts', () => {
         .fn()
         .mockReturnValueOnce(gainNodes[0])
         .mockReturnValueOnce(gainNodes[1])
-        .mockReturnValueOnce(gainNodes[2]),
+        .mockReturnValueOnce(gainNodes[2])
+        .mockReturnValueOnce(gainNodes[3]),
       createMediaElementSource: vi.fn(() => mediaSource),
       createOscillator,
       resume: vi.fn(async () => undefined),
@@ -96,14 +125,35 @@ describe('WP6 audio contracts', () => {
       play: vi.fn(async () => undefined),
       pause: vi.fn(),
     } as unknown as HTMLAudioElement;
+    const voice = {
+      preload: '',
+      src: '',
+      currentTime: 0,
+      play: vi.fn(async () => undefined),
+      pause: vi.fn(),
+      onended: null,
+      onerror: null,
+    } as unknown as HTMLAudioElement;
     const director = new AudioDirector({
       createContext: () => context,
       createMusicElement: () => music,
+      createVoiceElement: () => voice,
     });
 
     await expect(director.startFromGesture()).resolves.toBe(true);
     expect(music.play).toHaveBeenCalledOnce();
     expect(createOscillator).not.toHaveBeenCalled();
+    const cue = {
+      ...NARRATIVE_CATALOG.cues.start,
+      id: 'start' as const,
+      locale: 'es-ES',
+      text: NARRATIVE_CATALOG.cues.start.text,
+    };
+    director.playNarrativeCue(cue);
+    expect(voice.src).toContain('/assets/audio/narrative/cue-start.mp3');
+    expect(voice.play).toHaveBeenCalledOnce();
+    director.setVoicesEnabled(false);
+    expect(voice.pause).toHaveBeenCalled();
     director.dispose();
   });
 });
@@ -113,6 +163,7 @@ describe('WP6 accessible settings and narrative', () => {
     expect(DEFAULT_GAME_SETTINGS).toMatchObject({
       subtitles: true,
       reducedFlashes: true,
+      voicesEnabled: true,
     });
     expect(
       normalizeGameSettings({
@@ -135,8 +186,12 @@ describe('WP6 accessible settings and narrative', () => {
       'Mira. Lo que permanezca bajo tu atención tendrá derecho a existir.',
     );
     director.play('start');
-    expect(director.play('firstDeath')).toBe('El mundo recuerda mejor que tú.');
-    expect(director.play('lastThirtySeconds')).toBe(
+    expect(validateNarrativeCatalog()).toEqual([]);
+    expect(new Set(NARRATIVE_CUE_ORDER).size).toBe(NARRATIVE_CUE_ORDER.length);
+    expect(director.play('firstDeath')).toContain(
+      'El mundo recuerda mejor que tú.',
+    );
+    expect(director.play('lastThirtySeconds')).toContain(
       'No queda tiempo para verlo todo. Elige qué merece terminar.',
     );
     expect(director.play('final')).toBe(
@@ -144,5 +199,29 @@ describe('WP6 accessible settings and narrative', () => {
     );
     expect(onMessage).toHaveBeenCalledTimes(4);
     expect(onSubtitle).toHaveBeenCalledTimes(4);
+    expect(director.playedCueIds()).toEqual([
+      'start',
+      'firstDeath',
+      'lastThirtySeconds',
+      'final',
+    ]);
+    expect(NARRATIVE_CATALOG.locale).toBe('es-ES');
+  });
+
+  it('uses the localized fallback when approved copy is unavailable', () => {
+    const catalog = {
+      ...NARRATIVE_CATALOG,
+      cues: {
+        ...NARRATIVE_CATALOG.cues,
+        start: { ...NARRATIVE_CATALOG.cues.start, text: '' },
+      },
+    };
+    const onMessage = vi.fn();
+    const director = new NarrativeDirector(
+      { onMessage, onSubtitle: vi.fn() },
+      catalog,
+    );
+    expect(director.play('start')).toBe('Mira. La Cámara está preparada.');
+    expect(onMessage).toHaveBeenCalledWith('Mira. La Cámara está preparada.');
   });
 });

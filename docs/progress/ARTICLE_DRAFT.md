@@ -124,7 +124,7 @@ La PR acumulativa #66 conserva un commit por issue, de #9 a #14, y apunta a `dev
 
 El mundo observable necesitaba algo más preciso que una colección de modelos. WP3 formaliza sockets, rotaciones, pesos, tags, seguridad y adaptadores como contenido validable. Meadow A y B comparten encaje pero no apariencia; Agua conserva la cadena Deep–Shallow–Shore–Marsh hasta volver a `OPEN_FLAT`; Bosque y Ruina amplían el lenguaje sin romper el terreno base. El visor offline permite inspeccionar las 36 definiciones autorizadas sin ejecutar una partida completa.
 
-Tormenta queda fuera de esta entrega de forma deliberada. Su issue depende del gate de 10.000 seeds de la release candidate; activarla antes convertiría una dependencia explícita en deuda invisible. La gramática que sí entra en `dev` pasa reciprocidad, dos salidas, seguridad, assets locales y el límite de 64 variantes por capa.
+Tormenta quedó fuera de la entrega de jam hasta publicar la candidata y superar su gate de 10.000 seeds. Ya en la fase post-release, Charged Soil, Glass Ground, Scorched Meadow, Crystal, Spikes y Uncertainty Nest amplían la zona exterior con proxies locales y LOD. Scorched Meadow vuelve a `OPEN_FLAT`, los peligros empiezan a 38 m y el pulso de Cristal dura 2,5 s o queda estático con destellos reducidos. La campaña completa conserva 0 vacíos, 0 divergencias y 0 fallbacks.
 
 ## WP4 hace visible el acto de decidir
 
@@ -211,6 +211,16 @@ El perfil automatizado mantiene worker y main por debajo de 4 y 12 ms p95, estim
 
 La candidata termina como ZIP estático con manifest SHA-256, favicon y assets locales, créditos, procedencia de contenido asistido, privacidad y texto listo para itch.io. Después de cargar sus archivos no hace llamadas de red ni envía datos a modelos. El artefacto final no demuestra que todo mundo posible sea bello; demuestra algo más útil para la jam: que el mundo observado puede terminar, explicarse y volver a reproducirse sin esconder sus límites.
 
+## Conservar una observación sin convertirla en cuenta
+
+La primera expansión post-jam captura el canvas final como PNG sin retrasar el expediente. Seed, perfil y haiku se guardan con la imagen en IndexedDB: cinco entradas como máximo, 5 MiB por entrada, descarga y borrado local. No hay cuenta, nube ni galería pública; conservar un mundo sigue siendo una decisión privada del jugador.
+
+Una segunda opción convierte la fecha UTC en seed compartida sin servidor. El enlace diario y la vuelta a una seed aleatoria estándar viven en la misma portada; el expediente etiqueta fecha y seed. Compartir el día no introduce leaderboard, login ni reloj autoritativo: compartir la seed basta para comparar observaciones.
+
+Jardín de Eco amplía el vocabulario exterior de Tormenta sin inventar una quinta Semilla. Tres suelos `OPEN_FLAT` y tres features con LOD entran solo en chunks futuros tras la cuarta Semilla. La gramática queda en 43/22 variantes, sus proxies pesan menos de 10 KiB y una nueva campaña de 10.000 seeds conserva todos los ceros del gate de release.
+
+La última expansión mantiene una frontera más delicada: el poema local sigue siendo el cierre oficial, pero una publicación puede ofrecer una variante remota después del expediente. La opción no existe en la build estándar. Cuando se configura un proxy HTTPS, un checkbox desmarcado explica la transferencia y habilita una sola petición con perfil y estadísticas redondeadas; no viajan seed, ruta, panorama ni haiku local. Cuatro segundos de timeout, respuesta inválida o desconexión devuelven silenciosamente al poema determinista. La red amplía el lenguaje, nunca decide si la partida terminó.
+
 ## Pulido posterior: fallar sin quedar a oscuras
 
 La calibración de mirada escondía un fallo especialmente cruel: si Pointer Lock era rechazado durante el gesto inicial, la interfaz podía retirarse antes de saber si el navegador había concedido el control. Ahora la captura es una transacción observable. Solo se entra en juego al recibir confirmación; ante error, el mundo sigue renderizado, aparece «Reintentar calibración» y el mismo flujo puede completarse sin recargar.
@@ -224,3 +234,9 @@ La superposición también cuenta mejor qué está haciendo el algoritmo. Sus ca
 [Ver la recuperación completa de calibración (WebM, 24 s)](./issue-73-gameplay-polish/calibration-recovery.webm)
 
 El cambio sonoro elimina el tono sintético continuo y lo sustituye por una pieza original de casi tres minutos. Primero se generó la letra sobre WFC, superposición y colapso cuántico; después Lyria produjo dos interpretaciones. La toma elegida se validó y se incorporó como MP3 local, de forma que el juego conserva su promesa offline y OpenRouter no participa durante una partida.
+
+## La metáfora cuántica aprende a declarar sus límites
+
+La revisión narrativa posterior no cambia el solver: cambia qué significa para el jugador. QBism ofrece una distinción fértil entre la acción que un agente realiza, la experiencia que recibe y las expectativas que actualiza. El juego toma esa estructura, pero declara dónde termina la referencia científica. La Agencia afirma que una conciencia certificada condensa realidad; la obra nunca confirma esa doctrina ni convierte WFC en física cuántica.
+
+El nuevo canon separa QBism real, ficción institucional y metáfora procedural. Los porcentajes son expectativas de La Medida, las Semillas amplían familias de intervención y una celda fijada entra en el expediente intersubjetivo. Ese marco permite conservar la frase “mirar es construir” sin insinuar que el jugador elige el tile exacto o destruye universos alternativos.

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   closureForSeedCount,
   EndingDirector,
+  describeAgentUpdate,
   formatRunResult,
   formatSeed,
 } from '../../src/gameplay/ending';
@@ -34,6 +35,7 @@ describe('local haiku and ending', () => {
     const second = generateHaiku(0xa91f42c0, PORTRAIT, 'Cartógrafo');
     expect(second).toEqual(first);
     expect(first.lines).toHaveLength(3);
+    expect(first.lines.join(' ')).not.toContain('Ã');
     for (const line of first.lines) {
       expect(approximateSpanishSyllables(line)).toBeGreaterThanOrEqual(8);
       expect(approximateSpanishSyllables(line)).toBeLessThanOrEqual(17);
@@ -72,8 +74,23 @@ describe('local haiku and ending', () => {
       ...closure,
     });
     expect(text).toContain('LA ÚLTIMA OBSERVACIÓN');
+    expect(text).toContain('EXPEDIENTE DE ACTUALIZACIÓN DEL AGENTE');
     expect(text).toContain('Seed: A91F-42C0');
     expect(text).toContain('Perfil: Cartógrafo');
     expect(text).toContain('Haiku:');
+    expect(text).toContain('Lectura: Mundo habitable');
+    expect(text).toContain('sin reconocimiento de causalidad cosmológica');
+    expect(
+      describeAgentUpdate({
+        worldSeed: 0xa91f42c0,
+        seedLabel: formatSeed(0xa91f42c0),
+        profile: 'Cartógrafo',
+        portrait: PORTRAIT,
+        haiku,
+        ...closure,
+      }),
+    ).toBe(
+      '144 resultados, 16 formas; intervenciones lejanas; con exposición al riesgo.',
+    );
   });
 });

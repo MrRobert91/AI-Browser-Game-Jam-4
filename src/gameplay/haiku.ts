@@ -67,7 +67,7 @@ function chooseLine(
 
 function fitApproximateMetric(line: string): string {
   if (approximateSpanishSyllables(line) >= 8) return line;
-  return `${line.replace(/[.,;:]$/, '')} todavÃ­a.`;
+  return `${line.replace(/[.,;:]$/, '')} todavía.`;
 }
 
 export function generateHaiku(

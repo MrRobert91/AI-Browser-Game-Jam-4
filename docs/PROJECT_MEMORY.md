@@ -11,22 +11,103 @@ Actualizado: 2026-08-09 (Europe/Madrid)
 | WP0 — Fundación y contratos | #1–#4 | Completada y promovida | PR #61 fusionada; `main` y `dev` sincronizadas en `7be4649` |
 | WP1 — Solver puro | #5–#11 | Integrada en `dev` | PR #66 fusionada; issues #5–#11 cerradas |
 | WP2 — Render, cámara y física | #12–#14 | Integrada en `dev` | PR #66 fusionada; issues #12–#14 cerradas |
-| WP3 — Gramática y tiles | #15–#22 | Integrada en `dev` salvo #22 | PR #67 fusionada; #22 bloqueada por release #51 |
+| WP3 — Gramática y tiles | #15–#22 | #15–#21 en `dev`; #22 en rama acumulativa | La release #51 ya permite revisar Tormenta |
 | WP4 — Mundo observable | #23–#29 | Integrada en `dev` | PR #68 fusionada; dependencias WP6 cerradas |
 | WP5 — Progresión y peligros | #30–#35 | Integrada en `dev` | PR #68 fusionada; Semillas, peligros y respawn disponibles |
 | WP6 — Presentación | #36–#39 | Integrada en `dev` | PR #69 fusionada; audio, HUD, accesibilidad y narrativa local |
 | WP7 — Final | #40–#43 | Integrada en `dev` | PR #70 fusionada; Reloj, retrato, haiku y ascenso final completos |
 | WP8 — QA y entrega | #44–#51 | Integrada en `dev` | PR #70 fusionada; gates, evidencia y candidata reproducible |
-| POST — Pulido de juego | #73 | En revisión | Calibración recuperable, canción local, límite, probabilidades y movimiento |
-| POST — Expansiones | #52–#56 | Bloqueada | Solo después de la release de jam |
+| POST — Pulido de juego | #73 | Integrada en `dev` | PR #74 fusionada en `922f9e9` |
+| POST — Expansiones | #52–#56 | En rama acumulativa salvo #54 | #54 ya estaba cerrada; #52, #53, #55 y #56 listas para revisión |
 
 ### Estado operativo actual
 
-- Fase actual: pulido posterior a la candidata sobre `origin/dev` `9a82adedb36b67034d461d83e64788c095e78195`; WP7/WP8 y el hotfix Docker ya están integrados.
-- Trabajo en revisión: issue #73, con recuperación de calibración, canción generada y empaquetada localmente, límite esférico, porcentajes de superposición y velocidades reducidas.
-- Arquitectura vigente: el juego sigue siendo offline tras cargar; OpenRouter solo participa en producción de assets y ninguna clave ni llamada de red entra en runtime.
-- Evidencia actual: capturas y WebM reproducibles en [`docs/progress/issue-73-gameplay-polish/`](./progress/issue-73-gameplay-polish/), además de la evidencia acumulada de WP7/WP8 y la documentación de release.
-- Estado remoto: [`v0.1.0-rc.1`](https://github.com/MrRobert91/AI-Browser-Game-Jam-4/releases/tag/v0.1.0-rc.1) permanece como prerelease; la rama de #73 apunta a una PR no draft contra `dev` y no debe fusionarse automáticamente.
+- Fase actual: entrega acumulativa post-jam nacida de `origin/dev` `922f9e9428be25f5d7bb9d964180b474b72bfccf` tras integrar PR #74.
+- Trabajo en revisión: PR #84 reúne #22, #52, #53, #55, #56 y la revisión narrativa #76–#82, con un commit funcional por issue y destino `dev`.
+- Arquitectura vigente: la build de jam sigue siendo offline. #56 solo muestra una variante remota si la publicación configura un proxy HTTPS y el jugador consiente en esa partida; ninguna clave de proveedor entra en el navegador.
+- Evidencia actual: galerías/capturas locales, simulación de 10.000 seeds, WebM narrativo y QA automatizada bajo [`docs/progress/`](./progress/).
+- Gate humano: #83 y el epic #75 permanecen abiertos y **NO-GO 0/5**; la rama no afirma sesiones que no se han realizado.
+- Estado remoto verificado: PR #84 abierta y no draft; sus palabras de cierre excluyen deliberadamente #75 y #83.
+
+### 2026-08-09 — Issue #56 — Variante remota de haiku
+
+- La función está ausente por defecto y solo aparece con `VITE_REMOTE_HAIKU_ENDPOINT` HTTPS. El consentimiento es explícito, desmarcado y válido para una única petición al terminar la partida.
+- El payload contiene perfil y métricas redondeadas; excluye seed, ruta, coordenadas, muertes, panorama y haiku local. El transporte omite credenciales/referrer, valida tres líneas y expira a los 4 s.
+- Error, timeout o respuesta inválida conservan el expediente y el haiku local determinista. No hay clave de modelo en el cliente; la política operativa exige proxy, retención declarada y tope de coste.
+- Evidencia y contrato: [`docs/progress/issue-56-remote-haiku/`](./progress/issue-56-remote-haiku/) y [`docs/privacy/REMOTE_HAIKU.md`](./privacy/REMOTE_HAIKU.md).
+
+### 2026-08-09 — Issue #22 — Pack Tormenta post-release
+
+- La candidata ya publicada desbloquea el stretch pack: Charged Soil, Glass Ground, Scorched Meadow, Crystal, Spikes y Uncertainty Nest entran como contenido local con LOD y sin red.
+- Scorched Meadow conecta por `OPEN_FLAT`; los peligros solo aparecen desde 38 m y respetan corredores/anclas. Cristal usa un pulso suave de 2,5 s y queda estático con destellos reducidos.
+- `validate:tiles`, `validate:assets` y la campaña de 10.000 seeds pasan sin vacíos, divergencias, commits fuera de radio, fallbacks, `quantum_void_debug` ni anclas inaccesibles. Evidencia: [`docs/progress/issue-22-storm-pack/`](./progress/issue-22-storm-pack/).
+
+### 2026-08-09 — Issue #52 — Panorama PNG y galería local
+
+- El panel final no espera a la captura: tras el render, el canvas produce un PNG descargable con seed, perfil y haiku asociados.
+- IndexedDB conserva como máximo cinco panoramas de hasta 5 MiB, elimina el más antiguo y ofrece descarga/borrado. No hay subida, telemetría ni permiso externo.
+- Playwright descargó y validó una captura real 1216×68 de 228.167 bytes y reabrió sus metadatos desde la galería. Evidencia: [`docs/progress/issue-52-local-panorama/`](./progress/issue-52-local-panorama/).
+
+### 2026-08-09 — Issue #53 — Seed diaria compartida
+
+- `?daily=1` deriva la seed exclusivamente de la fecha UTC con el hash estable del proyecto; la misma fecha produce el mismo mundo sin backend.
+- La portada alterna de forma explícita entre diaria UTC y observación estándar aleatoria. Seed explícita y replay canónico tienen rutas deterministas separadas.
+- HUD, expediente y copia etiquetan el modo diario con fecha UTC. Vitest cubre la medianoche y Playwright la recarga/replay. Evidencia: [`docs/progress/issue-53-daily-seed/`](./progress/issue-53-daily-seed/).
+
+### 2026-08-09 — Issue #55 — Bioma Jardín de Eco
+
+- Seis definiciones post-jam amplían Tormenta: Echo Moss, Prism Soil, Echo Clearing, Bell Flower, Mirror Reed y Memory Stone. No añaden quinta Semilla, sockets, peligros ni red.
+- Las tres tiles conectan con `OPEN_FLAT`; la gramática queda en 43 variantes de terreno y 22 de feature. Seis proxies con LOD pesan menos de 10 KiB.
+- El unlock Tormenta solo afecta chunks futuros: la prueba conserva `paletteEpoch`, packs y celdas de un chunk previo. La galería real y la campaña de 10.000 seeds están en [`docs/progress/issue-55-echo-garden/`](./progress/issue-55-echo-garden/).
+
+### 2026-08-09 — Issue #76 — Canon QBista y límites científicos
+
+- La narrativa separa QBism real, doctrina ficticia de la Agencia y WFC como metáfora procedural. El jugador elige una intervención; La Medida expresa expectativas y el resultado se incorpora a un expediente, sin afirmar que la conciencia cause un colapso físico.
+- `AGENTS.md` 1.1 fija Agencia, Cámara de Silencio, Condensado de Posibilidad, Colapsador, cuerpo de campo, La Medida y resultado no reconciliado, además del tono administrativo-poético.
+- [`docs/narrative/QBISM_CANON.md`](./narrative/QBISM_CANON.md) documenta referencias primarias, licencias científicas, glosario editorial y una prueba de consistencia para el copy posterior. No cambia solver, reloj, movimiento ni runtime.
+
+### 2026-08-09 — Issue #77 — Introducción y calibración de conciencia
+
+- La pantalla existente presenta Cámara, Condensado, cuerpo de campo, certificación provisional y el contrato “elige la pregunta, no la respuesta” en cuatro beats automáticos de 18 s como máximo.
+- “Aceptar y calibrar” y “Omitir introducción y calibrar” nacen de un gesto real y entran directamente en el flujo transaccional de Pointer Lock. El fallo conserva el mundo visible y el reintento; el reloj sigue esperando al primer colapso.
+- La máquina de estados y las pruebas cubren reproducción determinista, omisión, línea obligatoria y camino E2E de un solo gesto.
+
+### 2026-08-09 — Issue #78 — Catálogo reactivo de La Medida
+
+- `narrative.json` es ahora un catálogo localizable `es-ES` con evento, hablante, texto, fallback, prioridad, duración y política de repetición por cue.
+- Colapso inicial, cuatro Semillas, primera muerte, respawn, detección/reconciliación de Incertidumbre, cuenta atrás y final se conectan por IDs tipados; progresión y respawn ya no contienen copy narrativo disperso.
+- `NarrativeDirector` valida unicidad, orden, prioridades y fallback, emite subtítulo/audio con la misma duración y conserva una historia determinista para tests y replay.
+
+### 2026-08-09 — Issue #79 — Registros automáticos de otros Colapsadores
+
+- Cuatro registros locales se activan por celdas fijadas, Semillas y distancia. Dos describen resultados incompatibles en 64,58 y la Agencia los clasifica como “variabilidad de usuario”.
+- Cada registro declara hablante, subtítulo, duración, prioridad y umbrales de replay; no añade coleccionables ni interacción obligatoria.
+- La cola admite como máximo dos pendientes, reproduce una vez y omite/interrumpe de forma segura ante muerte, Semilla, últimos 30 s o final. La misma secuencia de métricas produce el mismo orden.
+
+### 2026-08-09 — Issue #80 — La Incertidumbre como resultado no reconciliado
+
+- Copy, HUD y canon presentan las tres siluetas como informes incompatibles de otro Colapsador. La etiqueta “Incidencia de actualización pendiente” evoluciona hasta “Resultado reconciliado” al fijarse como estatua.
+- La línea de detección y la reconciliación ya pertenecen al catálogo tipado. No cambian estados, distancias 18/8 m, 1,2 s de observación, gracia 0,4 s, recompensa +3 s, pathfinding, spawn ni máximo cuatro.
+
+### 2026-08-09 — Issue #81 — Expediente QBista del agente
+
+- El panel final conserva ascenso de 8 s, bloqueo de commits, seed, perfil, haiku y cálculos. La presentación se renombra “Expediente de actualización del agente” y explica que La Medida registraba intervenciones, expectativas y experiencias.
+- Resultados, formas, familias desbloqueadas y distancia se presentan como decisiones de atención, sin puntuación, ranking ni diagnóstico. La nota final de la Agencia conserva la ambigüedad con humor administrativo.
+- El diálogo recibe foco, nombre accesible y botones de teclado; la copia incluye expediente, lectura, interpretación, seed, perfil, haiku y nota institucional.
+
+### 2026-08-09 — Issue #82 — Voces locales, mezcla y procedencia
+
+- 20 líneas aprobadas de introducción, eventos y Colapsadores se sintetizan reproduciblemente con Microsoft Helena Desktop `es-ES` y se procesan con FFmpeg a MP3 mono 24 kHz/56 kbps. El total es 1.030.044 bytes.
+- `AudioDirector` añade bus de voz, cola máxima de dos, prioridad e interrupción, ducking suave de música y fallback silencioso a subtítulos. Las voces pueden desactivarse sin afectar texto, música ni efectos.
+- [`docs/audio/narrative-voices.md`](./audio/narrative-voices.md), créditos y `ASSET_PROVENANCE` registran fuente, proceso, edición, licencia y verificación FFprobe. No hay TTS ni red en runtime.
+
+### 2026-08-09 — Issue #83 — QA automatizada y gate humano
+
+- La suite cubre catálogo, disparadores, introducción/omisión/reintento, Semillas, muerte, registros, Incertidumbre, expediente final, voces locales, consola y orígenes de red.
+- El navegador embebido verificó visualmente introducción y recuperación real ante rechazo de Pointer Lock; Playwright ejecuta el recorrido determinista en Chromium y Firefox.
+- La transición de cierre marca `ending` antes de deshabilitar el input para impedir que una pérdida de Pointer Lock abra la pausa durante el ascenso. El modo de evidencia evita solicitar Pointer Lock sin alterar la ruta normal.
+- [`docs/progress/qbism-narrative/`](./progress/qbism-narrative/) conserva cuatro capturas reales y un WebM/VP8 verificado con FFprobe (800×450, 25 fps, 62,560 s, 3.641.437 bytes).
+- El gate humano permanece **NO-GO 0/5** en [`docs/playtests/qbism-narrative/REPORT.md`](./playtests/qbism-narrative/REPORT.md). No se cierra #83 ni el epic #75 hasta alcanzar los umbrales con sesiones reales.
 
 ## Registro cronológico
 

@@ -1,0 +1,1 @@
+{ "version": 1, "shape": "prism-soil", "color": "#45435c", "accent": "#94b7e8", "bounds": { "width": 2, "height": 0.17, "depth": 2 }, "pivot": "center-bottom", "lod": [{ "maxDistance": 22, "shape": "prism-soil" }, { "maxDistance": 42, "shape": "prism-soil-low" }] }

@@ -17,6 +17,7 @@ export interface LookDelta {
 
 export interface PlayerInputHandlers {
   readonly onPauseChange?: (paused: boolean) => void;
+  readonly keepRunningWithoutPointerLock?: boolean;
 }
 
 const DEFAULT_SETTINGS: PlayerInputSettings = {
@@ -113,6 +114,12 @@ export class PlayerInput {
     return this.#resumePromise;
   }
 
+  resumeForEvidence(): boolean {
+    if (!this.#enabled) return false;
+    this.#setPaused(false);
+    return true;
+  }
+
   async #performResume(): Promise<boolean> {
     if (document.pointerLockElement === this.#pointerTarget) {
       this.#setPaused(false);
@@ -195,14 +202,14 @@ export class PlayerInput {
   readonly #handlePointerLockChange = (): void => {
     if (document.pointerLockElement !== this.#pointerTarget) {
       this.#keys.clear();
-      this.#setPaused(true);
+      if (!this.#handlers.keepRunningWithoutPointerLock) this.#setPaused(true);
     } else if (this.#enabled) {
       this.#setPaused(false);
     }
   };
 
   readonly #handleBlur = (): void => {
-    this.pause();
+    if (!this.#handlers.keepRunningWithoutPointerLock) this.pause();
   };
 
   readonly #handlePointerTargetClick = (): void => {

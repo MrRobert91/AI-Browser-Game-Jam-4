@@ -1,0 +1,1 @@
+{ "version": 1, "shape": "scorched-meadow", "color": "#3f4937", "accent": "#a98770", "bounds": { "width": 2, "height": 0.14, "depth": 2 }, "pivot": "center-bottom", "lod": [{ "maxDistance": 22, "shape": "scorched-meadow" }, { "maxDistance": 42, "shape": "scorched-meadow-low" }] }

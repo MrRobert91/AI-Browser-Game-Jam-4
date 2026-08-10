@@ -13,6 +13,7 @@ import {
   type ProgressionSnapshot,
   type SeedCollectionEvent,
 } from '../gameplay/progression';
+import type { NarrativeCueId } from '../gameplay/narrative';
 import {
   RespawnSystem,
   type RespawnEvent,
@@ -45,6 +46,7 @@ export interface Wp5PreviewOptions {
   readonly ensureRespawnGround: (position: WorldVector3) => void;
   readonly isRespawnWalkable: (position: WorldVector3) => boolean;
   readonly onMessage?: (message: string) => void;
+  readonly onNarrativeCue?: (cueId: NarrativeCueId) => void;
   readonly onClockReward?: (seconds: number) => void;
 }
 
@@ -173,7 +175,7 @@ export class Wp5PreviewRuntime {
 
   private handleSeedCollected(event: SeedCollectionEvent): void {
     this.options.visuals.collectSeed(event.packId, event.previewSilhouettes);
-    this.options.onMessage?.(event.narrativeLine);
+    this.options.onNarrativeCue?.(event.narrativeCueId);
     this.placeHazardsFor(event.packId);
   }
 
@@ -277,6 +279,7 @@ export class Wp5PreviewRuntime {
     });
     if (snapshot) {
       this.enemyId = snapshot.id;
+      this.options.onNarrativeCue?.('uncertaintyDetected');
       this.options.visuals.updateUncertainty(snapshot);
     }
   }
@@ -304,7 +307,7 @@ export class Wp5PreviewRuntime {
         this.respawn.requestDeath({ cause: 'UNCERTAINTY' });
       } else if (event.type === 'FIXED_STATUE') {
         this.options.onClockReward?.(event.rewardSeconds);
-        this.options.onMessage?.('La incertidumbre conserva ahora una forma.');
+        this.options.onNarrativeCue?.('uncertaintyFixed');
       }
     }
     const next = this.uncertainty.get(this.enemyId);
@@ -327,10 +330,11 @@ export class Wp5PreviewRuntime {
   private handleRespawnEvent(event: RespawnEvent): void {
     if (event.type === 'DEATH_STARTED') {
       this.progression.notifyDeath();
-      if (event.narrativeLine) this.options.onMessage?.(event.narrativeLine);
+      if (event.narrativeCueId)
+        this.options.onNarrativeCue?.(event.narrativeCueId);
     }
     if (event.type === 'RESPAWNED') {
-      this.options.onMessage?.('El mundo y las Semillas permanecen.');
+      this.options.onNarrativeCue?.('respawn');
     }
   }
 }
