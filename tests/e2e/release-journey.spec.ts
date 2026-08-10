@@ -66,12 +66,13 @@ async function skipBriefingAndCrossPortal(page: Page): Promise<void> {
     'PORTAL',
   );
   await page.keyboard.down('KeyW');
-  await page.waitForTimeout(3_400);
+  const shell = page.locator('.observation-shell');
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    if ((await shell.getAttribute('data-game-phase')) === 'RUN') break;
+    await page.waitForTimeout(100);
+  }
   await page.keyboard.up('KeyW');
-  await expect(page.locator('.observation-shell')).toHaveAttribute(
-    'data-game-phase',
-    'RUN',
-  );
+  await expect(shell).toHaveAttribute('data-game-phase', 'RUN');
 }
 
 test('canonical offline English journey reaches the qualitative ending', async ({
