@@ -1,33 +1,32 @@
 import type { UnlockablePackId } from '../contracts/tiles';
+import type { Locale } from '../contracts/localization';
 import {
   SEED_PACK_ORDER,
   type ProgressionSnapshot,
 } from '../gameplay/progression';
-
-const PACK_LABELS: Readonly<Record<UnlockablePackId, string>> = {
-  water: 'Agua',
-  forest: 'Bosque',
-  ruin: 'Ruina',
-  storm: 'Tormenta',
-};
+import { uiCopy } from '../i18n';
 
 export class ProgressionHud {
   readonly element: HTMLElement;
   private readonly items = new Map<UnlockablePackId, HTMLLIElement>();
   private readonly states = new Map<UnlockablePackId, string>();
 
-  constructor(parent: HTMLElement) {
+  constructor(parent: HTMLElement, private readonly locale: Locale) {
+    const copy = uiCopy(locale);
     this.element = document.createElement('aside');
     this.element.className = 'progression-hud';
-    this.element.setAttribute('aria-label', 'Semillas de Posibilidad');
+    this.element.setAttribute('aria-label', copy.seedsAria);
     const list = document.createElement('ol');
     for (const packId of SEED_PACK_ORDER) {
       const item = document.createElement('li');
       item.dataset.pack = packId;
       item.dataset.state = 'LOCKED';
-      item.title = PACK_LABELS[packId];
-      item.setAttribute('aria-label', `${PACK_LABELS[packId]}: bloqueada`);
-      item.innerHTML = `<span aria-hidden="true"></span><strong>${PACK_LABELS[packId]}</strong>`;
+      item.title = copy.packLabels[packId];
+      item.setAttribute(
+        'aria-label',
+        `${copy.packLabels[packId]}: ${copy.packStates.LOCKED}`,
+      );
+      item.innerHTML = `<span aria-hidden="true"></span><strong>${copy.packLabels[packId]}</strong>`;
       list.append(item);
       this.items.set(packId, item);
     }
@@ -44,7 +43,7 @@ export class ProgressionHud {
       item.dataset.state = state;
       item.setAttribute(
         'aria-label',
-        `${PACK_LABELS[packId]}: ${state.toLocaleLowerCase('es')}`,
+        `${uiCopy(this.locale).packLabels[packId]}: ${uiCopy(this.locale).packStates[state] ?? state.toLocaleLowerCase(this.locale)}`,
       );
     }
   }

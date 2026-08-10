@@ -1,6 +1,8 @@
 import type { AttentionPortrait, AttentionProfile } from './portrait';
 import type { WorldSeedMode } from './daily-seed';
 import type { GeneratedHaiku } from './haiku';
+import type { Locale } from '../contracts/localization';
+import { uiCopy } from '../i18n';
 
 export const ENDING_ASCENT_SECONDS = 8;
 
@@ -57,39 +59,60 @@ export function closureForSeedCount(
   };
 }
 
-export function formatRunResult(result: RunResult): string {
+export function formatRunResult(result: RunResult, locale: Locale = 'es'): string {
+  const copy = uiCopy(locale);
   const mode =
     result.seedMode === 'daily' && result.dailyDateKey
-      ? [`Modo: Diaria UTC ${result.dailyDateKey}`]
+      ? [
+          locale === 'en'
+            ? `Mode: Daily UTC ${result.dailyDateKey}`
+            : `Modo: Diaria UTC ${result.dailyDateKey}`,
+        ]
       : [];
   return [
-    'LA ÚLTIMA OBSERVACIÓN',
-    'EXPEDIENTE DE ACTUALIZACIÓN DEL AGENTE',
+    copy.title.toUpperCase(),
+    copy.resultEyebrow,
     `Seed: ${result.seedLabel}`,
     ...mode,
-    `Perfil: ${result.profile}`,
-    `Lectura: ${result.closure} · ${result.reading}`,
-    `Atención: ${describeAgentUpdate(result)}`,
+    `${copy.profile}: ${copy.profileLabels[result.profile] ?? result.profile}`,
+    `${locale === 'en' ? 'Reading' : 'Lectura'}: ${copy.closures[result.closure] ?? result.closure} · ${copy.readings[result.reading] ?? result.reading}`,
+    `${locale === 'en' ? 'Attention' : 'Atención'}: ${describeAgentUpdate(result, locale)}`,
     `Haiku: ${result.haiku.lines[0]}`,
     result.haiku.lines[1],
     result.haiku.lines[2],
-    'Nota de la Agencia: expediente cerrado sin reconocimiento de causalidad cosmológica.',
+    copy.agencyNote,
   ].join('\n');
 }
 
-export function describeAgentUpdate(result: RunResult): string {
+export function describeAgentUpdate(
+  result: RunResult,
+  locale: Locale = 'es',
+): string {
   const portrait = result.portrait;
-  const breadth = `${portrait.fixedCells} resultados, ${portrait.uniqueTerrainTiles + portrait.uniqueFeatureTiles} formas`;
+  const breadth =
+    locale === 'en'
+      ? `${portrait.fixedCells} results, ${portrait.uniqueTerrainTiles + portrait.uniqueFeatureTiles} forms`
+      : `${portrait.fixedCells} resultados, ${portrait.uniqueTerrainTiles + portrait.uniqueFeatureTiles} formas`;
   const route =
     portrait.maxDistance >= 36
-      ? 'intervenciones lejanas'
+      ? locale === 'en'
+        ? 'distant interventions'
+        : 'intervenciones lejanas'
       : portrait.revisitRatio >= 0.25
-        ? 'intervenciones revisitadas'
-        : 'intervenciones concentradas';
+        ? locale === 'en'
+          ? 'revisited interventions'
+          : 'intervenciones revisitadas'
+        : locale === 'en'
+          ? 'concentrated interventions'
+          : 'intervenciones concentradas';
   const risk =
     portrait.dangerExposureSeconds >= 20
-      ? 'con exposición al riesgo'
-      : 'con atención al resguardo';
+      ? locale === 'en'
+        ? 'with exposure to risk'
+        : 'con exposición al riesgo'
+      : locale === 'en'
+        ? 'with attention to shelter'
+        : 'con atención al resguardo';
   return `${breadth}; ${route}; ${risk}.`;
 }
 

@@ -1,4 +1,5 @@
 import introduction from '../content/introduction.json';
+import type { Locale } from '../contracts/localization';
 
 export interface IntroductionBeat {
   readonly id: string;
@@ -11,17 +12,41 @@ export const INTRODUCTION_MAX_MS = INTRODUCTION_BEAT_MS * introduction.length;
 
 export const INTRODUCTION_BEATS: readonly IntroductionBeat[] = introduction;
 
+const ENGLISH_INTRODUCTION_BEATS: readonly IntroductionBeat[] = [
+  {
+    id: 'assignment',
+    eyebrow: 'AGENCY // SILENCE CHAMBER 7-C',
+    text: 'Possibility Condensate stable. A field body has been assigned to the last certified Collapser.',
+  },
+  {
+    id: 'instrument',
+    eyebrow: 'THE MEASURE // LOCAL INSTRUMENT',
+    text: 'Your attention establishes a measurement basis. The Agency accepts no liability for the resulting landscape.',
+  },
+  {
+    id: 'ready',
+    eyebrow: 'CALIBRATION // READY',
+    text: 'Look. What remains under your attention will earn the right to exist.',
+  },
+];
+
 export class AgencyIntroduction {
   private index = 0;
   private elapsedMs = 0;
   private skipped = false;
 
+  constructor(private readonly locale: Locale = 'es') {}
+
+  private get beats(): readonly IntroductionBeat[] {
+    return this.locale === 'en' ? ENGLISH_INTRODUCTION_BEATS : INTRODUCTION_BEATS;
+  }
+
   get current(): IntroductionBeat {
-    return INTRODUCTION_BEATS[this.index] ?? INTRODUCTION_BEATS[0]!;
+    return this.beats[this.index] ?? this.beats[0]!;
   }
 
   get complete(): boolean {
-    return this.index === INTRODUCTION_BEATS.length - 1;
+    return this.index === this.beats.length - 1;
   }
 
   get wasSkipped(): boolean {
@@ -44,7 +69,7 @@ export class AgencyIntroduction {
   }
 
   skip(): IntroductionBeat {
-    this.index = INTRODUCTION_BEATS.length - 1;
+    this.index = this.beats.length - 1;
     this.elapsedMs = 0;
     this.skipped = true;
     return this.current;

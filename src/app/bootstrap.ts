@@ -5,6 +5,7 @@ import { ObservableWorldBridge } from './observable-world-bridge';
 import { SolverWorkerClient } from './solver-worker-client';
 import { Wp5PreviewRuntime } from './wp5-preview-runtime';
 import { AudioDirector } from '../audio/audio-director';
+import type { Locale } from '../contracts/localization';
 import type { UnlockablePackId } from '../contracts/tiles';
 import { planSeedAnchors } from '../gameplay/anchors';
 import { CollapsadorRecordDirector } from '../gameplay/collapsador-records';
@@ -25,6 +26,12 @@ import {
   classifyAttentionPortrait,
 } from '../gameplay/portrait';
 import { RunClock, type RunMode } from '../gameplay/run-clock';
+import {
+  applyDocumentLocale,
+  loadLocale,
+  saveLocale,
+  uiCopy,
+} from '../i18n';
 import { DebugOverlay, debugToolsAvailable } from '../dev/debug-overlay';
 import {
   isGrammarViewerMode,
@@ -64,7 +71,9 @@ import {
   worldPositionToCell,
 } from '../world/world-state';
 
-const SHELL_MARKUP = `
+function shellMarkup(locale: Locale): string {
+  const copy = uiCopy(locale);
+  return `
   <main class="observation-shell" aria-labelledby="game-title">
     <div class="field" aria-hidden="true">
       <div class="game-viewport" data-game-viewport></div>
@@ -76,92 +85,107 @@ const SHELL_MARKUP = `
     </div>
 
     <header class="system-bar">
-      <p>ESTACIÓN // VENTANA DE OBSERVACIÓN</p>
-      <p class="system-bar__state" data-system-state>EN ESPERA</p>
+      <p>${copy.systemBar}</p>
+      <p class="system-bar__state" data-system-state>${copy.waiting}</p>
     </header>
 
     <section class="intro-panel">
-      <p class="intro-panel__eyebrow" data-intro-eyebrow>AGENCIA // CÁMARA DE SILENCIO 7-C</p>
-      <h1 id="game-title">La Última<br /><span>Observación</span></h1>
+      <p class="intro-panel__eyebrow" data-intro-eyebrow>${copy.roomEyebrow}</p>
+      <h1 id="game-title">${copy.titleLine1}<br /><span>${copy.titleLine2}</span></h1>
       <p class="intro-panel__statement" data-intro-copy aria-live="polite">
-        Condensado de Posibilidad estable. Se ha asignado un cuerpo de campo al Colapsador remoto.
+        ${copy.roomStatement}
       </p>
       <div class="intro-panel__actions">
         <button class="observation-button" type="button" data-observation-button>
-          <span>Aceptar y calibrar</span>
-          <span aria-hidden="true">↗</span>
+          <span>${copy.enterChamber}</span>
+          <span aria-hidden="true">→</span>
         </button>
         <button class="intro-panel__skip" type="button" data-intro-skip>
-          Omitir introducción y calibrar
+          ${copy.skipBriefing}
         </button>
         <a class="intro-panel__daily" href="?daily=1" data-seed-mode-link>
-          Observación diaria UTC
+          ${copy.dailySeed}
         </a>
       </div>
       <p class="intro-panel__hint" data-shell-status role="status" aria-live="polite">
-        Instrumento local · sin conexión de runtime
+        ${copy.roomHint}
       </p>
     </section>
 
-    <aside class="possibility-readout" aria-label="Estado de posibilidades">
-      <p>POSIBILIDADES</p>
+    <aside class="possibility-readout" aria-label="${copy.possibilities}">
+      <p>${copy.possibilities}</p>
       <ol>
-        <li><span>01</span><i></i><strong>SUPERPUESTA</strong></li>
-        <li><span>02</span><i></i><strong>INDETERMINADA</strong></li>
-        <li><span>03</span><i></i><strong>EN ESPERA</strong></li>
+        <li><span>01</span><i></i><strong>${copy.superposed}</strong></li>
+        <li><span>02</span><i></i><strong>${copy.undetermined}</strong></li>
+        <li><span>03</span><i></i><strong>${copy.waiting}</strong></li>
       </ol>
     </aside>
 
     <footer class="shell-footer">
       <p>WP8 // RELEASE CANDIDATE</p>
-      <p data-worker-state>CONTRATO // INICIALIZANDO</p>
-      <p>BUILD <span>LOCAL</span></p>
+      <p data-worker-state>${copy.workerInitializing}</p>
+      <p>${copy.buildLocal}</p>
     </footer>
 
     <section class="slice-hud" aria-live="polite">
-      <p><span>VENTANA</span><strong data-slice-time>10:00</strong></p>
+      <p><span>${copy.window}</span><strong data-slice-time>10:00</strong></p>
       <p><span data-seed-mode-label>SEED</span><strong data-seed-label>A91F-42C0</strong></p>
     </section>
 
     <p class="wp5-gate-status" data-wp5-gate-status>
-      WP6 · PRESENTACIÓN LOCAL
+      WP6 · ${copy.buildLocal}
     </p>
 
     <p class="uncertainty-status" data-uncertainty-status role="status" hidden></p>
 
     <section class="slice-result" data-slice-result hidden>
-      <p>REGISTRO DE ATENCIÓN</p>
-      <h2>No encontraste este mundo.<br />Lo separaste de todos los demás.</h2>
-      <p>Muchos caminos.<br />Solo aquel que miraste<br />recuerda tus pasos.</p>
+      <p>${copy.resultEyebrow}</p>
+      <h2>${copy.resultTitle}</h2>
       <strong>SEED A91F-42C0</strong>
     </section>
   </main>
 `;
+}
 
-const BASE_SUPERPOSITION_CANDIDATES: readonly SuperpositionCandidate[] = [
-  { tileId: 0, family: 'ground', weight: 14, label: 'Pradera' },
-  { tileId: 1, family: 'organic', weight: 9, label: 'Vegetación' },
-  { tileId: 2, family: 'mineral', weight: 5, label: 'Roca' },
-];
+function baseSuperpositionCandidates(
+  locale: Locale,
+): readonly SuperpositionCandidate[] {
+  return locale === 'en'
+    ? [
+        { tileId: 0, family: 'ground', weight: 14, label: 'Meadow' },
+        { tileId: 1, family: 'organic', weight: 9, label: 'Vegetation' },
+        { tileId: 2, family: 'mineral', weight: 5, label: 'Rock' },
+      ]
+    : [
+        { tileId: 0, family: 'ground', weight: 14, label: 'Pradera' },
+        { tileId: 1, family: 'organic', weight: 9, label: 'Vegetación' },
+        { tileId: 2, family: 'mineral', weight: 5, label: 'Roca' },
+      ];
+}
 
 type PerformanceWindow = Window & {
   __ULTIMA_OBSERVATION_PERFORMANCE__?: () => GameRendererPerformanceSnapshot;
 };
 
-function toErrorMessage(error: unknown): string {
+function toErrorMessage(error: unknown, locale: Locale): string {
   if (error instanceof Error && error.message.trim().length > 0)
     return error.message;
-  return 'Error desconocido durante el arranque.';
+  return locale === 'en'
+    ? 'Unknown error during startup.'
+    : 'Error desconocido durante el arranque.';
 }
 
 export function renderBootstrapError(root: HTMLElement, error: unknown): void {
-  const message = toErrorMessage(error);
+  const locale = loadLocale();
+  const copy = uiCopy(locale);
+  applyDocumentLocale(locale);
+  const message = toErrorMessage(error, locale);
   root.innerHTML = `
     <main class="error-shell" role="alert">
-      <p class="error-shell__code">OBSERVACIÓN INTERRUMPIDA</p>
-      <h1>El instrumento no pudo iniciar.</h1>
+      <p class="error-shell__code">${copy.bootInterrupted}</p>
+      <h1>${copy.bootFailed}</h1>
       <p data-error-message></p>
-      <button type="button" data-retry-button>Reintentar</button>
+      <button type="button" data-retry-button>${copy.retry}</button>
     </main>
   `;
 
@@ -177,7 +201,58 @@ export function renderBootstrapError(root: HTMLElement, error: unknown): void {
 
 export function bootstrap(root: HTMLElement): () => void {
   if (isGrammarViewerMode()) return renderGrammarViewer(root);
-  root.innerHTML = SHELL_MARKUP;
+  let selectedLocale = loadLocale();
+  let gameDisposer: (() => void) | null = null;
+  const abortController = new AbortController();
+  const renderSelector = (): void => {
+    const copy = uiCopy(selectedLocale);
+    applyDocumentLocale(selectedLocale);
+    root.innerHTML = `
+      <main class="language-select" aria-labelledby="language-title">
+        <p class="language-select__eyebrow">AGENCY // AGENCIA</p>
+        <h1 id="language-title">${copy.languageTitle}</h1>
+        <p>${copy.languageHint}</p>
+        <div class="language-select__options" role="radiogroup" aria-label="${copy.languageTitle}">
+          <button type="button" role="radio" aria-checked="${String(selectedLocale === 'en')}" data-locale="en">${copy.english}</button>
+          <button type="button" role="radio" aria-checked="${String(selectedLocale === 'es')}" data-locale="es">${copy.spanish}</button>
+        </div>
+        <button class="observation-button" type="button" data-enter-language>${copy.enterChamber}</button>
+      </main>
+    `;
+    for (const option of root.querySelectorAll<HTMLButtonElement>('[data-locale]')) {
+      option.addEventListener(
+        'click',
+        () => {
+          const candidate = option.dataset.locale;
+          if (candidate !== 'en' && candidate !== 'es') return;
+          selectedLocale = candidate;
+          saveLocale(selectedLocale);
+          renderSelector();
+        },
+        { signal: abortController.signal },
+      );
+    }
+    root.querySelector<HTMLButtonElement>('[data-enter-language]')?.addEventListener(
+      'click',
+      () => {
+        saveLocale(selectedLocale);
+        applyDocumentLocale(selectedLocale);
+        abortController.abort();
+        gameDisposer = bootstrapGame(root, selectedLocale);
+      },
+      { signal: abortController.signal, once: true },
+    );
+  };
+  renderSelector();
+  return () => {
+    abortController.abort();
+    gameDisposer?.();
+  };
+}
+
+function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
+  const copy = uiCopy(locale);
+  root.innerHTML = shellMarkup(locale);
 
   const shell = root.querySelector<HTMLElement>('.observation-shell');
   const observationButton = root.querySelector<HTMLButtonElement>(
@@ -224,11 +299,15 @@ export function bootstrap(root: HTMLElement): () => void {
     !wp5GateStatus ||
     !uncertaintyStatus
   ) {
-    throw new Error('La interfaz de observación está incompleta.');
+    throw new Error(
+      locale === 'en'
+        ? 'The observation interface is incomplete.'
+        : 'La interfaz de observación está incompleta.',
+    );
   }
 
   const abortController = new AbortController();
-  const introduction = new AgencyIntroduction();
+  const introduction = new AgencyIntroduction(locale);
   const renderIntroduction = (): void => {
     introEyebrow.textContent = introduction.current.eyebrow;
     introCopy.textContent = introduction.current.text;
@@ -252,7 +331,7 @@ export function bootstrap(root: HTMLElement): () => void {
   const seedSelection = resolveWorldSeed(search);
   const worldSeed = seedSelection.worldSeed;
   seedModeLabel.textContent =
-    seedSelection.mode === 'daily' ? 'DIARIA UTC' : 'SEED';
+    seedSelection.mode === 'daily' ? copy.dailySeed : 'SEED';
   seedValueLabel.textContent = formatSeed(worldSeed);
   shell.dataset.seedMode = seedSelection.mode;
   if (seedSelection.dateKey) shell.dataset.dailyDate = seedSelection.dateKey;
@@ -263,10 +342,10 @@ export function bootstrap(root: HTMLElement): () => void {
   alternateSeedUrl.searchParams.delete('start');
   if (seedSelection.mode === 'daily') {
     alternateSeedUrl.searchParams.delete('daily');
-    seedModeLink.textContent = 'Nueva observación aleatoria';
+    seedModeLink.textContent = copy.randomObservation;
   } else {
     alternateSeedUrl.searchParams.set('daily', '1');
-    seedModeLink.textContent = 'Observación diaria UTC';
+    seedModeLink.textContent = copy.dailySeed;
   }
   seedModeLink.href = `${alternateSeedUrl.pathname}${alternateSeedUrl.search}`;
   const requestedStart = Number(search.get('start') ?? '0');
@@ -305,7 +384,7 @@ export function bootstrap(root: HTMLElement): () => void {
     superposition.setQuality(profile.preset === 'low' ? 'low' : profile.preset);
   });
   const reticle = new ObservationReticle(shell);
-  const hud = new GameHud(shell, { time: sliceTime });
+  const hud = new GameHud(shell, { time: sliceTime }, locale);
   hud.setSubtitlesEnabled(settings.subtitles);
   hud.setHighContrast(settings.highContrast);
   const narrative = new NarrativeDirector({
@@ -339,12 +418,12 @@ export function bootstrap(root: HTMLElement): () => void {
         audioDirector.setPaused(paused);
         systemState.textContent =
           shell.dataset.playerState === 'death'
-            ? 'RECONSTRUYENDO'
+            ? copy.rebuilding
             : shell.dataset.ending === 'true'
-              ? 'CIERRE'
+              ? copy.ending
               : paused
-                ? 'PAUSA'
-                : 'OBSERVANDO';
+                ? copy.pause
+                : copy.observing;
         pauseMenu?.setOpen(
           paused &&
             shell.dataset.playerState !== 'death' &&
@@ -368,11 +447,16 @@ export function bootstrap(root: HTMLElement): () => void {
     audioDirector.setVoicesEnabled(nextSettings.voicesEnabled);
     shell.dataset.reducedFlashes = String(nextSettings.reducedFlashes);
   };
-  pauseMenu = new PauseMenu(shell, settings, {
-    onResume: () => void playerInput.resume(),
-    onRestart: () => window.location.reload(),
-    onSettingsChange: applySettings,
-  });
+  pauseMenu = new PauseMenu(
+    shell,
+    settings,
+    {
+      onResume: () => void playerInput.resume(),
+      onRestart: () => window.location.reload(),
+      onSettingsChange: applySettings,
+    },
+    locale,
+  );
   applySettings(settings);
   let playerPhysics: PlayerPhysicsRuntime | null = null;
   let disposed = false;
@@ -390,9 +474,15 @@ export function bootstrap(root: HTMLElement): () => void {
     })
     .catch((error: unknown) => {
       shell.dataset.physics = 'error';
-      workerState.textContent = 'FÍSICA // ERROR';
+      workerState.textContent =
+        locale === 'en' ? 'PHYSICS // ERROR' : 'FÍSICA // ERROR';
       workerState.dataset.contractState = 'error';
-      console.error('Rapier no pudo iniciar.', error);
+      console.error(
+        locale === 'en'
+          ? 'Rapier could not initialize.'
+          : 'Rapier no pudo iniciar.',
+        error,
+      );
       return null;
     });
   let observableWorld: ObservableWorldBridge | null = null;
@@ -415,7 +505,8 @@ export function bootstrap(root: HTMLElement): () => void {
       }
     },
     onProtocolError: (message) => {
-      workerState.textContent = 'CONTRATO // ERROR';
+      workerState.textContent =
+        locale === 'en' ? 'CONTRACT // ERROR' : 'CONTRATO // ERROR';
       workerState.dataset.contractState = 'error';
       console.error(message);
     },
@@ -448,6 +539,7 @@ export function bootstrap(root: HTMLElement): () => void {
       gallery: new LocalPanoramaGallery(),
     },
     configuredRemoteHaikuEndpoint(import.meta.env.VITE_REMOTE_HAIKU_ENDPOINT),
+    locale,
   );
   observableWorld = new ObservableWorldBridge({
     solver: solverWorker,
@@ -495,7 +587,7 @@ export function bootstrap(root: HTMLElement): () => void {
       plan,
       settings.reducedFlashes,
     );
-    progressionHud = new ProgressionHud(shell);
+    progressionHud = new ProgressionHud(shell, locale);
     shell.dataset.wp5Preview = 'true';
     wp5Preview = new Wp5PreviewRuntime({
       worldSeed,
@@ -665,7 +757,11 @@ export function bootstrap(root: HTMLElement): () => void {
       ) {
         runClock!.notifyFirstCollapse();
         hud.notifyFirstCollapse();
-        hud.showSubtitle('La mirada está fijando el mundo.');
+        hud.showSubtitle(
+          locale === 'en'
+            ? 'Your gaze is fixing the world.'
+            : 'La mirada está fijando el mundo.',
+        );
       }
     }
 
@@ -700,7 +796,7 @@ export function bootstrap(root: HTMLElement): () => void {
           cellId,
           center: cellCenterToWorld(cellId, 0),
           observationCharge: cell.observationCharge,
-          candidates: BASE_SUPERPOSITION_CANDIDATES,
+          candidates: baseSuperpositionCandidates(locale),
         };
         nextSuperposedCells.push(superposedCell);
         if (
@@ -756,7 +852,10 @@ export function bootstrap(root: HTMLElement): () => void {
         uncertaintyStatus.hidden = uncertaintyHidden;
       }
       if (wp5Snapshot.uncertainty) {
-        const statusText = uncertaintyStatusText(wp5Snapshot.uncertainty.state);
+        const statusText = uncertaintyStatusText(
+          wp5Snapshot.uncertainty.state,
+          locale,
+        );
         if (uncertaintyStatus.textContent !== statusText) {
           uncertaintyStatus.textContent = statusText;
         }
@@ -830,7 +929,7 @@ export function bootstrap(root: HTMLElement): () => void {
         runClock!.markComplete();
         const portrait = portraitTracker.snapshot();
         const profile = classifyAttentionPortrait(portrait);
-        const haiku = generateHaiku(worldSeed, portrait, profile);
+        const haiku = generateHaiku(worldSeed, portrait, profile, locale);
         const closure = closureForSeedCount(portrait.unlockedPacks.length);
         const result: RunResult = {
           worldSeed,
@@ -860,13 +959,18 @@ export function bootstrap(root: HTMLElement): () => void {
     if (skipIntroduction) introduction.skip();
     renderIntroduction();
     shell.dataset.calibration = 'pending';
-    systemState.textContent = 'CALIBRANDO';
-    shellStatus.textContent = 'Solicitando control de mirada…';
+    systemState.textContent = locale === 'en' ? 'CALIBRATING' : 'CALIBRANDO';
+    shellStatus.textContent =
+      locale === 'en'
+        ? 'Requesting gaze control…'
+        : 'Solicitando control de mirada…';
     observationButton.disabled = true;
     introSkip.disabled = true;
     observationButton
       .querySelector('span')
-      ?.replaceChildren('Calibrando mirada…');
+      ?.replaceChildren(
+        locale === 'en' ? 'Calibrating gaze…' : 'Calibrando mirada…',
+      );
     playerInput.setEnabled(true);
 
     // Start both privileged operations synchronously from the same gesture.
@@ -882,7 +986,7 @@ export function bootstrap(root: HTMLElement): () => void {
       if (shell.dataset.calibration === 'error') {
         audioDirector.setPaused(true);
       } else if (!audioStarted) {
-        shellStatus.textContent = 'Shell lista · audio no disponible';
+        shellStatus.textContent = copy.audioUnavailable;
       }
     });
 
@@ -890,14 +994,13 @@ export function bootstrap(root: HTMLElement): () => void {
       playerInput.setEnabled(false);
       shell.dataset.calibration = 'error';
       shell.dataset.calibrated = 'false';
-      systemState.textContent = 'EN ESPERA';
-      shellStatus.textContent =
-        'No se pudo capturar la mirada. Haz clic para reintentar.';
+      systemState.textContent = copy.waiting;
+      shellStatus.textContent = copy.calibrationFailed;
       observationButton.disabled = false;
       introSkip.hidden = true;
       observationButton
         .querySelector('span')
-        ?.replaceChildren('Reintentar calibración');
+        ?.replaceChildren(copy.retryCalibration);
       return;
     }
 
@@ -906,25 +1009,26 @@ export function bootstrap(root: HTMLElement): () => void {
       playerInput.setEnabled(false);
       shell.dataset.calibration = 'error';
       shell.dataset.calibrated = 'false';
-      systemState.textContent = 'FÍSICA NO DISPONIBLE';
-      shellStatus.textContent =
-        'El cuerpo de campo no pudo iniciar. Recarga para reintentar.';
+      systemState.textContent =
+        locale === 'en' ? 'PHYSICS UNAVAILABLE' : 'FÍSICA NO DISPONIBLE';
+      shellStatus.textContent = copy.physicsUnavailable;
       observationButton.disabled = false;
       observationButton
         .querySelector('span')
-        ?.replaceChildren('Reintentar calibración');
+        ?.replaceChildren(copy.retryCalibration);
       return;
     }
     readyPlayerPhysics.controller.respawn();
 
     shell.dataset.calibration = 'ready';
     shell.dataset.calibrated = 'true';
-    systemState.textContent = 'CALIBRADA';
-    shellStatus.textContent =
-      'Shell lista · el primer colapso iniciará el reloj';
+    systemState.textContent = locale === 'en' ? 'CALIBRATED' : 'CALIBRADA';
+    shellStatus.textContent = copy.firstCollapseStartsClock;
     observationButton
       .querySelector('span')
-      ?.replaceChildren('Mirada calibrada');
+      ?.replaceChildren(
+        locale === 'en' ? 'Gaze calibrated' : 'Mirada calibrada',
+      );
     narrative.play('start');
   };
 

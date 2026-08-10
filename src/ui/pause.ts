@@ -1,5 +1,7 @@
 import type { AudioVolumes } from '../audio/audio-director';
+import type { Locale } from '../contracts/localization';
 import type { QualityPreset } from '../render/quality';
+import { uiCopy } from '../i18n';
 
 export interface GameSettings {
   readonly mouseSensitivity: number;
@@ -134,31 +136,33 @@ export class PauseMenu {
     parent: HTMLElement,
     initialSettings: GameSettings,
     private readonly handlers: PauseMenuHandlers,
+    locale: Locale,
   ) {
+    const copy = uiCopy(locale);
     this.settings = initialSettings;
     this.element = document.createElement('section');
     this.element.className = 'pause-menu';
     this.element.hidden = true;
-    this.element.setAttribute('aria-label', 'Pausa y opciones');
+    this.element.setAttribute('aria-label', copy.pauseAria);
     this.element.innerHTML = `
       <div class="pause-menu__panel">
-        <p>INSTRUMENTO EN PAUSA</p>
-        <h2>Pausa</h2>
-        <button type="button" data-resume>Continuar observación</button>
+        <p>${copy.pauseInstrument}</p>
+        <h2>${copy.pause}</h2>
+        <button type="button" data-resume>${copy.continueObservation}</button>
         <div class="pause-menu__options">
-          <label>Sensibilidad <input data-setting="sensitivity" type="range" min="0.0005" max="0.008" step="0.0005"></label>
-          <label><input data-setting="invertY" type="checkbox"> Invertir eje Y</label>
-          <label><input data-setting="headBob" type="checkbox"> Cabeceo reducido</label>
-          <label><input data-setting="reducedFlashes" type="checkbox"> Destellos reducidos</label>
-          <label><input data-setting="highContrast" type="checkbox"> Superposición de alto contraste</label>
-          <label><input data-setting="subtitles" type="checkbox"> Subtítulos</label>
-          <label><input data-setting="voices" type="checkbox"> Voces locales</label>
-          <label>Calidad <select data-setting="quality"><option value="auto">Automática</option><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option></select></label>
-          <label>Volumen maestro <input data-setting="master" type="range" min="0" max="1" step="0.05"></label>
-          <label>Música <input data-setting="music" type="range" min="0" max="1" step="0.05"></label>
-          <label>Efectos <input data-setting="effects" type="range" min="0" max="1" step="0.05"></label>
+          <label>${copy.sensitivity} <input data-setting="sensitivity" type="range" min="0.0005" max="0.008" step="0.0005"></label>
+          <label><input data-setting="invertY" type="checkbox"> ${copy.invertY}</label>
+          <label><input data-setting="headBob" type="checkbox"> ${copy.headBob}</label>
+          <label><input data-setting="reducedFlashes" type="checkbox"> ${copy.reducedFlashes}</label>
+          <label><input data-setting="highContrast" type="checkbox"> ${copy.highContrast}</label>
+          <label><input data-setting="subtitles" type="checkbox"> ${copy.subtitles}</label>
+          <label><input data-setting="voices" type="checkbox"> ${copy.localVoices}</label>
+          <label>${copy.quality} <select data-setting="quality"><option value="auto">${copy.qualityAuto}</option><option value="low">${copy.qualityLow}</option><option value="medium">${copy.qualityMedium}</option><option value="high">${copy.qualityHigh}</option></select></label>
+          <label>${copy.masterVolume} <input data-setting="master" type="range" min="0" max="1" step="0.05"></label>
+          <label>${copy.ambienceVolume} <input data-setting="music" type="range" min="0" max="1" step="0.05"></label>
+          <label>${copy.effectsVolume} <input data-setting="effects" type="range" min="0" max="1" step="0.05"></label>
         </div>
-        <button class="pause-menu__restart" type="button" data-restart>Reiniciar · mantén R durante 2 s</button>
+        <button class="pause-menu__restart" type="button" data-restart>${copy.restartHold}</button>
       </div>
     `;
     parent.append(this.element);

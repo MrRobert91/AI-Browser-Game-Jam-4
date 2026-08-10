@@ -117,6 +117,61 @@ button {
   font: inherit;
 }
 
+.language-select {
+  display: grid;
+  place-content: center;
+  gap: 1.25rem;
+  width: 100%;
+  min-height: 100%;
+  padding: 2rem;
+  color: #ecf8f3;
+  background:
+    radial-gradient(circle at 50% 32%, rgb(42 142 157 / 22%), transparent 34rem),
+    linear-gradient(145deg, #071018, #111923 58%, #071018);
+  text-align: center;
+}
+
+.language-select__eyebrow {
+  margin: 0;
+  color: #8ed8df;
+  font-family: "Courier New", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.24em;
+}
+
+.language-select h1,
+.language-select p {
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+.language-select__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(9rem, 1fr));
+  gap: 0.75rem;
+}
+
+.language-select__options button,
+.language-select > .observation-button {
+  min-height: 3.25rem;
+  border: 1px solid rgb(151 231 235 / 28%);
+  color: #dffcff;
+  background: rgb(12 34 42 / 76%);
+  cursor: pointer;
+}
+
+.language-select__options button[aria-checked="true"] {
+  border-color: #ff725f;
+  color: #fff;
+  background: rgb(255 114 95 / 18%);
+  box-shadow: 0 0 1.5rem rgb(255 114 95 / 16%);
+}
+
+.language-select > .observation-button {
+  color: #071018;
+  background: #ff725f;
+}
+
 .boot-fallback,
 .error-shell {
   display: grid;

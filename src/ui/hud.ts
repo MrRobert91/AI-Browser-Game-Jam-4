@@ -1,3 +1,6 @@
+import type { Locale } from '../contracts/localization';
+import { uiCopy } from '../i18n';
+
 export interface GameHudElements {
   readonly time: HTMLElement;
 }
@@ -12,10 +15,11 @@ export class GameHud {
   constructor(
     private readonly parent: HTMLElement,
     private readonly elements: GameHudElements,
+    locale: Locale,
   ) {
     this.onboarding = document.createElement('p');
     this.onboarding.className = 'onboarding-prompt';
-    this.onboarding.textContent = 'MIRA';
+    this.onboarding.textContent = uiCopy(locale).look;
     this.onboarding.setAttribute('aria-hidden', 'true');
     this.subtitle = document.createElement('p');
     this.subtitle.className = 'narrative-subtitle';
