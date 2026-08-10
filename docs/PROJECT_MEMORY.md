@@ -4,7 +4,7 @@ Este documento conserva la historia de implementación de **La Última Observaci
 
 ## Vista de pájaro
 
-Actualizado: 2026-08-10 (Europe/Madrid)
+Actualizado: 2026-08-11 (Europe/Madrid)
 
 | Fase | Issues | Estado | Gate o dependencia principal |
 |---|---:|---|---|
@@ -21,16 +21,26 @@ Actualizado: 2026-08-10 (Europe/Madrid)
 | POST — Seguridad física | #85 | Integrada en `dev` | `origin/dev` incluye `e7181d3` |
 | POST — Limpieza del HUD | #87 | Integrada en `dev` | PR #88 fusionada en `423fc90` |
 | POST — Rendimiento | #89 | Implementada en rama | `codex/issue-89-stable-fps` desde `origin/dev` `423fc90` |
+| POST — Prólogo bilingüe | #91–#94 | Implementada en rama acumulativa | Localización, voz/ambientes y sala/briefing listos para PR a `dev` |
 | POST — Expansiones | #52–#56 | En rama acumulativa salvo #54 | #54 ya estaba cerrada; #52, #53, #55 y #56 listas para revisión |
 
 ### Estado operativo actual
 
-- Fase actual: optimización de rendimiento #89 sobre `origin/dev` `423fc907aae3ef3b1967038d359cc6a2113a2cdd`; la limpieza visual #87 ya está integrada mediante PR #88.
+- Fase actual: prólogo bilingüe #91–#94 sobre `origin/dev` `d73d8f5`; #89 ya está integrado en `dev`.
 - Trabajo en revisión: PR #84 reúne #22, #52, #53, #55, #56 y la revisión narrativa #76–#82, con un commit funcional por issue y destino `dev`.
 - Arquitectura vigente: la build de jam sigue siendo offline. #56 solo muestra una variante remota si la publicación configura un proxy HTTPS y el jugador consiente en esa partida; ninguna clave de proveedor entra en el navegador.
 - Evidencia actual: galerías/capturas locales, simulación de 10.000 seeds, WebM narrativo y QA automatizada bajo [`docs/progress/`](./progress/).
 - Gate humano: #83 y el epic #75 permanecen abiertos y **NO-GO 0/5**; la rama no afirma sesiones que no se han realizado.
 - Estado remoto verificado: PR #84 abierta y no draft; sus palabras de cierre excluyen deliberadamente #75 y #83.
+
+### 2026-08-11 — Epic #91 / issues #92–#94 — Prólogo bilingüe y nueva voz
+
+- El arranque pasa por `LANGUAGE_SELECT → ROOM → BRIEFING → PORTAL → RUN`; el idioma se elige siempre, inglés es el valor inicial y el reloj permanece inmóvil hasta el primer colapso.
+- La canción, 20 MP3 SAPI, generadores antiguos y registros de otros Colapsadores se retiran. `AudioDirector` usa master/voz/ambiente/efectos, expone estado y reintento y reproduce como máximo 22 de 44 cues por idioma, todos locales.
+- OpenRouter produjo 44 voces EN con `microsoft/mai-voice-2`/Harper y 44 ES con `google/gemini-3.1-flash-tts-preview`/Kore. Dos narraciones segmentadas de 50 s comparten timeline; 90 clips de voz pasan transcripción y 95 assets pasan loudness.
+- Veo 3.1 Lite generó siete planos sin audio. Tres tomas con texto accidental se rechazaron y sustituyeron tras inspección de hoja de contactos. El WebM final es VP9 1280×720, 50 s, sin audio, 5,49 MB; coste de vídeo reportado acumulado: 2,16 USD.
+- El runtime final de audio+vídeo ocupa 12.649.765 bytes, no contiene credenciales ni llamadas remotas y conserva fallbacks WebP/captions. `check` pasa 51 archivos/199 tests y E2E pasa 12/12 en Chromium/Firefox, incluido fallo forzado del WebM en español.
+- Evidencia reproducible: [`docs/progress/issue-94-bilingual-prologue/`](./progress/issue-94-bilingual-prologue/). #75/#83 permanecen abiertos en **NO-GO 0/5**; no se inventan playtests y #87 queda fuera del alcance de esta entrega.
 
 ### 2026-08-10 — Issue #89 — FPS estable y degradación adaptativa
 

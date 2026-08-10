@@ -2,16 +2,50 @@ import catalogSource from '../content/narrative.catalog.json';
 import type { Locale } from '../contracts/localization';
 
 export type NarrativeCueId =
-  | 'start' | 'firstCollapse' | 'unlockWater' | 'unlockForest' | 'unlockRuin'
-  | 'unlockStorm' | 'firstDanger' | 'firstDeath' | 'respawn'
-  | 'uncertaintyDetected' | 'uncertaintyFixed' | 'lastSixtySeconds'
-  | 'lastThirtySeconds' | 'final' | 'distanceNear' | 'distanceMid'
-  | 'distanceFar' | 'distanceOuter' | 'distanceReturn' | 'attentionLongA'
-  | 'attentionLongB' | 'attentionLongC' | 'attentionLongD' | 'attentionLongE'
-  | 'revisitA' | 'revisitB' | 'revisitC' | 'revisitD' | 'riskA' | 'riskB'
-  | 'riskC' | 'riskD' | 'stalledA' | 'stalledB' | 'stalledC' | 'stalledD'
-  | 'deathAgainA' | 'deathAgainB' | 'deathAgainC' | 'deathAgainD'
-  | 'ambientA' | 'ambientB' | 'ambientC' | 'ambientD';
+  | 'start'
+  | 'firstCollapse'
+  | 'unlockWater'
+  | 'unlockForest'
+  | 'unlockRuin'
+  | 'unlockStorm'
+  | 'firstDanger'
+  | 'firstDeath'
+  | 'respawn'
+  | 'uncertaintyDetected'
+  | 'uncertaintyFixed'
+  | 'lastSixtySeconds'
+  | 'lastThirtySeconds'
+  | 'final'
+  | 'distanceNear'
+  | 'distanceMid'
+  | 'distanceFar'
+  | 'distanceOuter'
+  | 'distanceReturn'
+  | 'attentionLongA'
+  | 'attentionLongB'
+  | 'attentionLongC'
+  | 'attentionLongD'
+  | 'attentionLongE'
+  | 'revisitA'
+  | 'revisitB'
+  | 'revisitC'
+  | 'revisitD'
+  | 'riskA'
+  | 'riskB'
+  | 'riskC'
+  | 'riskD'
+  | 'stalledA'
+  | 'stalledB'
+  | 'stalledC'
+  | 'stalledD'
+  | 'deathAgainA'
+  | 'deathAgainB'
+  | 'deathAgainC'
+  | 'deathAgainD'
+  | 'ambientA'
+  | 'ambientB'
+  | 'ambientC'
+  | 'ambientD';
 export type NarrativeCategory =
   | 'critical'
   | 'distance'
@@ -69,7 +103,9 @@ function buildCatalog(locale: Locale): NarrativeCatalog {
         return [
           entry.id,
           {
-            event: entry.id.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase(),
+            event: entry.id
+              .replace(/[A-Z]/g, (letter) => `_${letter}`)
+              .toUpperCase(),
             speaker: 'LA_MEDIDA' as const,
             text,
             fallbackText: text,
@@ -117,7 +153,8 @@ export function validateNarrativeCatalog(
     if (!Number.isFinite(cue.durationMs) || cue.durationMs <= 0) {
       errors.push(`${cueId}: invalid duration`);
     }
-    if (events.has(cue.event)) errors.push(`${cueId}: duplicate event ${cue.event}`);
+    if (events.has(cue.event))
+      errors.push(`${cueId}: duplicate event ${cue.event}`);
     events.add(cue.event);
   }
   return errors;
@@ -144,7 +181,11 @@ export class NarrativeDirector {
     if (errors.length > 0) throw new Error(errors.join('\n'));
   }
 
-  play(cueId: NarrativeCueId, repeat = false, nowMs = performance.now()): string {
+  play(
+    cueId: NarrativeCueId,
+    repeat = false,
+    nowMs = performance.now(),
+  ): string {
     const definition = this.catalog.cues[cueId];
     const text = definition.text.trim() || definition.fallbackText;
     if (!repeat && definition.once && this.played.has(cueId)) return text;
@@ -184,7 +225,8 @@ export class NarrativeDirector {
         !this.played.has(cueId),
     );
     if (candidates.length === 0) return null;
-    const cueId = candidates[stablePoolIndex(seed, category, candidates.length)]!;
+    const cueId =
+      candidates[stablePoolIndex(seed, category, candidates.length)]!;
     const previousCount = this.history.length;
     this.play(cueId, false, nowMs);
     return this.history.length > previousCount ? cueId : null;

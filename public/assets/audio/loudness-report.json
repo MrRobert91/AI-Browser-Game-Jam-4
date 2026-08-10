@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-10T22:48:35.591Z",
+  "generatedAt": "2026-08-10T23:19:22.974Z",
   "entries": [
     {
       "id": "start",
@@ -837,6 +837,24 @@
       "targetLufs": -24,
       "integratedLufs": -24.48,
       "truePeakDbtp": -9.2,
+      "valid": true
+    },
+    {
+      "id": "briefing",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.89,
+      "truePeakDbtp": -1.3,
+      "valid": true
+    },
+    {
+      "id": "briefing",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.43,
+      "truePeakDbtp": -1.55,
       "valid": true
     }
   ]

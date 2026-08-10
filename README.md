@@ -31,7 +31,7 @@ La build se genera en `dist/` y funciona como sitio estático. El contenedor de 
 ese mismo directorio con Nginx en el puerto `8080`; el navegador no usa CDN ni realiza llamadas
 de red después de cargar los archivos de la aplicación.
 
-La canción «La función que nos mira» también se carga como asset local. Su letra, procedencia y
-validación están documentadas en
-[`docs/audio/la-funcion-que-nos-mira.md`](./docs/audio/la-funcion-que-nos-mira.md); ninguna clave
-de OpenRouter forma parte del código o de la build.
+Las voces EN/ES, ambientes y el briefing de cincuenta segundos se cargan como
+assets locales. Su producción y validación están documentadas en
+[`docs/progress/issue-94-bilingual-prologue/`](./docs/progress/issue-94-bilingual-prologue/);
+ninguna clave de OpenRouter forma parte del código, de la build ni del despliegue.

@@ -25,6 +25,8 @@
     "test:e2e:desktop": "playwright test --config=playwright.desktop.config.ts",
     "profile:browser": "tsx scripts/profile-browser.ts",
     "profile:release": "tsx scripts/profile-release.ts",
+    "media:briefing:audio": "tsx scripts/generate-briefing-audio.ts",
+    "media:briefing:video": "tsx scripts/generate-briefing-video.ts",
     "package:release": "npm run build && tsx scripts/package-release.ts",
     "release:check": "npm run check && npm run validate:tiles && npm run validate:assets && npm run test:sim:release && npm run build && npm run test:e2e && npm run profile:release"
   },

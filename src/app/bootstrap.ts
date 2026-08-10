@@ -1,11 +1,11 @@
-import { Vector3 } from 'three';
+import { Matrix4, Quaternion, Vector3 } from 'three';
 
 import { GameLoop } from './game-loop';
 import { ObservableWorldBridge } from './observable-world-bridge';
 import { SolverWorkerClient } from './solver-worker-client';
 import { Wp5PreviewRuntime } from './wp5-preview-runtime';
 import { AudioDirector } from '../audio/audio-director';
-import type { Locale } from '../contracts/localization';
+import type { GamePhase, Locale } from '../contracts/localization';
 import type { UnlockablePackId } from '../contracts/tiles';
 import { planSeedAnchors } from '../gameplay/anchors';
 import { resolveWorldSeed } from '../gameplay/daily-seed';
@@ -16,7 +16,7 @@ import {
   type RunResult,
 } from '../gameplay/ending';
 import { generateHaiku } from '../gameplay/haiku';
-import { AgencyIntroduction } from '../gameplay/introduction';
+import { BriefingPlayback } from '../gameplay/briefing';
 import {
   narrativeCatalog,
   NarrativeDirector,
@@ -29,12 +29,8 @@ import {
   classifyAttentionPortrait,
 } from '../gameplay/portrait';
 import { RunClock, type RunMode } from '../gameplay/run-clock';
-import {
-  applyDocumentLocale,
-  loadLocale,
-  saveLocale,
-  uiCopy,
-} from '../i18n';
+import { PrologueDirector } from '../gameplay/prologue';
+import { applyDocumentLocale, loadLocale, saveLocale, uiCopy } from '../i18n';
 import { DebugOverlay, debugToolsAvailable } from '../dev/debug-overlay';
 import {
   isGrammarViewerMode,
@@ -58,6 +54,11 @@ import {
   type SuperpositionCell,
 } from '../render/superposition';
 import { Wp5PreviewVisuals } from '../render/wp5-preview-visuals';
+import {
+  AgencyRoom,
+  PROLOGUE_PORTAL_Z,
+  PROLOGUE_ROOM_SPAWN,
+} from '../render/agency-room';
 import { ObservationReticle } from '../ui/observation-reticle';
 import { GameHud } from '../ui/hud';
 import { loadGameSettings, PauseMenu, type GameSettings } from '../ui/pause';
@@ -103,9 +104,6 @@ function shellMarkup(locale: Locale): string {
           <span>${copy.enterChamber}</span>
           <span aria-hidden="true">→</span>
         </button>
-        <button class="intro-panel__skip" type="button" data-intro-skip>
-          ${copy.skipBriefing}
-        </button>
         <a class="intro-panel__daily" href="?daily=1" data-seed-mode-link>
           ${copy.dailySeed}
         </a>
@@ -140,6 +138,14 @@ function shellMarkup(locale: Locale): string {
     </p>
 
     <p class="uncertainty-status" data-uncertainty-status role="status" hidden></p>
+
+    <p class="room-interaction" data-room-interaction hidden></p>
+
+    <section class="briefing-controls" data-briefing-controls hidden>
+      <p>${copy.briefingPaused}</p>
+      <button type="button" data-briefing-resume>${copy.resumeBriefing}</button>
+      <button type="button" data-briefing-skip disabled>${copy.skipBriefing}</button>
+    </section>
 
     <section class="audio-diagnostic" data-audio-diagnostic hidden>
       <span data-audio-diagnostic-status role="status"></span>
@@ -227,7 +233,9 @@ export function bootstrap(root: HTMLElement): () => void {
         <button class="observation-button" type="button" data-enter-language>${copy.enterChamber}</button>
       </main>
     `;
-    for (const option of root.querySelectorAll<HTMLButtonElement>('[data-locale]')) {
+    for (const option of root.querySelectorAll<HTMLButtonElement>(
+      '[data-locale]',
+    )) {
       option.addEventListener(
         'click',
         () => {
@@ -240,16 +248,18 @@ export function bootstrap(root: HTMLElement): () => void {
         { signal: abortController.signal },
       );
     }
-    root.querySelector<HTMLButtonElement>('[data-enter-language]')?.addEventListener(
-      'click',
-      () => {
-        saveLocale(selectedLocale);
-        applyDocumentLocale(selectedLocale);
-        abortController.abort();
-        gameDisposer = bootstrapGame(root, selectedLocale);
-      },
-      { signal: abortController.signal, once: true },
-    );
+    root
+      .querySelector<HTMLButtonElement>('[data-enter-language]')
+      ?.addEventListener(
+        'click',
+        () => {
+          saveLocale(selectedLocale);
+          applyDocumentLocale(selectedLocale);
+          abortController.abort();
+          gameDisposer = bootstrapGame(root, selectedLocale, true);
+        },
+        { signal: abortController.signal, once: true },
+      );
   };
   renderSelector();
   return () => {
@@ -258,7 +268,11 @@ export function bootstrap(root: HTMLElement): () => void {
   };
 }
 
-function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
+function bootstrapGame(
+  root: HTMLElement,
+  locale: Locale,
+  enterFromLanguageGesture = false,
+): () => void {
   const copy = uiCopy(locale);
   root.innerHTML = shellMarkup(locale);
 
@@ -266,7 +280,6 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
   const observationButton = root.querySelector<HTMLButtonElement>(
     '[data-observation-button]',
   );
-  const introSkip = root.querySelector<HTMLButtonElement>('[data-intro-skip]');
   const seedModeLink = root.querySelector<HTMLAnchorElement>(
     '[data-seed-mode-link]',
   );
@@ -294,12 +307,24 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
   const audioDiagnosticStatus = root.querySelector<HTMLElement>(
     '[data-audio-diagnostic-status]',
   );
-  const audioRetry = root.querySelector<HTMLButtonElement>('[data-audio-retry]');
+  const audioRetry =
+    root.querySelector<HTMLButtonElement>('[data-audio-retry]');
+  const roomInteraction = root.querySelector<HTMLElement>(
+    '[data-room-interaction]',
+  );
+  const briefingControls = root.querySelector<HTMLElement>(
+    '[data-briefing-controls]',
+  );
+  const briefingResume = root.querySelector<HTMLButtonElement>(
+    '[data-briefing-resume]',
+  );
+  const briefingSkip = root.querySelector<HTMLButtonElement>(
+    '[data-briefing-skip]',
+  );
 
   if (
     !shell ||
     !observationButton ||
-    !introSkip ||
     !seedModeLink ||
     !introEyebrow ||
     !introCopy ||
@@ -315,7 +340,11 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
     !uncertaintyStatus ||
     !audioDiagnostic ||
     !audioDiagnosticStatus ||
-    !audioRetry
+    !audioRetry ||
+    !roomInteraction ||
+    !briefingControls ||
+    !briefingResume ||
+    !briefingSkip
   ) {
     throw new Error(
       locale === 'en'
@@ -325,20 +354,6 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
   }
 
   const abortController = new AbortController();
-  const introduction = new AgencyIntroduction(locale);
-  const renderIntroduction = (): void => {
-    introEyebrow.textContent = introduction.current.eyebrow;
-    introCopy.textContent = introduction.current.text;
-    shell.dataset.introStep = introduction.current.id;
-    shell.dataset.introComplete = String(introduction.complete);
-    shell.dataset.introSkipped = String(introduction.wasSkipped);
-  };
-  renderIntroduction();
-  const introductionTimer = window.setInterval(() => {
-    introduction.advance(8_000);
-    renderIntroduction();
-    if (introduction.complete) window.clearInterval(introductionTimer);
-  }, 8_000);
   const settings = loadGameSettings();
   const search = new URLSearchParams(window.location.search);
   const requestedMode = search.get('mode');
@@ -391,11 +406,13 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
   const audioDirector = new AudioDirector({
     onStateChange: (snapshot) => {
       shell.dataset.audioState = snapshot.status;
-      if (snapshot.activeClipId) shell.dataset.audioClip = snapshot.activeClipId;
+      if (snapshot.activeClipId)
+        shell.dataset.audioClip = snapshot.activeClipId;
       else delete shell.dataset.audioClip;
       if (snapshot.error) shell.dataset.audioError = snapshot.error;
       else delete shell.dataset.audioError;
-      const failed = snapshot.status === 'blocked' || snapshot.status === 'error';
+      const failed =
+        snapshot.status === 'blocked' || snapshot.status === 'error';
       audioDiagnostic.hidden = !failed;
       audioDiagnosticStatus.textContent =
         snapshot.status === 'blocked' ? copy.audioBlocked : copy.audioError;
@@ -405,18 +422,48 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
   audioRetry.addEventListener(
     'click',
     () => {
-      void audioDirector.startFromGesture().then(() =>
-        audioDirector.retryActiveVoice(),
-      );
+      void audioDirector
+        .startFromGesture()
+        .then(() => audioDirector.retryActiveVoice());
     },
     { signal: abortController.signal },
   );
+  const prologue = new PrologueDirector();
+  prologue.enterRoom();
+  shell.dataset.gamePhase = 'ROOM';
+  let room: AgencyRoom | null = new AgencyRoom(gameRenderer.scene, locale);
+  let playerPhysics: PlayerPhysicsRuntime | null = null;
+  let enterRun = (): void => undefined;
+  const completeBriefing = (): void => {
+    prologue.completeBriefing();
+    shell.dataset.gamePhase = 'PORTAL';
+    systemState.textContent = locale === 'en' ? 'PORTAL READY' : 'PORTAL LISTO';
+    roomInteraction.textContent = copy.enterPortal;
+    roomInteraction.hidden = false;
+    room?.setPhase('PORTAL');
+    playerPhysics?.openProloguePortal();
+  };
+  const briefing = new BriefingPlayback(shell, locale, {
+    onComplete: completeBriefing,
+    onFallbackChapter: (chapter) =>
+      room?.setFallbackSlide(chapter.title, chapter.caption),
+    onMediaState: (state) => {
+      shell.dataset.briefingMedia = state;
+    },
+  });
+  room.attachVideo(briefing.video);
+  briefing.setVolume(settings.volumes.master, settings.volumes.voice);
+  gameRenderer.setWorldAtmosphereVisible(false);
   const originDetails = createOriginDetailField(gameRenderer.scene);
+  originDetails.family.mesh.visible = false;
   const worldBoundary = createWorldBoundaryVisual();
+  worldBoundary.root.visible = false;
   gameRenderer.scene.add(worldBoundary.root);
   const superposition = new SuperpositionRenderer(
     gameRenderer.quality.preset === 'low' ? 'low' : 'medium',
   );
+  superposition.root.visible = false;
+  finalArt.vegetation.root.visible = false;
   gameRenderer.scene.add(superposition.root);
   const stopQualitySync = gameRenderer.onQualityChange((profile) => {
     finalArt.applyQuality(profile);
@@ -426,11 +473,14 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
   const hud = new GameHud(shell, { time: sliceTime }, locale);
   hud.setSubtitlesEnabled(settings.subtitles);
   hud.setHighContrast(settings.highContrast);
-  const narrative = new NarrativeDirector({
-    onMessage: () => undefined,
-    onSubtitle: (message) => hud.showSubtitle(message),
-    onAudioCue: (cue) => audioDirector.playNarrativeCue(cue),
-  }, narrativeCatalog(locale));
+  const narrative = new NarrativeDirector(
+    {
+      onMessage: () => undefined,
+      onSubtitle: (message) => hud.showSubtitle(message),
+      onAudioCue: (cue) => audioDirector.playNarrativeCue(cue),
+    },
+    narrativeCatalog(locale),
+  );
   const portraitTracker = new AttentionPortraitTracker();
   const endingDirector = new EndingDirector();
   const evidenceMode =
@@ -440,6 +490,17 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
   const playerInput = new PlayerInput(shell, {
     keepRunningWithoutPointerLock: evidenceMode,
     onPauseChange: (paused) => {
+      const gamePhase = prologue.snapshot().phase;
+      if (gamePhase === 'BRIEFING') {
+        shell.dataset.paused = String(paused);
+        if (paused) {
+          briefing.pause();
+          briefingControls.hidden = false;
+          briefingSkip.disabled = !prologue.snapshot().canSkip;
+          systemState.textContent = copy.briefingPaused;
+        }
+        return;
+      }
       runClock?.setPaused('MENU', paused);
       shell.dataset.paused = String(paused);
       if (shell.dataset.calibrated === 'true') {
@@ -472,6 +533,7 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
     hud.setSubtitlesEnabled(nextSettings.subtitles);
     hud.setHighContrast(nextSettings.highContrast);
     audioDirector.setVolumes(nextSettings.volumes);
+    briefing.setVolume(nextSettings.volumes.master, nextSettings.volumes.voice);
     audioDirector.setVoicesEnabled(nextSettings.voicesEnabled);
     shell.dataset.reducedFlashes = String(nextSettings.reducedFlashes);
   };
@@ -486,7 +548,40 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
     locale,
   );
   applySettings(settings);
-  let playerPhysics: PlayerPhysicsRuntime | null = null;
+  const beginBriefing = (): void => {
+    const snapshot = prologue.pressButton(true);
+    if (snapshot.phase !== 'BRIEFING') return;
+    shell.dataset.gamePhase = 'BRIEFING';
+    systemState.textContent = copy.briefingPlaying;
+    roomInteraction.hidden = true;
+    briefingControls.hidden = true;
+    room?.setPhase('BRIEFING');
+    briefing.start();
+  };
+  briefingResume.addEventListener(
+    'click',
+    () => {
+      void playerInput.resume().then((resumed) => {
+        if (!resumed) return;
+        briefing.resume();
+        briefingControls.hidden = true;
+        systemState.textContent = copy.briefingPlaying;
+      });
+    },
+    { signal: abortController.signal },
+  );
+  briefingSkip.addEventListener(
+    'click',
+    () => {
+      if (!prologue.snapshot().canSkip) return;
+      prologue.skip();
+      completeBriefing();
+      briefing.skip();
+      briefingControls.hidden = true;
+      void playerInput.resume();
+    },
+    { signal: abortController.signal },
+  );
   let disposed = false;
   const playerPhysicsPromise = createPlayerPhysicsRuntime(camera, playerInput)
     .then((runtime) => {
@@ -495,7 +590,10 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
         return null;
       } else {
         playerPhysics = runtime;
-        if (shell.dataset.calibrated === 'true') runtime.controller.respawn();
+        runtime.activatePrologueRoom();
+        if (shell.dataset.calibrated === 'true') {
+          runtime.controller.respawn(PROLOGUE_ROOM_SPAWN);
+        }
         shell.dataset.physics = 'ready';
         return runtime;
       }
@@ -541,6 +639,7 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
   });
   const worldState = new WorldState();
   const fixedVisuals = new SliceCollapseVisuals(gameRenderer.scene, worldState);
+  fixedVisuals.root.visible = false;
   let resultPresented = false;
   runClock = new RunClock(
     {
@@ -549,6 +648,8 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
         if (remainingSeconds === 30) narrative.play('lastThirtySeconds');
       },
       onEnding: () => {
+        prologue.startEnding();
+        shell.dataset.gamePhase = 'ENDING';
         shell.dataset.ending = 'true';
         playerInput.setEnabled(false);
         superposition.root.visible = false;
@@ -579,8 +680,10 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
     ],
     worldState,
     visuals: fixedVisuals,
-    canObserve: () => runClock!.snapshot().canCommit,
-    canAcceptCollapse: () => runClock!.canCommit(),
+    canObserve: () =>
+      prologue.snapshot().phase === 'RUN' && runClock!.snapshot().canCommit,
+    canAcceptCollapse: () =>
+      prologue.snapshot().phase === 'RUN' && runClock!.canCommit(),
     onCollapseAccepted: () => {
       runClock!.notifyFirstCollapse();
       hud.notifyFirstCollapse();
@@ -593,8 +696,9 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
       }
     },
   });
-  const resetTick = observableWorld.reset(worldSeed);
-  workerState.textContent = `CONTRATO #${String(resetTick).padStart(6, '0')} // SEED`;
+  let worldInitialized = false;
+  workerState.textContent =
+    locale === 'en' ? 'CONTRACT // PROLOGUE' : 'CONTRATO // PRÓLOGO';
 
   const replayMode = search.get('replay');
   const wp5PreviewEnabled = search.get('wp5') !== 'off';
@@ -616,7 +720,9 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
       plan,
       settings.reducedFlashes,
     );
+    wp5Visuals.root.visible = false;
     progressionHud = new ProgressionHud(shell, locale);
+    progressionHud.element.hidden = true;
     shell.dataset.wp5Preview = 'true';
     wp5Preview = new Wp5PreviewRuntime({
       worldSeed,
@@ -644,6 +750,34 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
     });
     progressionHud.update(wp5Preview.progression.snapshot());
   }
+
+  enterRun = (): void => {
+    if (prologue.snapshot().phase !== 'PORTAL') return;
+    prologue.crossPortal();
+    shell.dataset.gamePhase = 'RUN';
+    roomInteraction.hidden = true;
+    briefingControls.hidden = true;
+    room?.dispose();
+    room = null;
+    briefing.dispose();
+    playerPhysics?.deactivatePrologueRoom();
+    playerPhysics?.controller.respawn();
+    gameRenderer.setWorldAtmosphereVisible(true);
+    finalArt.vegetation.root.visible = true;
+    originDetails.family.mesh.visible = true;
+    worldBoundary.root.visible = true;
+    superposition.root.visible = true;
+    fixedVisuals.root.visible = true;
+    if (wp5Visuals) wp5Visuals.root.visible = true;
+    if (progressionHud) progressionHud.element.hidden = false;
+    audioDirector.setAmbienceScene('base');
+    if (!worldInitialized) {
+      const resetTick = observableWorld!.reset(worldSeed);
+      workerState.textContent = `${locale === 'en' ? 'CONTRACT' : 'CONTRATO'} #${String(resetTick).padStart(6, '0')} // SEED`;
+      worldInitialized = true;
+    }
+    systemState.textContent = copy.observing;
+  };
 
   const narrativeCueByPack: Readonly<Record<UnlockablePackId, NarrativeCueId>> =
     {
@@ -728,9 +862,56 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
   let firstDangerAnnounced = false;
   let lastContextualSlot = 0;
   let contextualFixedCells = 0;
+  const briefingTarget = new Vector3(64, 2.35, 58.17);
+  const briefingLookMatrix = new Matrix4();
+  const briefingTargetQuaternion = new Quaternion();
 
   const gameLoop = new GameLoop(({ deltaSeconds, elapsedSeconds }) => {
     const previousClock = runClock!.snapshot();
+    let gamePhase: GamePhase = prologue.snapshot().phase;
+    if (
+      (gamePhase === 'ROOM' || gamePhase === 'PORTAL') &&
+      shell.dataset.calibrated === 'true' &&
+      !playerInput.paused
+    ) {
+      playerPhysics?.controller.update(deltaSeconds);
+    }
+    if (gamePhase === 'BRIEFING') {
+      if (!playerInput.paused) {
+        prologue.update(deltaSeconds);
+        briefing.update(deltaSeconds);
+      }
+      briefingSkip.disabled = !prologue.snapshot().canSkip;
+      briefingLookMatrix.lookAt(camera.position, briefingTarget, camera.up);
+      briefingTargetQuaternion.setFromRotationMatrix(briefingLookMatrix);
+      camera.quaternion.slerp(
+        briefingTargetQuaternion,
+        1 - Math.exp(-deltaSeconds * 2.8),
+      );
+    }
+    const buttonFocused =
+      (gamePhase === 'ROOM' || gamePhase === 'PORTAL') &&
+      room?.isButtonFocused(camera) === true;
+    room?.update(elapsedSeconds, buttonFocused);
+    if (gamePhase === 'ROOM' || gamePhase === 'PORTAL') {
+      roomInteraction.hidden = !buttonFocused && gamePhase !== 'PORTAL';
+      roomInteraction.textContent =
+        gamePhase === 'PORTAL' && !buttonFocused
+          ? copy.enterPortal
+          : gamePhase === 'PORTAL'
+            ? copy.replayBriefing
+            : copy.interactHint;
+      if (playerInput.consumeInteract() && buttonFocused) beginBriefing();
+      if (gamePhase === 'PORTAL' && camera.position.z <= PROLOGUE_PORTAL_Z) {
+        enterRun();
+        gamePhase = prologue.snapshot().phase;
+      }
+    }
+    if (gamePhase !== 'RUN' && gamePhase !== 'ENDING') {
+      debugOverlay?.update();
+      gameRenderer.render();
+      return;
+    }
     if (
       !canonicalReplay &&
       shell.dataset.calibrated === 'true' &&
@@ -770,7 +951,7 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
     ]);
     const nearbyCellIds = observableWorld!.getNearbyCellIds(playerPosition);
     let observationTicks = 0;
-    if (shell.dataset.calibrated === 'true') {
+    if (shell.dataset.calibrated === 'true' && worldInitialized) {
       observationTicks = observableWorld!.update(
         {
           deltaSeconds,
@@ -904,9 +1085,7 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
         announcedPacks.add(packId);
         portraitTracker.recordUnlock(packId);
         audioDirector.playUnlockCue(packId);
-        audioDirector.setAmbienceScene(
-          packId === 'forest' ? 'base' : packId,
-        );
+        audioDirector.setAmbienceScene(packId === 'forest' ? 'base' : packId);
         narrative.play(narrativeCueByPack[packId]);
       }
       if (wp5Snapshot.respawn.deaths > recordedDeaths) {
@@ -1001,11 +1180,8 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
     gameRenderer.render();
   });
 
-  const startCalibration = async (skipIntroduction: boolean): Promise<void> => {
+  const startCalibration = async (): Promise<void> => {
     if (shell.dataset.calibration === 'pending') return;
-    window.clearInterval(introductionTimer);
-    if (skipIntroduction) introduction.skip();
-    renderIntroduction();
     shell.dataset.calibration = 'pending';
     systemState.textContent = locale === 'en' ? 'CALIBRATING' : 'CALIBRANDO';
     shellStatus.textContent =
@@ -1013,7 +1189,6 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
         ? 'Requesting gaze control…'
         : 'Solicitando control de mirada…';
     observationButton.disabled = true;
-    introSkip.disabled = true;
     observationButton
       .querySelector('span')
       ?.replaceChildren(
@@ -1045,7 +1220,6 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
       systemState.textContent = copy.waiting;
       shellStatus.textContent = copy.calibrationFailed;
       observationButton.disabled = false;
-      introSkip.hidden = true;
       observationButton
         .querySelector('span')
         ?.replaceChildren(copy.retryCalibration);
@@ -1066,13 +1240,15 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
         ?.replaceChildren(copy.retryCalibration);
       return;
     }
-    readyPlayerPhysics.controller.respawn();
-    audioDirector.setAmbienceScene('base');
+    readyPlayerPhysics.activatePrologueRoom();
+    readyPlayerPhysics.controller.respawn(PROLOGUE_ROOM_SPAWN);
+    camera.lookAt(64, 1.05, 64);
+    audioDirector.setAmbienceScene('room');
 
     shell.dataset.calibration = 'ready';
     shell.dataset.calibrated = 'true';
-    systemState.textContent = locale === 'en' ? 'CALIBRATED' : 'CALIBRADA';
-    shellStatus.textContent = copy.firstCollapseStartsClock;
+    systemState.textContent = locale === 'en' ? 'IN CHAMBER' : 'EN CÁMARA';
+    shellStatus.textContent = copy.roomHint;
     observationButton
       .querySelector('span')
       ?.replaceChildren(
@@ -1081,12 +1257,7 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
     narrative.play('start');
   };
 
-  observationButton.addEventListener(
-    'click',
-    () => void startCalibration(false),
-    { signal: abortController.signal },
-  );
-  introSkip.addEventListener('click', () => void startCalibration(true), {
+  observationButton.addEventListener('click', () => void startCalibration(), {
     signal: abortController.signal,
   });
 
@@ -1111,10 +1282,10 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
   });
 
   gameLoop.start();
+  if (enterFromLanguageGesture) void startCalibration();
 
   return () => {
     disposed = true;
-    window.clearInterval(introductionTimer);
     abortController.abort();
     gameLoop.stop();
     solverWorker.dispose();
@@ -1123,6 +1294,8 @@ function bootstrapGame(root: HTMLElement, locale: Locale): () => void {
     debugOverlay?.destroy();
     pauseMenu?.destroy();
     audioDirector.dispose();
+    briefing.dispose();
+    room?.dispose();
     superposition.dispose();
     fixedVisuals.dispose();
     wp5Visuals?.dispose();

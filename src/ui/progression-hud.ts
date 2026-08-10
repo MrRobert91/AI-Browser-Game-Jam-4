@@ -11,7 +11,10 @@ export class ProgressionHud {
   private readonly items = new Map<UnlockablePackId, HTMLLIElement>();
   private readonly states = new Map<UnlockablePackId, string>();
 
-  constructor(parent: HTMLElement, private readonly locale: Locale) {
+  constructor(
+    parent: HTMLElement,
+    private readonly locale: Locale,
+  ) {
     const copy = uiCopy(locale);
     this.element = document.createElement('aside');
     this.element.className = 'progression-hud';

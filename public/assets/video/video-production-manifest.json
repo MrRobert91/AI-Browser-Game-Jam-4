@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "generatedAt": "2026-08-10T23:22:29.643Z",
+  "model": "google/veo-3.1-lite",
+  "resolution": "1280x720",
+  "codec": "vp9",
+  "audioTracks": 0,
+  "durationSeconds": 50,
+  "bytes": 5493689,
+  "sha256": "451e5916c31c0b25c5834b3b6075c16d0416748d4a6bcb4d7d2d9c082d6ee939",
+  "estimatedCostUsd": 2.1599999999999997,
+  "actualCostUsd": 2.1599999999999997,
+  "shots": [
+    {
+      "id": "shot-1",
+      "durationSeconds": 8,
+      "prompt": "Retrofuturist corporate training film, 1970s institutional science documentary in a vast white and dark-metal orbital laboratory, cyan practical lighting, a lonely replaceable humanoid field body entering a sealed perfectly smooth spherical chamber, every wall and door completely unmarked and blank, symmetrical wide shot, subtle film grain, slow precise dolly, melancholy and bureaucratic, no display panels, no signs, no logos, no letters, no numbers, no text, no audio.",
+      "jobId": "QeVma0ETU1AiOxVBTbyk",
+      "generationId": "gen-vid-1786403924-18Yz624llj4qHtaa9lfD",
+      "costUsd": 0.24
+    },
+    {
+      "id": "shot-2",
+      "durationSeconds": 8,
+      "prompt": "Retrofuturist scientific training film visualization of an isolated translucent volume suspended in black space, no particles or signals crossing its perfect boundary while external sensor arrays orbit at a respectful distance, cyan and violet coherent light, slow orbital camera, elegant physical realism, institutional documentary, no text, no symbols, no audio.",
+      "jobId": "pZKnSOxM7b57oy5aOFT4",
+      "generationId": "gen-vid-1786403374-Ohkf3oeTXel8aROpsTAW",
+      "costUsd": 0.24
+    },
+    {
+      "id": "shot-3",
+      "durationSeconds": 8,
+      "prompt": "Corporate science film macro journey inside a coherent Possibility Condensate: ghostly overlapping landscapes, geometric ruins, water, vegetation and faint potential organisms occupying the same volume without becoming distinct, beautiful cyan violet white superposition, slow forward movement, no horror, no text, no audio.",
+      "jobId": "1NDYReVOK0lCvaaPAWs9",
+      "generationId": "gen-vid-1786403377-99Hb1Y1qFwfcyNnCFZUe",
+      "costUsd": 0.24
+    },
+    {
+      "id": "shot-4",
+      "durationSeconds": 8,
+      "prompt": "Aged white institutional control room filled only with precise analog retrofuturist machinery: unmarked lenses project many luminous probability silhouettes into the air, then every mechanical arm stops just before selecting one, dry bureaucratic visual comedy, no screens, no gauges, no interface, no human faces, slow lateral camera, no signs, no letters, no numbers, no text, no audio.",
+      "jobId": "CI0Ocgdly59kxcbou0bA",
+      "generationId": "gen-vid-1786403927-t4DBQsGWQdhClyGLFuug",
+      "costUsd": 0.24
+    },
+    {
+      "id": "shot-5",
+      "durationSeconds": 6,
+      "prompt": "Retrofuturist corporate training demonstration: warm light inhabits the chest of a replaceable dark-metal field body, facing a compact cyan measuring instrument made only from a glowing lens and smooth unmarked metal, sealed laboratory chamber, measured slow push-in, elegant and cold, no screen, no interface, no written words, no logos, no audio.",
+      "jobId": "RjntfDK1BpEzALkEEbwW",
+      "generationId": "gen-vid-1786403929-ZThhp3jmE7JXEfiYrYKZ",
+      "costUsd": 0.18
+    },
+    {
+      "id": "shot-6",
+      "durationSeconds": 6,
+      "prompt": "Abstract institutional science visualization: a narrow beam of attention from a field-body visor becomes a measurement basis, several translucent possibilities contract and one warm material landscape propagates in a clean wave across the environment, slow controlled camera, cyan to gold transformation, no equations, no text, no audio.",
+      "jobId": "q454yqSlZjQWWPIJvJoP",
+      "generationId": "gen-vid-1786403386-XPJOhGrgOKhRuqzsi0rj",
+      "costUsd": 0.18
+    },
+    {
+      "id": "shot-7",
+      "durationSeconds": 6,
+      "prompt": "Melancholy retrofuturist training-film finale: footprints, a long shadow and fading memory-like silhouettes become permanent luminous records across a newly materialized world, a circular chamber window slowly closing like a ten-minute clock, distant camera rising, beautiful warm landscape surrounded by dark unresolved grid, no text, no audio.",
+      "jobId": "N8CECC6lhudld18zE0Fi",
+      "generationId": "gen-vid-1786403389-yNMqBXbeWMu3ZzAVGSRj",
+      "costUsd": 0.18
+    }
+  ]
+}

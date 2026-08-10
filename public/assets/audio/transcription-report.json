@@ -1,8 +1,8 @@
 {
   "version": 1,
   "model": "openai/gpt-4o-mini-transcribe",
-  "generatedAt": "2026-08-10T22:49:36.900Z",
-  "totalCostUsd": 0.016003749999999997,
+  "generatedAt": "2026-08-10T23:41:41.885Z",
+  "totalCostUsd": 0.018283749999999994,
   "minimumSimilarity": 0.7272727272727273,
   "entries": [
     {
@@ -169,7 +169,7 @@
       "id": "attentionLongB",
       "locale": "en",
       "expected": "You are studying that possibility very carefully. It has noticed.",
-      "transcription": "You are studying that possibility very carefully, it is noticed.",
+      "transcription": "You are studying that possibility very carefully. It is noticed.",
       "similarity": 0.9,
       "costUsd": 0.0001475
     },
@@ -313,7 +313,7 @@
       "id": "deathAgainC",
       "locale": "en",
       "expected": "The world remains fixed. You, by contrast, remain replaceable.",
-      "transcription": "The world remains fixed. You, by contrast, remain replaceable.",
+      "transcription": "The world remains fixed; you, by contrast, remain replaceable.",
       "similarity": 1,
       "costUsd": 0.00015875
     },
@@ -401,7 +401,7 @@
       "id": "unlockStorm",
       "locale": "es",
       "expected": "Se autorizan intervenciones de alta energía. El riesgo adjunto ha sido clasificado como preferencia del usuario.",
-      "transcription": "Se autorizan intervenciones de alta energía. El riesgo adjunto ha sido clasificado como \"preferencia del usuario\".",
+      "transcription": "Se autorizan intervenciones de alta energía. El riesgo adjunto ha sido clasificado como: preferencia del usuario.",
       "similarity": 1,
       "costUsd": 0.00023625
     },
@@ -417,9 +417,9 @@
       "id": "firstDeath",
       "locale": "es",
       "expected": "El mundo recuerda mejor que tú. Tu fallecimiento ha sido clasificado como formación; se asignará otro cuerpo de campo.",
-      "transcription": "El mundo recuerda mejor que tú. Tu fallecimiento ha sido clasificado como: formación. Se asignará a otro cuerpo de campo.",
+      "transcription": "El mundo recuerda mejor que tú. Tu fallecimiento ha sido clasificado como «formación». Se asignará a otro cuerpo de campo.",
       "similarity": 0.95,
-      "costUsd": 0.00027625
+      "costUsd": 0.00028125
     },
     {
       "id": "respawn",
@@ -625,7 +625,7 @@
       "id": "stalledB",
       "locale": "es",
       "expected": "Pareces inmóvil. Se ha marcado como contemplativo, no como avería.",
-      "transcription": "parece sin móvil. Se ha marcado como contemplativo, no como avería.",
+      "transcription": "parece sin móvil; se ha marcado como contemplativo, no como avería.",
       "similarity": 0.7272727272727273,
       "costUsd": 0.0001825
     },
@@ -708,6 +708,22 @@
       "transcription": "La medida registra experiencia, no verdad. La verdad pertenece a otro departamento.",
       "similarity": 1,
       "costUsd": 0.00019125
+    },
+    {
+      "id": "briefing",
+      "locale": "en",
+      "expected": "Specialist: this Silence Chamber contains your assigned Possibility Condensate. Isolated from the exterior, these volumes preserved collective coherence. Matter, geometry and potential life coexist without a classical history. Machines detect possibilities. Agency doctrine says they cannot conclude measurement. Convenient. Your consciousness occupies a field body. The Measure is your instrument. Your attention defines the measurement basis, never the exact result. Footprints and memories make results irreversible. Your window: ten minutes.",
+      "transcription": "Specialist, this silence chamber contains your assigned possibility condensate. Isolated from the exterior, these volumes preserved collective coherence. Matter, geometry, and potential life coexist without a classical history. Machines detect possibilities. Agency doctrine says they cannot conclude measurement. Convenient. Your consciousness occupies a field body. The measure is your instrument. Your attention defines the measurement basis, never the exact result. Footprints and memories make results irreversible. Your window, ten minutes.",
+      "similarity": 1,
+      "costUsd": 0.00109
+    },
+    {
+      "id": "briefing",
+      "locale": "es",
+      "expected": "Especialista: esta Cámara contiene tu Condensado de Posibilidad asignado. Aislados del exterior, estos volúmenes preservaron coherencia colectiva. Materia, geometría y vida potencial coexisten sin historia clásica. Las máquinas detectan posibilidades. Según la Agencia, no concluyen la medición. Conveniente. Tu consciencia ocupa un cuerpo de campo. La Medida es tu instrumento. Tu atención define la base de medición, nunca el resultado exacto. Huellas y recuerdos vuelven irreversible el resultado. Tienes diez minutos.",
+      "transcription": "Especialista, esta cámara contiene tu condensado de posibilidad asignado. Aislados del exterior, estos volúmenes preservaron coherencia colectiva. Materia, geometría y vida potencial, coexisten sin historia clásica. Las máquinas detectan posibilidades, según la agencia, no concluyen la medición. Conveniente. Tu conciencia ocupa un cuerpo de campo. La medida es tu instrumento. Tu atención define la base de medición, nunca el resultado exacto. Huellas y recuerdos vuelven irreversible el resultado. Tienes diez minutos.",
+      "similarity": 0.9859154929577465,
+      "costUsd": 0.001185
     }
   ]
 }

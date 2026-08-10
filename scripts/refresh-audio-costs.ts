@@ -9,7 +9,9 @@ const manifestPath = resolve(
   import.meta.dirname,
   '../public/assets/audio/audio-manifest.json',
 );
-const manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as AudioAssetManifest;
+const manifest = JSON.parse(
+  await readFile(manifestPath, 'utf8'),
+) as AudioAssetManifest;
 const updated = [];
 for (const asset of manifest.assets) {
   let costUsd = asset.costUsd;
@@ -18,10 +20,17 @@ for (const asset of manifest.assets) {
       `https://openrouter.ai/api/v1/generation?id=${encodeURIComponent(asset.generationId)}`,
       { headers: { Authorization: `Bearer ${apiKey}` } },
     );
-    if (!response.ok) throw new Error(`Accounting failed for ${asset.id}: HTTP ${response.status}`);
-    const payload = (await response.json()) as { data?: { total_cost?: number } };
+    if (!response.ok)
+      throw new Error(
+        `Accounting failed for ${asset.id}: HTTP ${response.status}`,
+      );
+    const payload = (await response.json()) as {
+      data?: { total_cost?: number };
+    };
     if (typeof payload.data?.total_cost !== 'number') {
-      throw new Error(`Accounting is not ready for ${asset.locale}/${asset.id}`);
+      throw new Error(
+        `Accounting is not ready for ${asset.locale}/${asset.id}`,
+      );
     }
     costUsd = payload.data.total_cost;
   }
@@ -33,4 +42,6 @@ await writeFile(
   `${JSON.stringify({ ...manifest, assets: updated, totalCostUsd }, null, 2)}\n`,
   'utf8',
 );
-process.stdout.write(`Refreshed ${updated.length} assets; total $${totalCostUsd.toFixed(6)}\n`);
+process.stdout.write(
+  `Refreshed ${updated.length} assets; total $${totalCostUsd.toFixed(6)}\n`,
+);

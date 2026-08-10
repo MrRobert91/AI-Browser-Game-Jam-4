@@ -30,7 +30,6 @@ const CPU_THROTTLING_RATE = Number(process.env.PROFILE_CPU_RATE ?? '2');
 const WARMUP_MS = Number(process.env.PROFILE_WARMUP_MS ?? '4000');
 const SAMPLE_MS = Number(process.env.PROFILE_SAMPLE_MS ?? '5000');
 const REPLAY_SPEED = Number(process.env.PROFILE_REPLAY_SPEED ?? '1');
-const CALIBRATE = process.env.PROFILE_CALIBRATE !== '0';
 const QUALITY = process.env.PROFILE_QUALITY ?? 'auto';
 const HARDWARE_CORES = Number(process.env.PROFILE_CORES ?? '8');
 const HARDWARE_MEMORY_GB = Number(process.env.PROFILE_MEMORY_GB ?? '8');
@@ -106,7 +105,40 @@ async function measureFrames(): Promise<BrowserProfile> {
     await page.goto(
       `${ORIGIN}/?wp5=preview&replay=wp5&speed=${REPLAY_SPEED}&evidence=1`,
     );
-    if (CALIBRATE) await page.locator('[data-observation-button]').click();
+    await page.locator('[data-enter-language]').click();
+    const shell = page.locator('.observation-shell');
+    await shell.waitFor({ state: 'visible' });
+    await page.keyboard.down('KeyW');
+    const interaction = page.locator('[data-room-interaction]');
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      await page.waitForTimeout(100);
+      if (await interaction.isVisible()) break;
+    }
+    await page.keyboard.up('KeyW');
+    await page.keyboard.press('KeyE');
+    const skip = page.locator('[data-briefing-skip]');
+    await skip.waitFor({ state: 'attached' });
+    for (let attempt = 0; attempt < 120; attempt += 1) {
+      if (await skip.isEnabled()) break;
+      await page.waitForTimeout(100);
+    }
+    await page.keyboard.press('Escape');
+    await skip.click({ force: true });
+    for (let attempt = 0; attempt < 30; attempt += 1) {
+      if ((await shell.getAttribute('data-game-phase')) === 'PORTAL') break;
+      await page.waitForTimeout(100);
+    }
+    await page.keyboard.down('KeyW');
+    for (let attempt = 0; attempt < 80; attempt += 1) {
+      if ((await shell.getAttribute('data-game-phase')) === 'RUN') break;
+      await page.waitForTimeout(100);
+    }
+    await page.keyboard.up('KeyW');
+    if ((await shell.getAttribute('data-game-phase')) !== 'RUN') {
+      throw new Error(
+        `Browser profile could not cross the prologue portal from ${await shell.getAttribute('data-game-phase')}.`,
+      );
+    }
     await page.waitForTimeout(WARMUP_MS);
 
     const profile = (await page.evaluate(`new Promise((resolve) => {

@@ -24,7 +24,8 @@ const CONFIG = {
     locale: 'en' as const,
     model: 'microsoft/mai-voice-2',
     voice: 'en-US-Harper:MAI-Voice-2',
-    style: 'Firm, contained, mature institutional delivery with elegant dry wit; never imitate an existing character or performer.',
+    style:
+      'Firm, contained, mature institutional delivery with elegant dry wit; never imitate an existing character or performer.',
     responseFormat: 'mp3' as const,
     input: (text: string) => text,
     provider: undefined,
@@ -34,7 +35,8 @@ const CONFIG = {
     locale: 'es' as const,
     model: 'google/gemini-3.1-flash-tts-preview',
     voice: 'Kore',
-    style: 'Castellano peninsular neutral, voz femenina madura, precisión institucional, fría y contenida, con sátira burocrática muy seca; sin imitar personajes o intérpretes existentes.',
+    style:
+      'Castellano peninsular neutral, voz femenina madura, precisión institucional, fría y contenida, con sátira burocrática muy seca; sin imitar personajes o intérpretes existentes.',
     responseFormat: 'pcm' as const,
     input: (text: string) =>
       `Habla en castellano de España, con voz femenina madura, precisa, institucional, fría y contenida. Introduce una sátira burocrática muy seca sin caricatura y sin imitar a ningún personaje o intérprete existente. Pronuncia exactamente este texto y nada más:\n\n${text}`,
@@ -45,7 +47,9 @@ const CONFIG = {
 
 function argument(name: string): string | undefined {
   const prefix = `${name}=`;
-  return process.argv.find((value) => value.startsWith(prefix))?.slice(prefix.length);
+  return process.argv
+    .find((value) => value.startsWith(prefix))
+    ?.slice(prefix.length);
 }
 
 async function run(command: string, args: readonly string[]): Promise<string> {
@@ -58,7 +62,10 @@ async function run(command: string, args: readonly string[]): Promise<string> {
     child.on('error', reject);
     child.on('close', (code) => {
       if (code === 0) accept(stdout.trim());
-      else reject(new Error(`${command} failed (${code}): ${stderr.slice(-1200)}`));
+      else
+        reject(
+          new Error(`${command} failed (${code}): ${stderr.slice(-1200)}`),
+        );
     });
   });
 }
@@ -91,39 +98,53 @@ async function synthesize(
         body: JSON.stringify(body),
       });
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${(await response.text()).slice(0, 500)}`);
+        throw new Error(
+          `HTTP ${response.status}: ${(await response.text()).slice(0, 500)}`,
+        );
       }
       const contentType = response.headers.get('content-type') ?? '';
-      const expectedType = config.responseFormat === 'mp3' ? 'audio/mpeg' : 'audio/pcm';
+      const expectedType =
+        config.responseFormat === 'mp3' ? 'audio/mpeg' : 'audio/pcm';
       if (!contentType.includes(expectedType)) {
         throw new Error(`Unexpected content type ${contentType}`);
       }
       const bytes = new Uint8Array(await response.arrayBuffer());
-      if (bytes.byteLength < 2_000) throw new Error('TTS response was too small');
+      if (bytes.byteLength < 2_000)
+        throw new Error('TTS response was too small');
       return {
         bytes,
         generationId: response.headers.get('x-generation-id'),
       };
     } catch (error) {
       lastError = error;
-      if (attempt < 3) await new Promise((resolveDelay) => setTimeout(resolveDelay, attempt * 1_500));
+      if (attempt < 3)
+        await new Promise((resolveDelay) =>
+          setTimeout(resolveDelay, attempt * 1_500),
+        );
     }
   }
   throw lastError;
 }
 
-async function generationCost(apiKey: string, generationId: string | null): Promise<number> {
+async function generationCost(
+  apiKey: string,
+  generationId: string | null,
+): Promise<number> {
   if (!generationId) return 0;
   for (let attempt = 0; attempt < 5; attempt += 1) {
     try {
-      if (attempt > 0) await new Promise((resolveDelay) => setTimeout(resolveDelay, 500));
+      if (attempt > 0)
+        await new Promise((resolveDelay) => setTimeout(resolveDelay, 500));
       const response = await fetch(
         `https://openrouter.ai/api/v1/generation?id=${encodeURIComponent(generationId)}`,
         { headers: { Authorization: `Bearer ${apiKey}` } },
       );
       if (!response.ok) continue;
-      const payload = (await response.json()) as { data?: { total_cost?: number } };
-      if (typeof payload.data?.total_cost === 'number') return payload.data.total_cost;
+      const payload = (await response.json()) as {
+        data?: { total_cost?: number };
+      };
+      if (typeof payload.data?.total_cost === 'number')
+        return payload.data.total_cost;
     } catch {
       // Generation accounting is eventually consistent; retry briefly.
     }
@@ -133,16 +154,23 @@ async function generationCost(apiKey: string, generationId: string | null): Prom
 
 async function main(): Promise<void> {
   const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) throw new Error('OPENROUTER_API_KEY is required in the process environment.');
+  if (!apiKey)
+    throw new Error(
+      'OPENROUTER_API_KEY is required in the process environment.',
+    );
   const requested = argument('--locale') ?? 'all';
-  if (!['all', 'en', 'es'].includes(requested)) throw new Error('--locale must be all, en, or es');
+  if (!['all', 'en', 'es'].includes(requested))
+    throw new Error('--locale must be all, en, or es');
   const limit = Number(argument('--limit') ?? Number.POSITIVE_INFINITY);
   const force = process.argv.includes('--force');
   const catalog = JSON.parse(
     await readFile(resolve(ROOT, 'src/content/narrative.catalog.json'), 'utf8'),
   ) as CatalogEntry[];
-  if (catalog.length !== 44) throw new Error(`Expected 44 narrative cues, found ${catalog.length}.`);
-  const locales = (requested === 'all' ? ['en', 'es'] : [requested]) as ('en' | 'es')[];
+  if (catalog.length !== 44)
+    throw new Error(`Expected 44 narrative cues, found ${catalog.length}.`);
+  const locales = (requested === 'all' ? ['en', 'es'] : [requested]) as (
+    'en' | 'es'
+  )[];
   const assets: AudioAssetEntry[] = [];
   let totalCostUsd = 0;
   for (const locale of locales) {
@@ -168,21 +196,41 @@ async function main(): Promise<void> {
             ? ['-f', 's16le', '-ar', '24000', '-ac', '1', '-i', raw]
             : ['-i', raw];
         await run('ffmpeg', [
-          '-hide_banner', '-loglevel', 'error', '-y', ...inputArguments,
-          '-af', 'loudnorm=I=-16:TP=-1.5:LRA=7', '-ac', '1', '-ar', '44100',
-          '-codec:a', 'libmp3lame', '-b:a', '64k', destination,
+          '-hide_banner',
+          '-loglevel',
+          'error',
+          '-y',
+          ...inputArguments,
+          '-af',
+          'loudnorm=I=-16:TP=-1.5:LRA=7',
+          '-ac',
+          '1',
+          '-ar',
+          '44100',
+          '-codec:a',
+          'libmp3lame',
+          '-b:a',
+          '64k',
+          destination,
         ]);
         await rm(raw, { force: true });
       }
       const bytes = await readFile(destination);
       const duration = Number(
         await run('ffprobe', [
-          '-v', 'error', '-show_entries', 'format=duration',
-          '-of', 'default=noprint_wrappers=1:nokey=1', destination,
+          '-v',
+          'error',
+          '-show_entries',
+          'format=duration',
+          '-of',
+          'default=noprint_wrappers=1:nokey=1',
+          destination,
         ]),
       );
       if (!Number.isFinite(duration) || duration < 1 || duration > 18) {
-        throw new Error(`${locale}/${entry.id} duration ${duration} is outside 1-18 s.`);
+        throw new Error(
+          `${locale}/${entry.id} duration ${duration} is outside 1-18 s.`,
+        );
       }
       const costUsd = await generationCost(apiKey, generationId);
       totalCostUsd += costUsd;
@@ -206,7 +254,9 @@ async function main(): Promise<void> {
         truePeakDbtp: -1.5,
         costUsd,
       });
-      process.stdout.write(`${locale}/${entry.id} ${duration.toFixed(2)}s ${bytes.byteLength}B\n`);
+      process.stdout.write(
+        `${locale}/${entry.id} ${duration.toFixed(2)}s ${bytes.byteLength}B\n`,
+      );
     }
   }
   await mkdir(resolve(ROOT, 'public/assets/audio'), { recursive: true });
@@ -216,8 +266,14 @@ async function main(): Promise<void> {
     assets,
     totalCostUsd,
   };
-  await writeFile(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
-  process.stdout.write(`Generated ${assets.length} assets; reported cost $${totalCostUsd.toFixed(4)}\n`);
+  await writeFile(
+    MANIFEST_PATH,
+    `${JSON.stringify(manifest, null, 2)}\n`,
+    'utf8',
+  );
+  process.stdout.write(
+    `Generated ${assets.length} assets; reported cost $${totalCostUsd.toFixed(4)}\n`,
+  );
 }
 
 await main();

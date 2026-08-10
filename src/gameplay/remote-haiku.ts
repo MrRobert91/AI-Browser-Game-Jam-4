@@ -105,11 +105,7 @@ export async function requestRemoteHaikuWithFallback(
           options.locale === 'en'
             ? approximateEnglishSyllables
             : approximateSpanishSyllables,
-        ) as [
-          number,
-          number,
-          number,
-        ],
+        ) as [number, number, number],
       },
       source: 'remote',
       error: null,

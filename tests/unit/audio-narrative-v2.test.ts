@@ -21,12 +21,24 @@ import {
 
 class MemoryStorage implements Storage {
   private readonly values = new Map<string, string>();
-  get length(): number { return this.values.size; }
-  clear(): void { this.values.clear(); }
-  getItem(key: string): string | null { return this.values.get(key) ?? null; }
-  key(index: number): string | null { return [...this.values.keys()][index] ?? null; }
-  removeItem(key: string): void { this.values.delete(key); }
-  setItem(key: string, value: string): void { this.values.set(key, value); }
+  get length(): number {
+    return this.values.size;
+  }
+  clear(): void {
+    this.values.clear();
+  }
+  getItem(key: string): string | null {
+    return this.values.get(key) ?? null;
+  }
+  key(index: number): string | null {
+    return [...this.values.keys()][index] ?? null;
+  }
+  removeItem(key: string): void {
+    this.values.delete(key);
+  }
+  setItem(key: string, value: string): void {
+    this.values.set(key, value);
+  }
 }
 
 async function productionText(directory: string): Promise<string> {
@@ -35,7 +47,8 @@ async function productionText(directory: string): Promise<string> {
   for (const entry of entries) {
     const path = resolve(directory, entry.name);
     if (entry.isDirectory()) values.push(await productionText(path));
-    else if (/\.(?:ts|json)$/u.test(entry.name)) values.push(await readFile(path, 'utf8'));
+    else if (/\.(?:ts|json)$/u.test(entry.name))
+      values.push(await readFile(path, 'utf8'));
   }
   return values.join('\n');
 }
@@ -110,26 +123,51 @@ describe('bounded bilingual Measure narration', () => {
 describe('generated local audio assets', () => {
   it('matches every manifest hash and stays inside the pre-video budget', async () => {
     const manifest = JSON.parse(
-      await readFile(resolve('public/assets/audio/audio-manifest.json'), 'utf8'),
+      await readFile(
+        resolve('public/assets/audio/audio-manifest.json'),
+        'utf8',
+      ),
     ) as AudioAssetManifest;
-    expect(manifest.assets.filter((asset) => asset.kind === 'voice' && asset.locale === 'en')).toHaveLength(44);
-    expect(manifest.assets.filter((asset) => asset.kind === 'voice' && asset.locale === 'es')).toHaveLength(44);
-    expect(manifest.assets.filter((asset) => asset.kind === 'ambience')).toHaveLength(5);
+    expect(
+      manifest.assets.filter(
+        (asset) =>
+          asset.kind === 'voice' &&
+          asset.locale === 'en' &&
+          asset.id !== 'briefing',
+      ),
+    ).toHaveLength(44);
+    expect(
+      manifest.assets.filter(
+        (asset) =>
+          asset.kind === 'voice' &&
+          asset.locale === 'es' &&
+          asset.id !== 'briefing',
+      ),
+    ).toHaveLength(44);
+    expect(
+      manifest.assets.filter((asset) => asset.kind === 'ambience'),
+    ).toHaveLength(5);
     expect(manifest.totalCostUsd).toBeGreaterThan(0);
     expect(manifest.totalCostUsd).toBeLessThan(1);
     let bytes = 0;
     for (const asset of manifest.assets) {
-      const file = await readFile(resolve('public', asset.path.replace(/^\//u, '')));
+      const file = await readFile(
+        resolve('public', asset.path.replace(/^\//u, '')),
+      );
       bytes += file.byteLength;
       expect(file.subarray(0, 3).toString('ascii')).toBe('ID3');
-      expect(createHash('sha256').update(file).digest('hex')).toBe(asset.sha256);
+      expect(createHash('sha256').update(file).digest('hex')).toBe(
+        asset.sha256,
+      );
       expect(asset.durationSeconds).toBeGreaterThan(1);
     }
-    expect(bytes).toBeLessThan(7_000_000);
+    expect(bytes).toBeLessThan(8_000_000);
   });
 
   it('contains no production references to the removed song, SAPI or old records', async () => {
     const source = `${await productionText(resolve('src'))}\n${await productionText(resolve('scripts'))}`;
-    expect(source).not.toMatch(/la-funcion-que-nos-mira|SAPI\.SpVoice|CollapsadorRecordDirector|custom-song/iu);
+    expect(source).not.toMatch(
+      /la-funcion-que-nos-mira|SAPI\.SpVoice|CollapsadorRecordDirector|custom-song/iu,
+    );
   });
 });

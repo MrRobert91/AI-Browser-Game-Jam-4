@@ -59,7 +59,10 @@ export function closureForSeedCount(
   };
 }
 
-export function formatRunResult(result: RunResult, locale: Locale = 'es'): string {
+export function formatRunResult(
+  result: RunResult,
+  locale: Locale = 'es',
+): string {
   const copy = uiCopy(locale);
   const mode =
     result.seedMode === 'daily' && result.dailyDateKey

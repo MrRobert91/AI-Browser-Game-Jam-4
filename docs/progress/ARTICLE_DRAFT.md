@@ -251,6 +251,41 @@ La reparación convierte «automático» en una decisión observable y reversibl
 
 La segunda mitad del trabajo reduce coste estructural. Las animaciones de colapso conservan sus 450–700 ms, pero al terminar ya no dejan dos draw calls permanentes: terreno y feature entran en siete lotes instanciados como máximo. Lecturas del mundo, centros, vecindarios y vector de cámara se reutilizan; el contador de celdas fijadas pasa a O(1); la superposición sigue la cadencia normativa de 10 Hz; HUD y retícula no reescriben DOM si el valor no cambió.
 
+## Antes de observar, la Agencia necesita que aceptes su versión
+
+El acceso directo al Condensado ocultaba demasiado contexto. El nuevo arranque
+obliga a escoger inglés o español y sitúa el cuerpo de campo en un laboratorio
+cerrado. Caminar hasta un botón coral y pulsarlo convierte el tutorial en una
+acción física; la pantalla reproduce un briefing corporativo de cincuenta
+segundos y después se vuelve portal. Sala, vídeo y portal no consumen reloj: el
+tiempo sigue empezando con el primer colapso.
+
+![Sala de la Agencia y botón de briefing](./issue-94-bilingual-prologue/02-room.png)
+
+La película usa siete planos silenciosos de Veo 3.1 Lite y captions HTML. La
+primera hoja de contactos reveló texto accidental en tres tomas; se rechazaron
+y regeneraron antes del montaje final. La narración se compuso por segmentos en
+dos idiomas sobre una línea temporal común. Si WebM o códec fallan, siete
+láminas locales conservan voz y captions y el portal sigue abriéndose.
+
+![Briefing local con captions obligatorios](./issue-94-bilingual-prologue/03-briefing.png)
+
+La canción y las veinte voces SAPI desaparecen del build. La Medida dispone
+ahora de 44 cues originales por idioma y reproduce como máximo 22 por partida,
+con prioridad, contexto, cooldown y estado observable. Harper aporta la voz
+inglesa contenida; Kore, dirigida en castellano peninsular, la española. No se
+imita a GLaDOS: la referencia queda en la frialdad institucional y la sátira
+burocrática, no en un personaje o intérprete existente.
+
+[Ver sala → briefing → portal → primer colapso](./issue-94-bilingual-prologue/room-briefing-portal-collapse.webm)
+
+El briefing tampoco presenta su propaganda como física. «Las máquinas no
+concluyen la medición» se atribuye expresamente a la Agencia y se remata como
+una doctrina conveniente. Así, Colapsador, cuerpo de campo y La Medida pueden
+explicar la ficción sin convertir la conciencia en una causa científica de
+colapso. Todo el runtime sigue siendo local: 12,65 MB entre audio y vídeo, cero
+credenciales y cero llamadas a modelos durante la partida.
+
 ![Replay optimizado en la ruta de bajo consumo](./issue-89-performance/optimized-gameplay.png)
 
 [Ver perfil visual optimizado (WebM, 11,12 s)](./issue-89-performance/optimized-gameplay.webm)

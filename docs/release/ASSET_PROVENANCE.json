@@ -31,25 +31,33 @@
       "path": "src/audio/**",
       "kind": "local audio runtime and bounded sound effects",
       "tool": "Web Audio API",
-      "process": "a local generated song is routed through separate master/music buses; oscillators are allocated only for short event cues after a user gesture",
-      "editing": "human-directed implementation, removal of continuous tones and accessibility tuning",
+      "process": "local voice, ambience and effects assets are routed through master/voice/ambience/effects buses after a user gesture",
+      "editing": "human-directed implementation, removal of the prior song and continuous tones, and accessibility tuning",
       "license": "Original project source under repository license"
     },
     {
-      "path": "public/assets/audio/la-funcion-que-nos-mira.mp3",
-      "kind": "original generated Spanish song",
-      "tool": "OpenRouter: openai/gpt-5.4-mini for lyrics, then google/lyria-3-pro-preview for music",
-      "process": "lyrics were generated first from the game design; two full-song candidates were generated and the more faithful take was selected after ffprobe, loudness and speech-transcription checks",
-      "editing": "human-directed brief, deterministic seed, candidate comparison and local runtime integration",
+      "path": "public/assets/audio/voice/{en,es}/*.mp3",
+      "kind": "bilingual local narrative voice pack",
+      "tool": "OpenRouter: microsoft/mai-voice-2 Harper for English and google/gemini-3.1-flash-tts-preview Kore for Spanish; FFmpeg 8.1.2",
+      "process": "44 approved cues per locale synthesized once, normalized to mono MP3 and verified by transcription, loudness, hashes and browser playback",
+      "editing": "human-directed copy and original institutional voice direction; no imitation of an existing character or performer",
       "license": "Original generated project content distributed with the game"
     },
     {
-      "path": "public/assets/audio/narrative/*.mp3",
-      "kind": "local Spanish narrative voices",
-      "tool": "Microsoft Helena Desktop es-ES via Windows SAPI; FFmpeg 8.1.2",
-      "process": "20 approved introduction, event and Collapsador lines synthesized offline, high-pass/low-pass filtered and EBU R128 normalized to mono MP3",
-      "editing": "human-directed copy, voice-rate direction, bounded queue integration, subtitle synchronization and browser QA",
-      "license": "Generated locally from the operating-system voice for distribution with this project; verify platform redistribution terms before commercial reuse"
+      "path": "public/assets/audio/briefing/{en,es}.mp3",
+      "kind": "localized 50-second briefing narration",
+      "tool": "same OpenRouter voice models as the narrative pack; FFmpeg 8.1.2",
+      "process": "seven segments per locale fitted to a shared timeline, normalized, hashed and transcription-validated",
+      "editing": "human-directed concise propaganda script with QBism disclaimer encoded in the Agency's wording",
+      "license": "Original generated project content distributed with the game"
+    },
+    {
+      "path": "public/assets/video/agency-briefing.webm",
+      "kind": "silent retrofuturist institutional briefing",
+      "tool": "OpenRouter google/veo-3.1-lite; FFmpeg 8.1.2",
+      "process": "seven silent 720p shots generated asynchronously, visually reviewed, three rejected shots replaced, then mounted as one 50-second VP9 WebM",
+      "editing": "contact-sheet review, local captions, seven WebP fallback frames and codec/duration/audio-track validation",
+      "license": "Original generated project content distributed with the game"
     },
     {
       "path": "public/favicon.svg",

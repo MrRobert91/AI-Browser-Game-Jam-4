@@ -8,15 +8,24 @@
     { "text": "You crossed the unknown.", "tags": ["danger", "impatient"] }
   ],
   "middles": [
-    { "text": "Only the road you witnessed", "tags": ["cartographer", "revisit"] },
-    { "text": "Beyond the reach of your eyes", "tags": ["water", "unresolved"] },
+    {
+      "text": "Only the road you witnessed",
+      "tags": ["cartographer", "revisit"]
+    },
+    {
+      "text": "Beyond the reach of your eyes",
+      "tags": ["water", "unresolved"]
+    },
     { "text": "The forest waited longer", "tags": ["forest", "death"] },
     { "text": "Stone archives borrowed light", "tags": ["ruin", "witness"] },
     { "text": "Where you allowed time to rest", "tags": ["dwell", "witness"] },
     { "text": "Distance learned how to burn", "tags": ["danger", "impatient"] }
   ],
   "closings": [
-    { "text": "still remembers your steps.", "tags": ["cartographer", "revisit"] },
+    {
+      "text": "still remembers your steps.",
+      "tags": ["cartographer", "revisit"]
+    },
     { "text": "the sea remains unsure.", "tags": ["water", "unresolved"] },
     { "text": "and kept the shape you lost.", "tags": ["forest", "death"] },
     { "text": "then quietly spoke your name.", "tags": ["ruin", "witness"] },
@@ -24,10 +33,30 @@
     { "text": "without learning your shadow.", "tags": ["danger", "impatient"] }
   ],
   "fallbacks": [
-    ["A thousand paths wait.", "Only the road you witnessed", "still remembers your steps."],
-    ["The water finds an edge.", "Beyond the reach of your eyes", "the sea remains unsure."],
-    ["Three bodies returned.", "The forest waited longer", "and kept the shape you lost."],
-    ["Your patient gaze remains.", "Where you allowed time to rest", "possibility sleeps."],
-    ["You crossed the unknown.", "Distance learned how to burn", "without learning your shadow."]
+    [
+      "A thousand paths wait.",
+      "Only the road you witnessed",
+      "still remembers your steps."
+    ],
+    [
+      "The water finds an edge.",
+      "Beyond the reach of your eyes",
+      "the sea remains unsure."
+    ],
+    [
+      "Three bodies returned.",
+      "The forest waited longer",
+      "and kept the shape you lost."
+    ],
+    [
+      "Your patient gaze remains.",
+      "Where you allowed time to rest",
+      "possibility sleeps."
+    ],
+    [
+      "You crossed the unknown.",
+      "Distance learned how to burn",
+      "without learning your shadow."
+    ]
   ]
 }

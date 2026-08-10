@@ -7,11 +7,19 @@ import type { AudioAssetManifest } from '../src/contracts/localization';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const MANIFEST_PATH = resolve(ROOT, 'public/assets/audio/audio-manifest.json');
-const requestedId = process.argv.find((value) => value.startsWith('--id='))?.split('=')[1];
-const requestedLocale = process.argv.find((value) => value.startsWith('--locale='))?.split('=')[1];
-const limiter = process.argv.find((value) => value.startsWith('--limiter='))?.split('=')[1] ?? '0.7943';
+const requestedId = process.argv
+  .find((value) => value.startsWith('--id='))
+  ?.split('=')[1];
+const requestedLocale = process.argv
+  .find((value) => value.startsWith('--locale='))
+  ?.split('=')[1];
+const limiter =
+  process.argv.find((value) => value.startsWith('--limiter='))?.split('=')[1] ??
+  '0.7943';
 
-async function run(args: readonly string[]): Promise<{ stdout: string; stderr: string }> {
+async function run(
+  args: readonly string[],
+): Promise<{ stdout: string; stderr: string }> {
   return await new Promise((accept, reject) => {
     const child = spawn('ffmpeg', [...args], { windowsHide: true });
     let stdout = '';
@@ -34,7 +42,9 @@ function loudnessJson(stderr: string): {
   return JSON.parse(match[0]) as ReturnType<typeof loudnessJson>;
 }
 
-const manifest = JSON.parse(await readFile(MANIFEST_PATH, 'utf8')) as AudioAssetManifest;
+const manifest = JSON.parse(
+  await readFile(MANIFEST_PATH, 'utf8'),
+) as AudioAssetManifest;
 const assets = [];
 for (const asset of manifest.assets) {
   if (
@@ -48,16 +58,37 @@ for (const asset of manifest.assets) {
   const destination = resolve(ROOT, 'public', asset.path.replace(/^\//u, ''));
   const temporary = `${destination}.normalized.mp3`;
   const firstPass = await run([
-    '-hide_banner', '-nostats', '-i', destination,
-    '-af', 'loudnorm=I=-16:TP=-1.5:LRA=7:print_format=json', '-f', 'null', 'NUL',
+    '-hide_banner',
+    '-nostats',
+    '-i',
+    destination,
+    '-af',
+    'loudnorm=I=-16:TP=-1.5:LRA=7:print_format=json',
+    '-f',
+    'null',
+    'NUL',
   ]);
   const measured = loudnessJson(firstPass.stderr);
   const correctionDb = -16 - Number(measured.input_i);
   const filter = `volume=${correctionDb.toFixed(2)}dB,alimiter=limit=${limiter}:attack=5:release=80:level=false`;
   await run([
-    '-hide_banner', '-loglevel', 'error', '-y', '-i', destination,
-    '-af', filter, '-ac', '1', '-ar', '44100',
-    '-codec:a', 'libmp3lame', '-b:a', '64k', temporary,
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-y',
+    '-i',
+    destination,
+    '-af',
+    filter,
+    '-ac',
+    '1',
+    '-ar',
+    '44100',
+    '-codec:a',
+    'libmp3lame',
+    '-b:a',
+    '64k',
+    temporary,
   ]);
   await copyFile(temporary, destination);
   await rm(temporary, { force: true });

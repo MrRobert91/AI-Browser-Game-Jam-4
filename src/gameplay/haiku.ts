@@ -101,25 +101,29 @@ export function generateHaiku(
   const tags = tagsForPortrait(portrait, profile);
   const fallbackIndex =
     nextUint32(
-      createRng(deriveSeed(worldSeed, `haiku:${locale}:${PROFILE_TAG[profile]}`)),
+      createRng(
+        deriveSeed(worldSeed, `haiku:${locale}:${PROFILE_TAG[profile]}`),
+      ),
     ) % catalog.fallbacks.length;
-  const fallback =
-    catalog.fallbacks[fallbackIndex] ?? catalog.fallbacks[0]!;
+  const fallback = catalog.fallbacks[fallbackIndex] ?? catalog.fallbacks[0]!;
   const lines = [
-    chooseLine(catalog.openings, tags, worldSeed, 'opening', locale) ?? fallback[0]!,
-    chooseLine(catalog.middles, tags, worldSeed, 'middle', locale) ?? fallback[1]!,
-    chooseLine(catalog.closings, tags, worldSeed, 'closing', locale) ?? fallback[2]!,
-  ].map((line) => fitApproximateMetric(line, locale)) as [string, string, string];
+    chooseLine(catalog.openings, tags, worldSeed, 'opening', locale) ??
+      fallback[0]!,
+    chooseLine(catalog.middles, tags, worldSeed, 'middle', locale) ??
+      fallback[1]!,
+    chooseLine(catalog.closings, tags, worldSeed, 'closing', locale) ??
+      fallback[2]!,
+  ].map((line) => fitApproximateMetric(line, locale)) as [
+    string,
+    string,
+    string,
+  ];
   return {
     lines,
     approximateSyllables: lines.map((line) =>
       locale === 'es'
         ? approximateSpanishSyllables(line)
         : approximateEnglishSyllables(line),
-    ) as [
-      number,
-      number,
-      number,
-    ],
+    ) as [number, number, number],
   };
 }

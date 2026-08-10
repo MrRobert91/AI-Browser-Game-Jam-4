@@ -11,11 +11,7 @@ export interface AudioVolumes {
 }
 
 export type AudioPlaybackStatus =
-  | 'idle'
-  | 'ready'
-  | 'playing'
-  | 'blocked'
-  | 'error';
+  'idle' | 'ready' | 'playing' | 'blocked' | 'error';
 
 export type AmbienceScene = 'room' | 'base' | 'water' | 'ruin' | 'storm';
 
@@ -291,7 +287,11 @@ export class AudioDirector {
     try {
       await this.context!.resume();
       const ready = this.context!.state === 'running';
-      this.setPlayback(ready ? 'ready' : 'blocked', null, ready ? null : 'AudioContext suspended');
+      this.setPlayback(
+        ready ? 'ready' : 'blocked',
+        null,
+        ready ? null : 'AudioContext suspended',
+      );
       if (ready) {
         for (const track of this.ambienceTracks.values()) {
           void track.element.play().catch(() => undefined);
@@ -318,7 +318,11 @@ export class AudioDirector {
     this.voiceElement.preload = 'auto';
     this.voiceElement.onended = () => this.finishVoice();
     this.voiceElement.onerror = () => {
-      this.setPlayback('error', this.activeVoice?.id ?? null, 'Voice asset failed');
+      this.setPlayback(
+        'error',
+        this.activeVoice?.id ?? null,
+        'Voice asset failed',
+      );
     };
     this.voiceSource = context.createMediaElementSource(this.voiceElement);
     this.voiceSource.connect(this.voiceBus);
@@ -338,7 +342,8 @@ export class AudioDirector {
   }
 
   private enqueueVoice(request: VoiceRequest): void {
-    if (!this.voiceEnabled || !this.voiceElement || !request.isContextValid()) return;
+    if (!this.voiceEnabled || !this.voiceElement || !request.isContextValid())
+      return;
     if (!this.activeVoice) {
       this.startVoice(request);
       return;

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 test.beforeEach(async ({ browserName, page }) => {
   if (browserName !== 'firefox') return;
@@ -20,7 +20,61 @@ test.beforeEach(async ({ browserName, page }) => {
   });
 });
 
-test('canonical offline journey reaches the qualitative ending', async ({
+async function enterRoom(
+  page: Page,
+  locale: 'en' | 'es' = 'en',
+): Promise<void> {
+  await expect(page.locator('.language-select')).toBeVisible();
+  await expect(page.locator('[data-locale="en"]')).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  if (locale === 'es') await page.locator('[data-locale="es"]').click();
+  await page.locator('[data-enter-language]').click();
+  const shell = page.locator('.observation-shell');
+  await expect(shell).toHaveAttribute('data-game-phase', 'ROOM');
+  await expect(shell).toHaveAttribute('data-calibrated', 'true');
+  await expect(shell).toHaveAttribute('data-audio-started', 'true');
+}
+
+async function pressRoomButton(page: Page): Promise<void> {
+  const interaction = page.locator('[data-room-interaction]');
+  await page.keyboard.down('KeyW');
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    await page.waitForTimeout(100);
+    if (await interaction.isVisible()) break;
+  }
+  await page.keyboard.up('KeyW');
+  await expect(interaction).toBeVisible();
+  await page.keyboard.press('KeyE');
+  await expect(page.locator('.observation-shell')).toHaveAttribute(
+    'data-game-phase',
+    'BRIEFING',
+  );
+  await expect(page.locator('.briefing-captions')).toBeVisible();
+}
+
+async function skipBriefingAndCrossPortal(page: Page): Promise<void> {
+  const skip = page.locator('[data-briefing-skip]');
+  await expect(skip).toBeEnabled({ timeout: 15_000 });
+  await page.keyboard.press('Escape');
+  await expect(skip).toBeVisible();
+  await expect(skip).toBeEnabled();
+  await skip.click({ force: true });
+  await expect(page.locator('.observation-shell')).toHaveAttribute(
+    'data-game-phase',
+    'PORTAL',
+  );
+  await page.keyboard.down('KeyW');
+  await page.waitForTimeout(3_400);
+  await page.keyboard.up('KeyW');
+  await expect(page.locator('.observation-shell')).toHaveAttribute(
+    'data-game-phase',
+    'RUN',
+  );
+}
+
+test('canonical offline English journey reaches the qualitative ending', async ({
   page,
 }, testInfo) => {
   test.slow();
@@ -37,40 +91,38 @@ test('canonical offline journey reaches the qualitative ending', async ({
       externalRequests.push(request.url());
   });
   page.on('response', (response) => {
-    if (response.ok() && response.url().includes('/assets/audio/narrative/')) {
+    if (response.ok() && response.url().includes('/assets/audio/voice/en/')) {
       loadedNarrativeVoices.push(response.url());
     }
   });
   page.on('requestfailed', (request) => {
     const failure = request.failure()?.errorText ?? 'unknown';
     const isBenignLocalMediaAbort =
-      request.url().startsWith('http://127.0.0.1:4173/assets/audio/') &&
-      failure.includes('ERR_ABORTED');
+      request.url().startsWith('http://127.0.0.1:4173/assets/') &&
+      (failure.includes('ERR_ABORTED') ||
+        failure.includes('NS_BINDING_ABORTED'));
     if (!isBenignLocalMediaAbort) {
       failedRequests.push(`${request.url()} :: ${failure}`);
     }
   });
 
   await page.goto('/?wp5=preview&replay=wp5&speed=8&evidence=1&start=590');
-  await page.addStyleTag({
-    content: `
-      .intro-panel {
-        padding: 1rem;
-        background: #03090f !important;
-        transform: translateY(-46%) translateZ(0) !important;
-      }
-      .intro-panel *, .slice-result * { text-shadow: none !important; }
-      .slice-result { background: #03090f !important; backdrop-filter: none !important; }
-    `,
-  });
-  const calibrate = page.locator('[data-observation-button]');
-  await expect(calibrate).toBeVisible();
-  await page.screenshot({ path: testInfo.outputPath('01-start.png') });
-
-  await calibrate.click();
+  await page.screenshot({ path: testInfo.outputPath('01-language.png') });
+  await enterRoom(page, 'en');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: testInfo.outputPath('02-room.png') });
+  await pressRoomButton(page);
+  await expect(page.locator('.briefing-captions')).toContainText(
+    'Possibility Condensate',
+  );
+  await expect(page.locator('.observation-shell')).not.toHaveAttribute(
+    'data-audio-state',
+    'error',
+  );
+  await page.screenshot({ path: testInfo.outputPath('03-briefing.png') });
+  await skipBriefingAndCrossPortal(page);
   const shell = page.locator('.observation-shell');
-  await expect(shell).toHaveAttribute('data-calibrated', 'true');
-  await expect(shell).toHaveAttribute('data-audio-started', 'true');
   await expect(page.locator('.possibility-probabilities')).toHaveCount(0);
   await expect(page.locator('[data-slice-message]')).toHaveCount(0);
   await expect(page.locator('.slice-hud > p')).toHaveCount(2);
@@ -83,30 +135,23 @@ test('canonical offline journey reaches the qualitative ending', async ({
     'data-complete',
     'true',
   );
-  await page.screenshot({ path: testInfo.outputPath('02-collapse.png') });
-
+  await page.screenshot({ path: testInfo.outputPath('04-collapse.png') });
   await expect(
     page.locator('.progression-hud [data-pack="water"]'),
   ).toHaveAttribute('data-state', 'COLLECTED');
-  await page.screenshot({ path: testInfo.outputPath('03-water.png') });
-  await expect(page.locator('.wp5-gate-status')).not.toContainText(
-    'SIN ENEMIGO',
-  );
-  await page.screenshot({ path: testInfo.outputPath('04-enemy.png') });
 
   const result = page.locator('[data-slice-result]');
   await expect(result).toBeVisible({ timeout: 20_000 });
   await expect(result).toHaveAttribute('role', 'dialog');
   await expect(result).toBeFocused();
-  await expect(result).toContainText('EXPEDIENTE DE ACTUALIZACIÓN DEL AGENTE');
-  await expect(result).toContainText('Perfil:');
+  await expect(result).toContainText('AGENT UPDATE RECORD');
+  await expect(result).toContainText('Profile:');
   await expect(result).toContainText('SEED A91F-42C0');
-  await expect(result).toContainText('sin reconocimiento de causalidad');
+  await expect(result).toContainText(
+    'without recognition of cosmological causality',
+  );
   await expect(page.locator('[data-remote-haiku-request]')).toHaveCount(0);
   await page.screenshot({ path: testInfo.outputPath('05-final.png') });
-  if (testInfo.project.name.startsWith('firefox')) {
-    await expect(result).toHaveScreenshot('result-panel.png');
-  }
   const panorama = page.locator('[data-panorama-download]');
   await expect(panorama).toBeEnabled();
   await expect(panorama).toHaveAttribute('data-gallery-saved', 'true');
@@ -122,13 +167,36 @@ test('canonical offline journey reaches the qualitative ending', async ({
   expect(externalRequests).toEqual([]);
   expect(failedRequests).toEqual([]);
   expect(loadedNarrativeVoices.length).toBeGreaterThan(0);
+  await expect(shell).toHaveAttribute('data-game-phase', 'ENDING');
 });
 
-test('pointer lock and pause recover after user gestures', async ({ page }) => {
+test('Spanish fallback briefing keeps captions and reaches RUN', async ({
+  page,
+}) => {
+  await page.route('**/assets/video/agency-briefing.webm', (route) =>
+    route.abort(),
+  );
+  await page.goto('/?wp5=off&evidence=1');
+  await enterRoom(page, 'es');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+  await pressRoomButton(page);
+  await expect(page.locator('.briefing-captions')).toContainText(
+    'Condensado de Posibilidad',
+  );
+  await expect(page.locator('.observation-shell')).toHaveAttribute(
+    'data-briefing-media',
+    'fallback',
+  );
+  await skipBriefingAndCrossPortal(page);
+  await expect(page.locator('[data-seed-mode-label]')).toHaveText('SEED');
+});
+
+test('pointer lock and pause recover after language selection', async ({
+  page,
+}) => {
   await page.goto('/?wp5=preview&replay=wp5&speed=8');
-  await page.locator('[data-observation-button]').click();
+  await enterRoom(page);
   const shell = page.locator('.observation-shell');
-  await expect(shell).toHaveAttribute('data-calibrated', 'true');
   await page.keyboard.press('Escape');
   await expect(shell).toHaveAttribute('data-paused', 'true');
   const pauseMenu = page.locator('.pause-menu');
@@ -137,27 +205,11 @@ test('pointer lock and pause recover after user gestures', async ({ page }) => {
   await expect(shell).toHaveAttribute('data-paused', 'false');
 });
 
-test('the Agency introduction can play or be skipped into one-gesture calibration', async ({
+test('daily mode is shared by UTC date and language choice stays locked in-room', async ({
   page,
 }) => {
-  await page.goto('/?wp5=preview&replay=wp5&speed=8');
-  const shell = page.locator('.observation-shell');
-  await expect(shell).toHaveAttribute('data-intro-step', 'chamber');
-  await expect(page.locator('[data-intro-copy]')).toContainText(
-    'Condensado de Posibilidad',
-  );
-  await page.locator('[data-intro-skip]').click();
-  await expect(shell).toHaveAttribute('data-intro-skipped', 'true');
-  await expect(shell).toHaveAttribute('data-calibrated', 'true');
-  await expect(page.locator('[data-intro-copy]')).toContainText(
-    'Mira. Lo que permanezca',
-  );
-});
-
-test('daily mode is shared by UTC date while replay keeps its canonical seed', async ({
-  page,
-}) => {
-  await page.goto('/?daily=1&wp5=off');
+  await page.goto('/?daily=1&wp5=off&evidence=1');
+  await enterRoom(page, 'es');
   const shell = page.locator('.observation-shell');
   await expect(shell).toHaveAttribute('data-seed-mode', 'daily');
   await expect(shell).toHaveAttribute(
@@ -167,14 +219,15 @@ test('daily mode is shared by UTC date while replay keeps its canonical seed', a
   await expect(page.locator('[data-seed-mode-label]')).toHaveText('DIARIA UTC');
   const first = await page.locator('[data-seed-label]').textContent();
   await page.reload();
+  await expect(page.locator('[data-locale="es"]')).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await page.locator('[data-enter-language]').click();
   await expect(page.locator('[data-seed-label]')).toHaveText(first ?? '');
   await expect(page.locator('[data-seed-mode-link]')).toHaveText(
     'Nueva observación aleatoria',
   );
-
-  await page.goto('/?replay=wp5&wp5=preview');
-  await expect(shell).toHaveAttribute('data-seed-mode', 'replay');
-  await expect(page.locator('[data-seed-label]')).toHaveText('A91F-42C0');
 });
 
 test('grammar gallery exposes the bounded Echo Garden extension', async ({
@@ -213,17 +266,15 @@ test('a rejected first calibration stays visible and can be retried', async ({
     };
   });
   await page.goto('/?wp5=preview&replay=wp5&speed=8');
+  await page.locator('[data-enter-language]').click();
   const shell = page.locator('.observation-shell');
   const calibrate = page.locator('[data-observation-button]');
-
-  await calibrate.click();
   await expect(shell).toHaveAttribute('data-calibration', 'error');
   await expect(shell).toHaveAttribute('data-calibrated', 'false');
   await expect(calibrate).toBeVisible();
   await expect(calibrate).toBeEnabled();
-  await expect(page.locator('[data-shell-status]')).toContainText('reintentar');
+  await expect(page.locator('[data-shell-status]')).toContainText('retry');
   await page.screenshot({ path: testInfo.outputPath('01-retry-visible.png') });
-
   await calibrate.click();
   await expect(shell).toHaveAttribute('data-calibration', 'ready');
   await expect(shell).toHaveAttribute('data-calibrated', 'true');

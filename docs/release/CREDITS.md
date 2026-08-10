@@ -8,8 +8,9 @@ La Última Observación fue diseñada y construida para AI Browser Game Jam 4.
 - Física: Rapier (`@dimforge/rapier3d-compat`).
 - Tooling: TypeScript, Vite, Vitest y Playwright.
 - Modelos y materiales durante la partida: proxies y generación procedural local.
-- Canción original «La función que nos mira»: letra con `openai/gpt-5.4-mini` y música con `google/lyria-3-pro-preview`, generadas previamente mediante OpenRouter y distribuidas como MP3 local.
-- Voces narrativas: Microsoft Helena Desktop (`es-ES`) mediante SAPI de Windows, dirigidas y procesadas localmente con FFmpeg; 20 MP3 incluidos en el build sin TTS de runtime.
-- Efectos: síntesis local de eventos breves con Web Audio API; no existen osciladores continuos de ambiente.
+- Voz inglesa de La Medida: `microsoft/mai-voice-2`, Harper (`en-US`), generada una vez mediante OpenRouter.
+- Voz española de La Medida: `google/gemini-3.1-flash-tts-preview`, Kore, dirigida en castellano peninsular y generada una vez mediante OpenRouter.
+- Briefing visual: siete planos de `google/veo-3.1-lite` generados sin audio ni texto intencional; montaje, fallbacks y control de calidad locales con FFmpeg.
+- Ambientes no musicales y efectos: assets originales locales y eventos breves con Web Audio API. La canción y las voces SAPI anteriores no forman parte del build.
 
 La procedencia detallada está en `ASSET_PROVENANCE.json`. El juego no recopila telemetría, no contiene credenciales y no envía datos a modelos durante la partida.

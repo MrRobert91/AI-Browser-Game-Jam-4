@@ -93,7 +93,12 @@ export function normalizeGameSettings(value: unknown): GameSettings {
     quality,
     volumes: {
       master: finiteRange(volumes.master, 0.75, 0, 1),
-      voice: finiteRange(legacyVolumes.voice, legacyVolumes.effects ?? 0.78, 0, 1),
+      voice: finiteRange(
+        legacyVolumes.voice,
+        legacyVolumes.effects ?? 0.78,
+        0,
+        1,
+      ),
       ambience: finiteRange(
         legacyVolumes.ambience,
         legacyVolumes.music ?? 0.55,

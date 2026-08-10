@@ -31,7 +31,10 @@ async function run(command: string, args: readonly string[]): Promise<string> {
     child.on('error', reject);
     child.on('close', (code) => {
       if (code === 0) accept(stdout.trim());
-      else reject(new Error(`${command} failed (${code}): ${stderr.slice(-1200)}`));
+      else
+        reject(
+          new Error(`${command} failed (${code}): ${stderr.slice(-1200)}`),
+        );
     });
   });
 }
@@ -45,17 +48,38 @@ const ambienceAssets: AudioAssetEntry[] = [];
 for (const [scene, filter] of Object.entries(SCENES)) {
   const destination = resolve(DIRECTORY, `${scene}.mp3`);
   await run('ffmpeg', [
-    '-hide_banner', '-loglevel', 'error', '-y',
-    '-f', 'lavfi', '-i', `anoisesrc=color=pink:sample_rate=44100:duration=${DURATION_SECONDS}:seed=${scene.length * 7919}`,
-    '-af', `${filter},afade=t=in:st=0:d=0.08,afade=t=out:st=19.92:d=0.08,loudnorm=I=-24:TP=-3:LRA=5`,
-    '-t', String(DURATION_SECONDS), '-ac', '1', '-ar', '44100',
-    '-codec:a', 'libmp3lame', '-b:a', '64k', destination,
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-y',
+    '-f',
+    'lavfi',
+    '-i',
+    `anoisesrc=color=pink:sample_rate=44100:duration=${DURATION_SECONDS}:seed=${scene.length * 7919}`,
+    '-af',
+    `${filter},afade=t=in:st=0:d=0.08,afade=t=out:st=19.92:d=0.08,loudnorm=I=-24:TP=-3:LRA=5`,
+    '-t',
+    String(DURATION_SECONDS),
+    '-ac',
+    '1',
+    '-ar',
+    '44100',
+    '-codec:a',
+    'libmp3lame',
+    '-b:a',
+    '64k',
+    destination,
   ]);
   const bytes = await readFile(destination);
   const durationSeconds = Number(
     await run('ffprobe', [
-      '-v', 'error', '-show_entries', 'format=duration',
-      '-of', 'default=noprint_wrappers=1:nokey=1', destination,
+      '-v',
+      'error',
+      '-show_entries',
+      'format=duration',
+      '-of',
+      'default=noprint_wrappers=1:nokey=1',
+      destination,
     ]),
   );
   ambienceAssets.push({
@@ -66,7 +90,8 @@ for (const [scene, filter] of Object.entries(SCENES)) {
     provider: 'local-ffmpeg',
     model: 'lavfi-anoisesrc',
     voice: null,
-    style: 'Non-musical procedural ambience loop; no speech and no runtime oscillator.',
+    style:
+      'Non-musical procedural ambience loop; no speech and no runtime oscillator.',
     generationId: null,
     generatedAt: new Date().toISOString(),
     text: null,
@@ -78,7 +103,9 @@ for (const [scene, filter] of Object.entries(SCENES)) {
     truePeakDbtp: -3,
     costUsd: 0,
   });
-  process.stdout.write(`${scene} ${durationSeconds.toFixed(2)}s ${bytes.byteLength}B\n`);
+  process.stdout.write(
+    `${scene} ${durationSeconds.toFixed(2)}s ${bytes.byteLength}B\n`,
+  );
 }
 await writeFile(
   MANIFEST_PATH,
