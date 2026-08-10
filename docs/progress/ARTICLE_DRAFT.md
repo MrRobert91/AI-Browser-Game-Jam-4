@@ -242,3 +242,17 @@ El cambio sonoro elimina el tono sintético continuo y lo sustituye por una piez
 La revisión narrativa posterior no cambia el solver: cambia qué significa para el jugador. QBism ofrece una distinción fértil entre la acción que un agente realiza, la experiencia que recibe y las expectativas que actualiza. El juego toma esa estructura, pero declara dónde termina la referencia científica. La Agencia afirma que una conciencia certificada condensa realidad; la obra nunca confirma esa doctrina ni convierte WFC en física cuántica.
 
 El nuevo canon separa QBism real, ficción institucional y metáfora procedural. Los porcentajes son expectativas de La Medida, las Semillas amplían familias de intervención y una celda fijada entra en el expediente intersubjetivo. Ese marco permite conservar la frase “mirar es construir” sin insinuar que el jugador elige el tile exacto o destruye universos alternativos.
+
+## Cuando una GPU lenta cambia qué significa «automático»
+
+El primer renderer ya tenía resolución dinámica, presets e instancing, pero el juego real seguía pudiendo caer a una presentación de diapositivas. El problema no era el solver del worker: un perfil con Chromium y SwiftShader mostró que el automático escogía calidad media a partir de CPU y RAM, mantenía bloom, esperaba treinta frames antes de reaccionar y dibujaba cada celda fijada con geometría y material propios. A 0,79 FPS, esos treinta frames equivalían a casi cuarenta segundos sin respuesta útil.
+
+La reparación convierte «automático» en una decisión observable y reversible. Un frame de emergencia baja el DPR inmediatamente; si el nivel actual ya agotó su resolución y sigue por encima de 30 ms, desaparecen primero SSAO, después bloom/sombras y finalmente se activa LOD agresivo. El nivel bajo limita el DPR físico, puede bajar a 0,35 y renderiza la escena directamente, sin reservar ni copiar buffers de postprocesado que están desactivados.
+
+La segunda mitad del trabajo reduce coste estructural. Las animaciones de colapso conservan sus 450–700 ms, pero al terminar ya no dejan dos draw calls permanentes: terreno y feature entran en siete lotes instanciados como máximo. Lecturas del mundo, centros, vecindarios y vector de cámara se reutilizan; el contador de celdas fijadas pasa a O(1); la superposición sigue la cadencia normativa de 10 Hz; HUD y retícula no reescriben DOM si el valor no cambió.
+
+![Replay optimizado en la ruta de bajo consumo](./issue-89-performance/optimized-gameplay.png)
+
+[Ver perfil visual optimizado (WebM, 11,12 s)](./issue-89-performance/optimized-gameplay.webm)
+
+En el mismo escenario SwiftShader con CPU 2×, el perfil documentado subió de 0,79 a 49,39 FPS, 62,5 veces más. Una repetición sin grabación llegó a 53,27 FPS; incluso fingiendo 16 cores y 16 GiB para comenzar en alto, el gobernador reconoció la GPU lenta, degradó hasta bajo y terminó en 56,92 FPS con p95 de 16,8 ms. No es una promesa universal de 60 FPS: es evidencia de que el juego ya puede sacrificar píxeles y efectos antes que movimiento, atención o determinismo.

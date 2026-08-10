@@ -14,6 +14,9 @@ export interface PostprocessingState {
 
 /** Selective-by-luminance bloom plus high-only SSAO. */
 export class WorldPostprocessing {
+  private readonly renderer: WebGLRenderer;
+  private readonly scene: Scene;
+  private readonly camera: Camera;
   private readonly composer: EffectComposer;
   private readonly ssao: SSAOPass;
   private readonly bloom: UnrealBloomPass;
@@ -24,6 +27,9 @@ export class WorldPostprocessing {
     camera: Camera,
     profile: QualityProfile,
   ) {
+    this.renderer = renderer;
+    this.scene = scene;
+    this.camera = camera;
     this.composer = new EffectComposer(renderer);
     this.composer.addPass(new RenderPass(scene, camera));
     this.ssao = new SSAOPass(scene, camera, 1, 1, 16);
@@ -56,6 +62,10 @@ export class WorldPostprocessing {
   }
 
   render(deltaSeconds: number): void {
+    if (!this.ssao.enabled && !this.bloom.enabled) {
+      this.renderer.render(this.scene, this.camera);
+      return;
+    }
     this.composer.render(Math.max(0, deltaSeconds));
   }
 

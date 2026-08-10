@@ -660,7 +660,10 @@ Render:
 - Bloom selectivo en superposición, Semillas y peligros.
 - SSAO solo alto; contacto barato medio.
 - Niebla 45–65 m según calidad.
-- Resolución dinámica 0,7–1,0 del device pixel ratio.
+- Resolución dinámica 0,35–1,0 del device pixel ratio limitado por preset
+  (1× bajo, 1,5× medio, 2× alto). El preset automático DEBE degradar con
+  rapidez ante frames sostenidos por encima de 22 ms y la ruta baja NO DEBE
+  pagar pases de postprocesado desactivados.
 
 ## 11. Audio, HUD y accesibilidad
 

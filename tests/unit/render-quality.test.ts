@@ -10,6 +10,7 @@ import {
 import {
   DynamicResolutionController,
   autoPreset,
+  nextLowerQuality,
   resolveQualityProfile,
 } from '../../src/render/quality';
 
@@ -19,30 +20,44 @@ describe('quality presets', () => {
       'low',
     );
     expect(autoPreset({ hardwareConcurrency: 8, deviceMemoryGb: 8 })).toBe(
-      'medium',
+      'low',
     );
     expect(autoPreset({ hardwareConcurrency: 12, deviceMemoryGb: 16 })).toBe(
+      'medium',
+    );
+    expect(autoPreset({ hardwareConcurrency: 16, deviceMemoryGb: 16 })).toBe(
       'high',
     );
   });
 
-  it('keeps dynamic resolution inside the normative 0.7-1.0 range', () => {
+  it('reacts to emergency frames and stays inside the normative 0.35-1.0 range', () => {
     const controller = new DynamicResolutionController(
       resolveQualityProfile('high'),
     );
-    for (let frame = 0; frame < 600; frame += 1) controller.sampleFrame(30);
-    expect(controller.scale).toBe(0.7);
-    for (let frame = 0; frame < 600; frame += 1) controller.sampleFrame(10);
+    for (let frame = 0; frame < 3; frame += 1) controller.sampleFrame(80);
+    expect(controller.scale).toBeCloseTo(0.7);
+    for (let frame = 0; frame < 1_600; frame += 1) controller.sampleFrame(10);
     expect(controller.scale).toBe(1);
+
+    const low = new DynamicResolutionController(resolveQualityProfile('low'));
+    for (let frame = 0; frame < 4; frame += 1) low.sampleFrame(80);
+    expect(low.scale).toBeCloseTo(0.35);
   });
 
   it('makes low quality legible without shadows or three-candidate proxies', () => {
     expect(resolveQualityProfile('low')).toMatchObject({
       fogFar: 45,
       shadows: false,
+      maxDevicePixelRatio: 1,
       maxSuperpositionCandidates: 2,
       aggressiveLod: true,
     });
+  });
+
+  it('degrades automatic effects in the documented order', () => {
+    expect(nextLowerQuality('high')).toBe('medium');
+    expect(nextLowerQuality('medium')).toBe('low');
+    expect(nextLowerQuality('low')).toBe('low');
   });
 });
 

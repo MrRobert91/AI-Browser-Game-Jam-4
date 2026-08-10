@@ -73,6 +73,8 @@ export class ObservableWorldBridge {
   private readonly boundaries = new Map<number, ChunkBoundaryEvent>();
   private readonly seenCollapseEvents = new Set<string>();
   private readonly seenBoundaryEvents = new Set<string>();
+  private nearbyCacheKey = '';
+  private nearbyCache: readonly CellId[] = [];
 
   constructor(private readonly options: ObservableWorldBridgeOptions) {
     this.worldState = options.worldState ?? new WorldState();
@@ -176,6 +178,8 @@ export class ObservableWorldBridge {
   getNearbyCellIds(position: WorldVector3, radiusCells = 6): readonly CellId[] {
     const centerX = Math.floor(position[0] / 2);
     const centerZ = Math.floor(position[2] / 2);
+    const cacheKey = `${centerX}:${centerZ}:${radiusCells}`;
+    if (cacheKey === this.nearbyCacheKey) return this.nearbyCache;
     const ids: CellId[] = [];
     for (let z = centerZ - radiusCells; z <= centerZ + radiusCells; z += 1) {
       for (let x = centerX - radiusCells; x <= centerX + radiusCells; x += 1) {
@@ -184,6 +188,8 @@ export class ObservableWorldBridge {
         }
       }
     }
-    return ids;
+    this.nearbyCacheKey = cacheKey;
+    this.nearbyCache = ids;
+    return this.nearbyCache;
   }
 }

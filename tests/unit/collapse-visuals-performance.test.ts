@@ -1,0 +1,48 @@
+import { InstancedMesh, Scene } from 'three';
+import { describe, expect, it } from 'vitest';
+
+import type { CollapseEvent } from '../../src/contracts/messages';
+import {
+  MAX_FIXED_WORLD_DRAW_BATCHES,
+  SliceCollapseVisuals,
+} from '../../src/world/collapse-visuals';
+import { WorldState, cellCenterToWorld } from '../../src/world/world-state';
+
+function event(cellId: number): CollapseEvent {
+  return {
+    type: 'COLLAPSE',
+    cellId,
+    terrainTileId: 0,
+    featureTileId: null,
+    entropyBefore: 1,
+    durationMs: 450,
+    worldSeed: 1,
+  };
+}
+
+describe('fixed world render batching', () => {
+  it('keeps completed terrain and features in a bounded number of draw batches', () => {
+    const scene = new Scene();
+    const world = new WorldState();
+    const visuals = new SliceCollapseVisuals(scene, world);
+
+    for (let cellId = 0; cellId < 256; cellId += 1) {
+      world.initializeCell(cellId, cellId % 3);
+      visuals.begin(event(cellId), cellCenterToWorld(cellId));
+      visuals.complete(cellId);
+    }
+
+    expect(visuals.root.children.length).toBeLessThanOrEqual(
+      MAX_FIXED_WORLD_DRAW_BATCHES,
+    );
+    expect(
+      visuals.root.children.every((child) => child instanceof InstancedMesh),
+    ).toBe(true);
+    const terrainInstances = visuals.root.children
+      .filter((child) => child.name.startsWith('fixed-terrain-'))
+      .reduce((total, child) => total + (child as InstancedMesh).count, 0);
+    expect(terrainInstances).toBe(256);
+
+    visuals.dispose();
+  });
+});

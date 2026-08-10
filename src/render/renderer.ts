@@ -11,6 +11,7 @@ import { updateCameraAspect } from '../player/camera';
 import { createAtmosphere, type Atmosphere } from './atmosphere';
 import {
   DynamicResolutionController,
+  nextLowerQuality,
   resolveQualityProfile,
   type QualityPreset,
   type QualityProfile,
@@ -23,6 +24,17 @@ export interface GameRendererOptions {
   readonly quality?: QualityPreset;
 }
 
+export interface GameRendererPerformanceSnapshot {
+  readonly preset: QualityProfile['preset'];
+  readonly resolutionScale: number;
+  readonly drawCalls: number;
+  readonly triangles: number;
+  readonly bloomEnabled: boolean;
+  readonly ssaoEnabled: boolean;
+  readonly drawingBufferWidth: number;
+  readonly drawingBufferHeight: number;
+}
+
 export class GameRenderer {
   readonly scene = new Scene();
   readonly camera: PerspectiveCamera;
@@ -31,13 +43,17 @@ export class GameRenderer {
   readonly #atmosphere: Atmosphere;
   readonly #resolution: DynamicResolutionController;
   readonly #postprocessing: WorldPostprocessing;
+  readonly #qualityListeners = new Set<(profile: QualityProfile) => void>();
   #profile: QualityProfile;
+  #requestedQuality: QualityPreset;
   #lastRenderTime: number | null = null;
+  #slowFramesAtMinimum = 0;
 
   constructor(options: GameRendererOptions) {
     this.#container = options.container;
     this.camera = options.camera;
-    this.#profile = resolveQualityProfile(options.quality ?? 'auto');
+    this.#requestedQuality = options.quality ?? 'auto';
+    this.#profile = resolveQualityProfile(this.#requestedQuality);
     this.#resolution = new DynamicResolutionController(this.#profile);
 
     const canvas = document.createElement('canvas');
@@ -52,7 +68,7 @@ export class GameRenderer {
       throw new Error('Este navegador no ofrece el contexto WebGL2 requerido.');
     }
 
-    this.renderer = new WebGLRenderer({ canvas, context, antialias: true });
+    this.renderer = new WebGLRenderer({ canvas, context });
     this.renderer.outputColorSpace = SRGBColorSpace;
     this.renderer.toneMapping = ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1;
@@ -73,13 +89,39 @@ export class GameRenderer {
     return this.#profile;
   }
 
+  get performanceSnapshot(): GameRendererPerformanceSnapshot {
+    const postprocessing = this.#postprocessing.state;
+    return {
+      preset: this.#profile.preset,
+      resolutionScale: this.#resolution.scale,
+      drawCalls: this.renderer.info.render.calls,
+      triangles: this.renderer.info.render.triangles,
+      ...postprocessing,
+      drawingBufferWidth: this.renderer.domElement.width,
+      drawingBufferHeight: this.renderer.domElement.height,
+    };
+  }
+
   setQuality(preset: QualityPreset): void {
-    this.#profile = resolveQualityProfile(preset);
+    this.#requestedQuality = preset;
+    this.#slowFramesAtMinimum = 0;
+    this.#setResolvedQuality(resolveQualityProfile(preset));
+  }
+
+  onQualityChange(listener: (profile: QualityProfile) => void): () => void {
+    this.#qualityListeners.add(listener);
+    listener(this.#profile);
+    return () => this.#qualityListeners.delete(listener);
+  }
+
+  #setResolvedQuality(profile: QualityProfile): void {
+    this.#profile = profile;
     this.#resolution.setProfile(this.#profile);
     this.#atmosphere.applyQuality(this.#profile);
     this.#postprocessing.applyQuality(this.#profile);
     this.#applyQuality();
     this.resize();
+    for (const listener of this.#qualityListeners) listener(this.#profile);
   }
 
   resize(): void {
@@ -90,17 +132,17 @@ export class GameRenderer {
     this.#postprocessing.setSize(
       width,
       height,
-      Math.min(window.devicePixelRatio || 1, 2) * this.#resolution.scale,
+      this.#devicePixelRatio() * this.#resolution.scale,
     );
   }
 
   render(timestamp = performance.now()): void {
     if (this.#lastRenderTime !== null) {
+      const frameTimeMs = timestamp - this.#lastRenderTime;
       const before = this.#resolution.scale;
-      const after = this.#resolution.sampleFrame(
-        timestamp - this.#lastRenderTime,
-      );
-      if (after !== before) {
+      const after = this.#resolution.sampleFrame(frameTimeMs);
+      const qualityChanged = this.#adaptAutomaticQuality(frameTimeMs);
+      if (!qualityChanged && after !== before) {
         this.#applyPixelRatio();
         this.resize();
       }
@@ -126,7 +168,37 @@ export class GameRenderer {
   }
 
   #applyPixelRatio(): void {
-    const deviceRatio = Math.min(window.devicePixelRatio || 1, 2);
-    this.renderer.setPixelRatio(deviceRatio * this.#resolution.scale);
+    this.renderer.setPixelRatio(
+      this.#devicePixelRatio() * this.#resolution.scale,
+    );
+  }
+
+  #devicePixelRatio(): number {
+    return Math.min(
+      window.devicePixelRatio || 1,
+      this.#profile.maxDevicePixelRatio,
+    );
+  }
+
+  #adaptAutomaticQuality(frameTimeMs: number): boolean {
+    if (
+      this.#requestedQuality !== 'auto' ||
+      this.#profile.preset === 'low' ||
+      !this.#resolution.atMinimum
+    ) {
+      this.#slowFramesAtMinimum = 0;
+      return false;
+    }
+    if (frameTimeMs <= 30) {
+      this.#slowFramesAtMinimum = 0;
+      return false;
+    }
+    this.#slowFramesAtMinimum += 1;
+    if (this.#slowFramesAtMinimum < 2) return false;
+    this.#slowFramesAtMinimum = 0;
+    this.#setResolvedQuality(
+      resolveQualityProfile(nextLowerQuality(this.#profile.preset)),
+    );
+    return true;
   }
 }

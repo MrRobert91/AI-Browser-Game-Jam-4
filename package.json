@@ -23,6 +23,7 @@
     "test:sim:release": "tsx scripts/run-simulation.ts --seeds=10000 --ticks=600 --full=100",
     "test:e2e": "playwright test",
     "test:e2e:desktop": "playwright test --config=playwright.desktop.config.ts",
+    "profile:browser": "tsx scripts/profile-browser.ts",
     "profile:release": "tsx scripts/profile-release.ts",
     "package:release": "npm run build && tsx scripts/package-release.ts",
     "release:check": "npm run check && npm run validate:tiles && npm run validate:assets && npm run test:sim:release && npm run build && npm run test:e2e && npm run profile:release"
