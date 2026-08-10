@@ -1,6 +1,5 @@
 export interface GameHudElements {
   readonly time: HTMLElement;
-  readonly message: HTMLElement;
 }
 
 export class GameHud {
@@ -33,10 +32,6 @@ export class GameHud {
         : totalSeconds <= 60
           ? 'warning'
           : 'normal';
-  }
-
-  setMessage(message: string): void {
-    this.elements.message.textContent = message;
   }
 
   showSubtitle(message: string): void {

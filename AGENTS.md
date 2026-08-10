@@ -640,9 +640,9 @@ Identidad: naturaleza sublime con simulación visible. Fijado = material, cálid
 Superposición:
 
 - Máximo tres candidatos de mayor peso por celda.
-- La celda bajo la retícula muestra esos candidatos con porcentajes enteros
-  normalizados que suman 100 %; son probabilidades relativas, no certeza del
-  resultado hasta el commit.
+- La celda bajo la retícula comunica su superposición mediante los proxies y la
+  carga de la retícula; no muestra un panel central de candidatos o porcentajes
+  que obstruya la vista.
 - Proxies low-poly alternan cada 160–260 ms.
 - Una geometría proxy instanciada por familia; ruido de vértices y fresnel.
 - Opacidad baja conforme sube la Carga.

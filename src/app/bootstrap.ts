@@ -40,7 +40,6 @@ import { FinalArtDirector } from '../render/final-art-director';
 import { SuperpositionRenderer } from '../render/superposition';
 import { Wp5PreviewVisuals } from '../render/wp5-preview-visuals';
 import { ObservationReticle } from '../ui/observation-reticle';
-import { PossibilityProbabilities } from '../ui/possibility-probabilities';
 import { GameHud } from '../ui/hud';
 import { loadGameSettings, PauseMenu, type GameSettings } from '../ui/pause';
 import { ProgressionHud } from '../ui/progression-hud';
@@ -112,7 +111,6 @@ const SHELL_MARKUP = `
 
     <section class="slice-hud" aria-live="polite">
       <p><span>VENTANA</span><strong data-slice-time>10:00</strong></p>
-      <p data-slice-message>Mira para iniciar el registro.</p>
       <p><span data-seed-mode-label>SEED</span><strong data-seed-label>A91F-42C0</strong></p>
     </section>
 
@@ -177,7 +175,6 @@ export function bootstrap(root: HTMLElement): () => void {
   const workerState = root.querySelector<HTMLElement>('[data-worker-state]');
   const viewport = root.querySelector<HTMLElement>('[data-game-viewport]');
   const sliceTime = root.querySelector<HTMLElement>('[data-slice-time]');
-  const sliceMessage = root.querySelector<HTMLElement>('[data-slice-message]');
   const sliceResult = root.querySelector<HTMLElement>('[data-slice-result]');
   const seedModeLabel = root.querySelector<HTMLElement>(
     '[data-seed-mode-label]',
@@ -202,7 +199,6 @@ export function bootstrap(root: HTMLElement): () => void {
     !workerState ||
     !viewport ||
     !sliceTime ||
-    !sliceMessage ||
     !sliceResult ||
     !seedModeLabel ||
     !seedValueLabel ||
@@ -282,12 +278,11 @@ export function bootstrap(root: HTMLElement): () => void {
   );
   gameRenderer.scene.add(superposition.root);
   const reticle = new ObservationReticle(shell);
-  const possibilityProbabilities = new PossibilityProbabilities(shell);
-  const hud = new GameHud(shell, { time: sliceTime, message: sliceMessage });
+  const hud = new GameHud(shell, { time: sliceTime });
   hud.setSubtitlesEnabled(settings.subtitles);
   hud.setHighContrast(settings.highContrast);
   const narrative = new NarrativeDirector({
-    onMessage: (message) => hud.setMessage(message),
+    onMessage: () => undefined,
     onSubtitle: (message) => hud.showSubtitle(message),
     onAudioCue: (cue) => audioDirector.playNarrativeCue(cue),
   });
@@ -295,7 +290,6 @@ export function bootstrap(root: HTMLElement): () => void {
     onPlay: (record) => {
       const message = `${record.speaker} // ${record.subtitle}`;
       shell.dataset.recordingId = record.id;
-      hud.setMessage(message);
       hud.showSubtitle(message);
       audioDirector.playCollapsadorRecord(record);
     },
@@ -499,7 +493,6 @@ export function bootstrap(root: HTMLElement): () => void {
         else camera.position.set(64, 1.7, 64);
       },
       onMessage: (message) => {
-        hud.setMessage(message);
         hud.showSubtitle(message);
       },
       onNarrativeCue: (cueId) => narrative.play(cueId),
@@ -645,7 +638,7 @@ export function bootstrap(root: HTMLElement): () => void {
       ) {
         runClock!.notifyFirstCollapse();
         hud.notifyFirstCollapse();
-        hud.setMessage('La mirada está fijando el mundo.');
+        hud.showSubtitle('La mirada está fijando el mundo.');
       }
     }
 
@@ -714,12 +707,6 @@ export function bootstrap(root: HTMLElement): () => void {
           ? cell
           : selected,
       null,
-    );
-    possibilityProbabilities.update(
-      shell.dataset.calibrated === 'true' ? focusedCell : null,
-      gameRenderer.quality.preset === 'low'
-        ? 'low'
-        : gameRenderer.quality.preset,
     );
     if (focusedCell && focusedCell.observationCharge > 0) {
       portraitTracker.recordGaze(focusedCell.cellId, deltaSeconds);
@@ -956,7 +943,6 @@ export function bootstrap(root: HTMLElement): () => void {
     gameLoop.stop();
     solverWorker.dispose();
     reticle.destroy();
-    possibilityProbabilities.destroy();
     hud.destroy();
     debugOverlay?.destroy();
     pauseMenu?.destroy();

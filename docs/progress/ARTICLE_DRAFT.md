@@ -229,9 +229,9 @@ Una regresión posterior reveló que la física también debía respetar esa tra
 
 ![Reintento visible tras rechazar Pointer Lock](./issue-73-gameplay-polish/01-calibration-retry.png)
 
-La superposición también cuenta mejor qué está haciendo el algoritmo. Sus candidatos ya no son solo siluetas alternantes: muestran pesos normalizados que siempre suman 100 %. La barrera esférica de 62 metros conserva la escala visual del paisaje, mientras un anillo de colliders impide abandonar el tablero. Caminar y correr son un 40 % más lentos para dar tiempo a observar antes de atravesar una zona.
+La superposición también aprendió cuándo callarse. Un primer ensayo añadió los pesos normalizados de los candidatos junto a la retícula, pero el panel competía con la mirada y repetía información ya expresada por las siluetas y la carga. El ajuste posterior lo retiró: el centro queda reservado al mundo, el HUD superior solo conserva tiempo y seed, y todos los mensajes comparten una única banda inferior. La barrera esférica de 62 metros conserva la escala visual del paisaje, mientras un anillo de colliders impide abandonar el tablero. Caminar y correr son un 40 % más lentos para dar tiempo a observar antes de atravesar una zona.
 
-![Probabilidades después de recuperar la calibración](./issue-73-gameplay-polish/02-calibration-recovered.png)
+![Centro despejado y mensajes únicamente en la franja inferior](./issue-87-hud-cleanup/hud-messages-bottom.jpg)
 
 [Ver la recuperación completa de calibración (WebM, 24 s)](./issue-73-gameplay-polish/calibration-recovery.webm)
 
