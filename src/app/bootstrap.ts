@@ -361,12 +361,16 @@ export function bootstrap(root: HTMLElement): () => void {
   applySettings(settings);
   let playerPhysics: PlayerPhysicsRuntime | null = null;
   let disposed = false;
-  void createPlayerPhysicsRuntime(camera, playerInput)
+  const playerPhysicsPromise = createPlayerPhysicsRuntime(camera, playerInput)
     .then((runtime) => {
-      if (disposed) runtime.dispose();
-      else {
+      if (disposed) {
+        runtime.dispose();
+        return null;
+      } else {
         playerPhysics = runtime;
+        if (shell.dataset.calibrated === 'true') runtime.controller.respawn();
         shell.dataset.physics = 'ready';
+        return runtime;
       }
     })
     .catch((error: unknown) => {
@@ -374,6 +378,7 @@ export function bootstrap(root: HTMLElement): () => void {
       workerState.textContent = 'FÍSICA // ERROR';
       workerState.dataset.contractState = 'error';
       console.error('Rapier no pudo iniciar.', error);
+      return null;
     });
   let observableWorld: ObservableWorldBridge | null = null;
   const debugEvents: string[] = [];
@@ -584,6 +589,7 @@ export function bootstrap(root: HTMLElement): () => void {
     const previousClock = runClock!.snapshot();
     if (
       !canonicalReplay &&
+      shell.dataset.calibrated === 'true' &&
       wp5Preview?.respawn.snapshot().inputLocked !== true &&
       previousClock.phase !== 'ENDING' &&
       previousClock.phase !== 'COMPLETE'
@@ -884,6 +890,22 @@ export function bootstrap(root: HTMLElement): () => void {
         ?.replaceChildren('Reintentar calibración');
       return;
     }
+
+    const readyPlayerPhysics = await playerPhysicsPromise;
+    if (!readyPlayerPhysics) {
+      playerInput.setEnabled(false);
+      shell.dataset.calibration = 'error';
+      shell.dataset.calibrated = 'false';
+      systemState.textContent = 'FÍSICA NO DISPONIBLE';
+      shellStatus.textContent =
+        'El cuerpo de campo no pudo iniciar. Recarga para reintentar.';
+      observationButton.disabled = false;
+      observationButton
+        .querySelector('span')
+        ?.replaceChildren('Reintentar calibración');
+      return;
+    }
+    readyPlayerPhysics.controller.respawn();
 
     shell.dataset.calibration = 'ready';
     shell.dataset.calibrated = 'true';

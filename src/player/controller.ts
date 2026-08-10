@@ -8,6 +8,10 @@ import type * as Rapier from '@dimforge/rapier3d-compat';
 import type { PerspectiveCamera } from 'three';
 
 import type { LookDelta, MovementIntent, PlayerInputSettings } from './input';
+import {
+  WORLD_BOUNDARY_RADIUS_METERS,
+  WORLD_CENTER_METERS,
+} from '../world/world-boundary';
 
 export const WALK_SPEED_METERS_PER_SECOND = 2.52;
 export const RUN_SPEED_METERS_PER_SECOND = 3.72;
@@ -24,6 +28,17 @@ export const JUMP_SPEED_METERS_PER_SECOND = Math.sqrt(
 );
 export const ACCELERATION_METERS_PER_SECOND_SQUARED = 30;
 export const BRAKING_METERS_PER_SECOND_SQUARED = 36;
+export const PLAYER_WORLD_BOUNDARY_SKIN_METERS = 0.01;
+export const PLAYER_MAX_CENTER_RADIUS_METERS =
+  WORLD_BOUNDARY_RADIUS_METERS -
+  PLAYER_CAPSULE_RADIUS_METERS -
+  PLAYER_WORLD_BOUNDARY_SKIN_METERS;
+
+export interface PlayerTranslation {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+}
 
 export interface PlanarVelocity {
   readonly x: number;
@@ -131,12 +146,17 @@ export class PlayerController {
     });
     const movement = this.#characterController.computedMovement();
     const translation = this.#body.translation();
-    this.#body.setNextKinematicTranslation({
+    const requestedTranslation = {
       x: translation.x + movement.x,
       y: translation.y + movement.y,
       z: translation.z + movement.z,
-    });
-    this.#grounded = this.#characterController.computedGrounded();
+    };
+    const safeTranslation = constrainPlayerTranslation(requestedTranslation);
+    this.#body.setNextKinematicTranslation(safeTranslation);
+    const stoppedBySafetyFloor =
+      safeTranslation.y > requestedTranslation.y + Number.EPSILON;
+    this.#grounded =
+      this.#characterController.computedGrounded() || stoppedBySafetyFloor;
     if (this.#grounded && this.#verticalVelocity < 0)
       this.#verticalVelocity = 0;
     this.#world.timestep = Math.max(1 / 240, delta);
@@ -147,14 +167,18 @@ export class PlayerController {
   respawn(
     position = { x: 64, y: PLAYER_CAPSULE_CENTER_HEIGHT_METERS, z: 64 },
   ): void {
+    const safePosition = constrainPlayerTranslation(position);
     this.#velocity = { x: 0, z: 0 };
     this.#verticalVelocity = 0;
-    this.#body.setTranslation(position, true);
-    this.#body.setNextKinematicTranslation(position);
+    this.#grounded = safePosition.y === PLAYER_CAPSULE_CENTER_HEIGHT_METERS;
+    this.#body.setTranslation(safePosition, true);
+    this.#body.setNextKinematicTranslation(safePosition);
     this.#camera.position.set(
-      position.x,
-      position.y + PLAYER_HEIGHT_METERS - PLAYER_CAPSULE_CENTER_HEIGHT_METERS,
-      position.z,
+      safePosition.x,
+      safePosition.y +
+        PLAYER_HEIGHT_METERS -
+        PLAYER_CAPSULE_CENTER_HEIGHT_METERS,
+      safePosition.z,
     );
   }
 
@@ -195,6 +219,30 @@ export class PlayerController {
       translation.z,
     );
   }
+}
+
+/**
+ * Last-resort safety envelope for the kinematic body. Rapier remains the
+ * primary collision response, while this guard makes invalid spawn states and
+ * perimeter seams unable to place the capsule below the floor or outside the
+ * dome.
+ */
+export function constrainPlayerTranslation(
+  translation: PlayerTranslation,
+): PlayerTranslation {
+  const offsetX = translation.x - WORLD_CENTER_METERS;
+  const offsetZ = translation.z - WORLD_CENTER_METERS;
+  const radius = Math.hypot(offsetX, offsetZ);
+  const radialScale =
+    radius > PLAYER_MAX_CENTER_RADIUS_METERS
+      ? PLAYER_MAX_CENTER_RADIUS_METERS / radius
+      : 1;
+
+  return {
+    x: WORLD_CENTER_METERS + offsetX * radialScale,
+    y: Math.max(PLAYER_CAPSULE_CENTER_HEIGHT_METERS, translation.y),
+    z: WORLD_CENTER_METERS + offsetZ * radialScale,
+  };
 }
 
 export function configureCharacterController(

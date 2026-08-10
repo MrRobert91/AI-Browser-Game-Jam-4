@@ -4,7 +4,7 @@ Este documento conserva la historia de implementación de **La Última Observaci
 
 ## Vista de pájaro
 
-Actualizado: 2026-08-09 (Europe/Madrid)
+Actualizado: 2026-08-10 (Europe/Madrid)
 
 | Fase | Issues | Estado | Gate o dependencia principal |
 |---|---:|---|---|
@@ -18,16 +18,23 @@ Actualizado: 2026-08-09 (Europe/Madrid)
 | WP7 — Final | #40–#43 | Integrada en `dev` | PR #70 fusionada; Reloj, retrato, haiku y ascenso final completos |
 | WP8 — QA y entrega | #44–#51 | Integrada en `dev` | PR #70 fusionada; gates, evidencia y candidata reproducible |
 | POST — Pulido de juego | #73 | Integrada en `dev` | PR #74 fusionada en `922f9e9` |
+| POST — Seguridad física | #85 | En implementación | Rama `codex/issue-85-player-physics-safety` desde `origin/dev` `5cf120b` |
 | POST — Expansiones | #52–#56 | En rama acumulativa salvo #54 | #54 ya estaba cerrada; #52, #53, #55 y #56 listas para revisión |
 
 ### Estado operativo actual
 
-- Fase actual: entrega acumulativa post-jam nacida de `origin/dev` `922f9e9428be25f5d7bb9d964180b474b72bfccf` tras integrar PR #74.
+- Fase actual: corrección de seguridad física #85 nacida de `origin/dev` `5cf120b67ed9c83cf942206aaad1bb729bcf48b5` tras integrar la rama acumulativa post-jam.
 - Trabajo en revisión: PR #84 reúne #22, #52, #53, #55, #56 y la revisión narrativa #76–#82, con un commit funcional por issue y destino `dev`.
 - Arquitectura vigente: la build de jam sigue siendo offline. #56 solo muestra una variante remota si la publicación configura un proxy HTTPS y el jugador consiente en esa partida; ninguna clave de proveedor entra en el navegador.
 - Evidencia actual: galerías/capturas locales, simulación de 10.000 seeds, WebM narrativo y QA automatizada bajo [`docs/progress/`](./progress/).
 - Gate humano: #83 y el epic #75 permanecen abiertos y **NO-GO 0/5**; la rama no afirma sesiones que no se han realizado.
 - Estado remoto verificado: PR #84 abierta y no draft; sus palabras de cierre excluyen deliberadamente #75 y #83.
+
+### 2026-08-10 — Issue #85 — Suelo y contención física continua
+
+- La simulación del cuerpo ya no avanza durante la introducción: solo comienza tras una calibración válida y cada calibración completada recoloca cuerpo y cámara en el origen seguro.
+- Rapier sigue resolviendo suelo, paredes y deslizamiento. Una envolvente final impide que un estado inválido deje la base de la cápsula bajo `y = 0` o que su borde exterior supere el radio interior de 62 m.
+- El límite radial proyecta únicamente la componente exterior, por lo que conserva movimiento tangencial contra la cúpula. Las pruebas recorren 16 ángulos, incluidos los encuentros entre segmentos, y recuperación desde coordenadas fuera del suelo y del mapa.
 
 ### 2026-08-09 — Issue #56 — Variante remota de haiku
 
