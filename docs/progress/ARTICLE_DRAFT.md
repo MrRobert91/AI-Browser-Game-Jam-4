@@ -225,6 +225,8 @@ La última expansión mantiene una frontera más delicada: el poema local sigue 
 
 La calibración de mirada escondía un fallo especialmente cruel: si Pointer Lock era rechazado durante el gesto inicial, la interfaz podía retirarse antes de saber si el navegador había concedido el control. Ahora la captura es una transacción observable. Solo se entra en juego al recibir confirmación; ante error, el mundo sigue renderizado, aparece «Reintentar calibración» y el mismo flujo puede completarse sin recargar.
 
+Una regresión posterior reveló que la física también debía respetar esa transacción. El cuerpo ya no acumula gravedad mientras la introducción sigue abierta y cada calibración válida lo devuelve al origen antes de ceder el control. Rapier conserva la respuesta material, pero una envolvente geométrica adicional garantiza que la cápsula no atraviese el plano del suelo ni encuentre una costura entre los segmentos de la cúpula; al empujar contra ella todavía puede deslizarse de lado.
+
 ![Reintento visible tras rechazar Pointer Lock](./issue-73-gameplay-polish/01-calibration-retry.png)
 
 La superposición también cuenta mejor qué está haciendo el algoritmo. Sus candidatos ya no son solo siluetas alternantes: muestran pesos normalizados que siempre suman 100 %. La barrera esférica de 62 metros conserva la escala visual del paisaje, mientras un anillo de colliders impide abandonar el tablero. Caminar y correr son un 40 % más lentos para dar tiempo a observar antes de atravesar una zona.

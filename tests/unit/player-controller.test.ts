@@ -7,10 +7,13 @@ import {
   JUMP_HEIGHT_METERS,
   JUMP_SPEED_METERS_PER_SECOND,
   MAX_SLOPE_DEGREES,
+  PLAYER_CAPSULE_CENTER_HEIGHT_METERS,
+  PLAYER_MAX_CENTER_RADIUS_METERS,
   RUN_SPEED_METERS_PER_SECOND,
   WALK_SPEED_METERS_PER_SECOND,
   approachPlanarVelocity,
   configureCharacterController,
+  constrainPlayerTranslation,
   PlayerController,
 } from '../../src/player/controller';
 import { movementIntentFromKeys } from '../../src/player/input';
@@ -65,6 +68,40 @@ describe('player movement contract', () => {
     expect(controller.setMaxSlopeClimbAngle).toHaveBeenCalledWith(radians);
     expect(controller.setMinSlopeSlideAngle).toHaveBeenCalledWith(radians);
     expect(controller.enableSnapToGround).toHaveBeenCalledWith(0.2);
+  });
+
+  it('recovers invalid translations without leaving the floor or dome', () => {
+    const recovered = constrainPlayerTranslation({
+      x: WORLD_CENTER_METERS + 100,
+      y: -50,
+      z: WORLD_CENTER_METERS + 100,
+    });
+
+    expect(recovered.y).toBe(PLAYER_CAPSULE_CENTER_HEIGHT_METERS);
+    expect(
+      Math.hypot(
+        recovered.x - WORLD_CENTER_METERS,
+        recovered.z - WORLD_CENTER_METERS,
+      ),
+    ).toBeCloseTo(PLAYER_MAX_CENTER_RADIUS_METERS, 12);
+  });
+
+  it('slides tangentially while rejecting outward movement at the dome', () => {
+    const requested = {
+      x: WORLD_CENTER_METERS + PLAYER_MAX_CENTER_RADIUS_METERS + 0.5,
+      y: PLAYER_CAPSULE_CENTER_HEIGHT_METERS,
+      z: WORLD_CENTER_METERS + 0.5,
+    };
+    const constrained = constrainPlayerTranslation(requested);
+
+    expect(constrained.x).toBeLessThan(requested.x);
+    expect(constrained.z).toBeGreaterThan(WORLD_CENTER_METERS);
+    expect(
+      Math.hypot(
+        constrained.x - WORLD_CENTER_METERS,
+        constrained.z - WORLD_CENTER_METERS,
+      ),
+    ).toBeCloseTo(PLAYER_MAX_CENTER_RADIUS_METERS, 12);
   });
 
   it('uses the Rapier capsule to stop before a fixed wall', async () => {
@@ -136,5 +173,52 @@ describe('player movement contract', () => {
 
     controller.dispose();
     world.free();
+  });
+
+  it('cannot cross the dome at cardinal or diagonal seams', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await rapier.init();
+    warn.mockRestore();
+
+    for (let index = 0; index < 16; index += 1) {
+      const angle = (index / 16) * Math.PI * 2;
+      const world = new rapier.World({ x: 0, y: -22, z: 0 });
+      const ground = world.createRigidBody(
+        rapier.RigidBodyDesc.fixed().setTranslation(64, -0.1, 64),
+      );
+      world.createCollider(rapier.ColliderDesc.cuboid(64, 0.1, 64), ground);
+      createWorldBoundaryColliders(world, rapier);
+      const camera = new PerspectiveCamera();
+      camera.rotation.y = angle - Math.PI / 2;
+      const input = {
+        paused: false,
+        settings: {
+          mouseSensitivity: 0.002,
+          invertY: false,
+          headBobEnabled: false,
+        },
+        movementIntent: () => ({ x: 0, forward: 1, sprint: true }),
+        consumeLookDelta: () => ({ x: 0, y: 0 }),
+        consumeJump: () => false,
+      };
+      const controller = new PlayerController(world, camera, input, rapier);
+      controller.respawn({
+        x: WORLD_CENTER_METERS + Math.cos(angle) * 60.5,
+        y: PLAYER_CAPSULE_CENTER_HEIGHT_METERS,
+        z: WORLD_CENTER_METERS + Math.sin(angle) * 60.5,
+      });
+
+      for (let frame = 0; frame < 180; frame += 1) controller.update(1 / 60);
+      expect(
+        Math.hypot(
+          camera.position.x - WORLD_CENTER_METERS,
+          camera.position.z - WORLD_CENTER_METERS,
+        ),
+      ).toBeLessThanOrEqual(PLAYER_MAX_CENTER_RADIUS_METERS + 1e-9);
+      expect(camera.position.y).toBeGreaterThanOrEqual(1.7);
+
+      controller.dispose();
+      world.free();
+    }
   });
 });
