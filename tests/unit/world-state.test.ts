@@ -66,6 +66,7 @@ describe('WorldState', () => {
     state.commitFixed(commit);
 
     expect(state.commitFixed(commit).phase).toBe('FIXED');
+    expect(state.countFixedCells()).toBe(1);
     expect(() => state.setObservationCharge(cellId, 0.5)).toThrow(
       FixedCellMutationError,
     );

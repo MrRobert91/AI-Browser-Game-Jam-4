@@ -1,0 +1,17 @@
+{
+  "sampleSeconds": 5.021300000011921,
+  "frames": 248,
+  "averageFps": 49.39,
+  "p50FrameMs": 16.7,
+  "p95FrameMs": 33.4,
+  "p99FrameMs": 66.6,
+  "framesOver33Ms": 18,
+  "resolvedPreset": "low",
+  "resolutionScale": 0.35,
+  "drawCalls": 17,
+  "triangles": 4226,
+  "bloomEnabled": false,
+  "ssaoEnabled": false,
+  "drawingBuffer": "503x315",
+  "gpuRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+}

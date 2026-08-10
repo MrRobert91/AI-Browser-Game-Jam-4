@@ -14,6 +14,7 @@ const PACK_LABELS: Readonly<Record<UnlockablePackId, string>> = {
 export class ProgressionHud {
   readonly element: HTMLElement;
   private readonly items = new Map<UnlockablePackId, HTMLLIElement>();
+  private readonly states = new Map<UnlockablePackId, string>();
 
   constructor(parent: HTMLElement) {
     this.element = document.createElement('aside');
@@ -38,6 +39,8 @@ export class ProgressionHud {
     for (const packId of SEED_PACK_ORDER) {
       const item = this.items.get(packId)!;
       const state = snapshot.packStates[packId];
+      if (this.states.get(packId) === state) continue;
+      this.states.set(packId, state);
       item.dataset.state = state;
       item.setAttribute(
         'aria-label',
@@ -49,5 +52,6 @@ export class ProgressionHud {
   destroy(): void {
     this.element.remove();
     this.items.clear();
+    this.states.clear();
   }
 }

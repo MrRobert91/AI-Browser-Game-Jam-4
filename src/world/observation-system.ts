@@ -118,7 +118,8 @@ export class ObservationSystem {
         continue;
       }
 
-      if (this.worldState.getCell(cellId).phase === 'UNINITIALIZED') {
+      const cell = this.worldState.getCellView(cellId);
+      if (cell.phase === 'UNINITIALIZED') {
         this.worldState.initializeCell(cellId, this.currentPaletteEpoch());
       }
 
@@ -139,7 +140,6 @@ export class ObservationSystem {
       const attention = lineOfSight ? focus * proximity : 0;
       attentionByCell.set(cellId, attention);
 
-      const cell = this.worldState.getCell(cellId);
       if (cell.phase !== 'FIXED') {
         const chargeDelta =
           attention > 0
@@ -147,7 +147,7 @@ export class ObservationSystem {
               attention *
               OBSERVATION_CHARGE_PER_SECOND
             : -OBSERVATION_TICK_SECONDS * OBSERVATION_DECAY_PER_SECOND;
-        this.worldState.setObservationCharge(
+        this.worldState.updateObservationCharge(
           cellId,
           cell.observationCharge + chargeDelta,
         );

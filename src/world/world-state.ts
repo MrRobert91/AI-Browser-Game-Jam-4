@@ -41,6 +41,10 @@ interface MutableWorldCell {
   featureRotationQuarterTurns: 0 | 1 | 2 | 3 | null;
 }
 
+export type WorldCellView = Readonly<MutableWorldCell>;
+
+const CELL_CENTER_CACHE: Array<WorldVector3 | undefined> = [];
+
 export class FixedCellMutationError extends Error {
   constructor(cellId: CellId) {
     super(`Cell ${cellId} is FIXED and cannot be mutated.`);
@@ -84,12 +88,18 @@ export function cellIdToCoordinates(cellId: CellId): CellCoordinates {
 }
 
 export function cellCenterToWorld(cellId: CellId, y = 0): WorldVector3 {
+  if (y === 0) {
+    const cached = CELL_CENTER_CACHE[cellId];
+    if (cached) return cached;
+  }
   const coordinates = cellIdToCoordinates(cellId);
-  return [
+  const center: WorldVector3 = [
     (coordinates.x + 0.5) * WORLD_CELL_SIZE_METERS,
     y,
     (coordinates.z + 0.5) * WORLD_CELL_SIZE_METERS,
   ];
+  if (y === 0) CELL_CENTER_CACHE[cellId] = center;
+  return center;
 }
 
 export function worldPositionToCell(
@@ -133,6 +143,7 @@ export class WorldState {
   readonly originCell = WORLD_ORIGIN_CELL;
 
   private readonly cells: MutableWorldCell[];
+  private fixedCellCount = 0;
 
   constructor() {
     this.cells = Array.from(
@@ -165,6 +176,11 @@ export class WorldState {
     });
   }
 
+  /** Allocation-free read path for render and simulation hot loops. */
+  getCellView(cellId: CellId): WorldCellView {
+    return this.getMutableCell(cellId);
+  }
+
   initializeCell(cellId: CellId, paletteEpoch = 0): WorldCellSnapshot {
     const cell = this.getMutableCell(cellId);
     if (cell.phase === 'FIXED') {
@@ -188,10 +204,15 @@ export class WorldState {
   }
 
   setObservationCharge(cellId: CellId, charge: number): WorldCellSnapshot {
+    this.updateObservationCharge(cellId, charge);
+    return this.getCell(cellId);
+  }
+
+  /** Allocation-free mutation used by the fixed 10 Hz observation sampler. */
+  updateObservationCharge(cellId: CellId, charge: number): void {
     const cell = this.getMutableCell(cellId);
     this.assertMutable(cellId, cell);
     cell.observationCharge = clamp01(charge);
-    return this.getCell(cellId);
   }
 
   commitFixed(commit: FixedCellCommit): WorldCellSnapshot {
@@ -211,6 +232,7 @@ export class WorldState {
     cell.featureRotationQuarterTurns =
       commit.featureRotationQuarterTurns ?? null;
     cell.paletteEpoch = commit.paletteEpoch ?? cell.paletteEpoch;
+    this.fixedCellCount += 1;
     return this.getCell(commit.cellId);
   }
 
@@ -240,11 +262,7 @@ export class WorldState {
   }
 
   countFixedCells(): number {
-    let count = 0;
-    for (const cell of this.cells) {
-      if (cell.phase === 'FIXED') count += 1;
-    }
-    return count;
+    return this.fixedCellCount;
   }
 
   private getMutableCell(cellId: CellId): MutableWorldCell {

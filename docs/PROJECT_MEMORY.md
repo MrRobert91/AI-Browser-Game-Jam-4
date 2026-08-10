@@ -19,17 +19,27 @@ Actualizado: 2026-08-10 (Europe/Madrid)
 | WP8 — QA y entrega | #44–#51 | Integrada en `dev` | PR #70 fusionada; gates, evidencia y candidata reproducible |
 | POST — Pulido de juego | #73 | Integrada en `dev` | PR #74 fusionada en `922f9e9` |
 | POST — Seguridad física | #85 | Integrada en `dev` | `origin/dev` incluye `e7181d3` |
-| POST — Limpieza del HUD | #87 | En revisión | Rama `codex/remove-center-overlay-message` desde `origin/dev` `e7181d3` |
+| POST — Limpieza del HUD | #87 | Integrada en `dev` | PR #88 fusionada en `423fc90` |
+| POST — Rendimiento | #89 | Implementada en rama | `codex/issue-89-stable-fps` desde `origin/dev` `423fc90` |
 | POST — Expansiones | #52–#56 | En rama acumulativa salvo #54 | #54 ya estaba cerrada; #52, #53, #55 y #56 listas para revisión |
 
 ### Estado operativo actual
 
-- Fase actual: limpieza visual del HUD #87 nacida de `origin/dev` `e7181d3419187922db1d1748d72e040c5117049b` tras integrar la seguridad física #85.
+- Fase actual: optimización de rendimiento #89 sobre `origin/dev` `423fc907aae3ef3b1967038d359cc6a2113a2cdd`; la limpieza visual #87 ya está integrada mediante PR #88.
 - Trabajo en revisión: PR #84 reúne #22, #52, #53, #55, #56 y la revisión narrativa #76–#82, con un commit funcional por issue y destino `dev`.
 - Arquitectura vigente: la build de jam sigue siendo offline. #56 solo muestra una variante remota si la publicación configura un proxy HTTPS y el jugador consiente en esa partida; ninguna clave de proveedor entra en el navegador.
 - Evidencia actual: galerías/capturas locales, simulación de 10.000 seeds, WebM narrativo y QA automatizada bajo [`docs/progress/`](./progress/).
 - Gate humano: #83 y el epic #75 permanecen abiertos y **NO-GO 0/5**; la rama no afirma sesiones que no se han realizado.
 - Estado remoto verificado: PR #84 abierta y no draft; sus palabras de cierre excluyen deliberadamente #75 y #83.
+
+### 2026-08-10 — Issue #89 — FPS estable y degradación adaptativa
+
+- El perfil reproducible encontró el cuello real en GPU/postprocesado: Chromium con SwiftShader, 1440×900, DPR 1,5 y CPU 2× produjo 0,79 FPS en el automático anterior. El mismo escenario documentado termina en 49,39 FPS, con repeticiones de hasta 53,27 FPS; un arranque forzado en alto se degradó hasta bajo y alcanzó 56,92 FPS.
+- La ruta baja limita DPR a 1×, puede reducir escala hasta 0,35 y evita enteramente `EffectComposer`, bloom y SSAO. Automático agota primero la resolución y después baja alto → medio → bajo si persisten frames de más de 30 ms.
+- El mundo fijado ya no conserva geometría/material por celda: las animaciones siguen siendo meshes transitorios, pero cada commit completado entra en un máximo de siete lotes `InstancedMesh`. La prueba fija 256 celdas y mantiene ese límite.
+- `WorldState` mantiene el recuento fijo en O(1), ofrece lectura caliente sin snapshots y reutiliza centros; el bridge cachea vecindarios. Superposición/HUD se actualizan solo cuando toca o cambia su valor, y el vector de cámara deja de asignarse por frame.
+- La norma de render de `AGENTS.md` amplía el rango a 0,35–1,0 sobre DPR limitado por preset y exige que bajo no pague pases desactivados. No cambian solver, ticks, seed, física, contenido ni comportamiento offline.
+- Validación: 189 tests, build, formato, lint, validadores, simulación de 100 seeds/5.100 colapsos con todos los fallos a cero, 12/12 E2E Chromium/Firefox y auditoría sin vulnerabilidades. Evidencia: [`docs/progress/issue-89-performance/`](./progress/issue-89-performance/).
 
 ### 2026-08-10 — Issue #87 — Mensajes solo abajo y centro despejado
 

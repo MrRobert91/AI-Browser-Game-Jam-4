@@ -1,3 +1,5 @@
+import { Vector3 } from 'three';
+
 import { GameLoop } from './game-loop';
 import { ObservableWorldBridge } from './observable-world-bridge';
 import { SolverWorkerClient } from './solver-worker-client';
@@ -35,9 +37,16 @@ import {
   createPlayerPhysicsRuntime,
   type PlayerPhysicsRuntime,
 } from '../player/physics';
-import { GameRenderer } from '../render/renderer';
+import {
+  GameRenderer,
+  type GameRendererPerformanceSnapshot,
+} from '../render/renderer';
 import { FinalArtDirector } from '../render/final-art-director';
-import { SuperpositionRenderer } from '../render/superposition';
+import {
+  SuperpositionRenderer,
+  type SuperpositionCandidate,
+  type SuperpositionCell,
+} from '../render/superposition';
 import { Wp5PreviewVisuals } from '../render/wp5-preview-visuals';
 import { ObservationReticle } from '../ui/observation-reticle';
 import { GameHud } from '../ui/hud';
@@ -128,6 +137,16 @@ const SHELL_MARKUP = `
     </section>
   </main>
 `;
+
+const BASE_SUPERPOSITION_CANDIDATES: readonly SuperpositionCandidate[] = [
+  { tileId: 0, family: 'ground', weight: 14, label: 'Pradera' },
+  { tileId: 1, family: 'organic', weight: 9, label: 'Vegetación' },
+  { tileId: 2, family: 'mineral', weight: 5, label: 'Roca' },
+];
+
+type PerformanceWindow = Window & {
+  __ULTIMA_OBSERVATION_PERFORMANCE__?: () => GameRendererPerformanceSnapshot;
+};
 
 function toErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message.trim().length > 0)
@@ -264,6 +283,10 @@ export function bootstrap(root: HTMLElement): () => void {
     camera,
     quality: settings.quality,
   });
+  const performanceSnapshot = (): GameRendererPerformanceSnapshot =>
+    gameRenderer.performanceSnapshot;
+  (window as PerformanceWindow).__ULTIMA_OBSERVATION_PERFORMANCE__ =
+    performanceSnapshot;
   const finalArt = new FinalArtDirector(
     gameRenderer.scene,
     gameRenderer.quality,
@@ -277,6 +300,10 @@ export function bootstrap(root: HTMLElement): () => void {
     gameRenderer.quality.preset === 'low' ? 'low' : 'medium',
   );
   gameRenderer.scene.add(superposition.root);
+  const stopQualitySync = gameRenderer.onQualityChange((profile) => {
+    finalArt.applyQuality(profile);
+    superposition.setQuality(profile.preset === 'low' ? 'low' : profile.preset);
+  });
   const reticle = new ObservationReticle(shell);
   const hud = new GameHud(shell, { time: sliceTime });
   hud.setSubtitlesEnabled(settings.subtitles);
@@ -334,12 +361,6 @@ export function bootstrap(root: HTMLElement): () => void {
       headBobEnabled: nextSettings.headBobEnabled,
     });
     gameRenderer.setQuality(nextSettings.quality);
-    finalArt.applyQuality(gameRenderer.quality);
-    superposition.setQuality(
-      gameRenderer.quality.preset === 'low'
-        ? 'low'
-        : gameRenderer.quality.preset,
-    );
     superposition.setHighContrast(nextSettings.highContrast);
     hud.setSubtitlesEnabled(nextSettings.subtitles);
     hud.setHighContrast(nextSettings.highContrast);
@@ -577,8 +598,14 @@ export function bootstrap(root: HTMLElement): () => void {
       })
     : null;
 
+  const forwardVector = new Vector3();
+  let superposedCells: readonly SuperpositionCell[] = [];
+  let focusedSuperposedCell: SuperpositionCell | null = null;
+  let maximumCharge = 0;
+  let lastWorldVisualSampleSeconds = Number.NEGATIVE_INFINITY;
+  let recordedDeaths = 0;
+
   const gameLoop = new GameLoop(({ deltaSeconds, elapsedSeconds }) => {
-    shell.style.setProperty('--observation-phase', `${elapsedSeconds % 8}`);
     const previousClock = runClock!.snapshot();
     if (
       !canonicalReplay &&
@@ -611,16 +638,16 @@ export function bootstrap(root: HTMLElement): () => void {
       camera.position.y,
       camera.position.z,
     ] as const;
-    const forwardVector = camera.getWorldDirection(camera.up.clone());
+    camera.getWorldDirection(forwardVector);
     replayRecorder.record(Math.floor(elapsedSeconds * 10), playerPosition, [
       forwardVector.x,
       forwardVector.y,
       forwardVector.z,
     ]);
     const nearbyCellIds = observableWorld!.getNearbyCellIds(playerPosition);
-    let maximumCharge = 0;
+    let observationTicks = 0;
     if (shell.dataset.calibrated === 'true') {
-      observableWorld!.update(
+      observationTicks = observableWorld!.update(
         {
           deltaSeconds,
           playerPosition,
@@ -633,7 +660,7 @@ export function bootstrap(root: HTMLElement): () => void {
         runClock!.snapshot().phase === 'READY' &&
         nearbyCellIds.some(
           (cellId) =>
-            observableWorld!.worldState.getCell(cellId).phase === 'FIXED',
+            observableWorld!.worldState.getCellView(cellId).phase === 'FIXED',
         )
       ) {
         runClock!.notifyFirstCollapse();
@@ -642,54 +669,51 @@ export function bootstrap(root: HTMLElement): () => void {
       }
     }
 
-    const superposedCells = nearbyCellIds.flatMap((cellId) => {
-      const cell = observableWorld!.worldState.getCell(cellId);
-      maximumCharge = Math.max(maximumCharge, cell.observationCharge);
-      if (cell.phase === 'FIXED' || cell.phase === 'COLLAPSING') return [];
-      return [
-        {
+    if (
+      observationTicks > 0 ||
+      elapsedSeconds - lastWorldVisualSampleSeconds >= 0.1
+    ) {
+      const nextSuperposedCells: SuperpositionCell[] = [];
+      maximumCharge = 0;
+      focusedSuperposedCell = null;
+      for (const cellId of nearbyCellIds) {
+        const cell = worldState.getCellView(cellId);
+        if (cell.phase === 'FIXED') {
+          portraitTracker.recordFixedCell({
+            cellId,
+            terrainTileId: cell.terrainTileId ?? 0,
+            featureTileId: cell.featureTileId,
+            family:
+              cell.paletteEpoch === 1
+                ? 'water'
+                : cell.paletteEpoch === 2
+                  ? 'forest'
+                  : cell.paletteEpoch >= 3
+                    ? 'ruin'
+                    : 'base',
+          });
+          continue;
+        }
+        if (cell.phase === 'COLLAPSING') continue;
+        maximumCharge = Math.max(maximumCharge, cell.observationCharge);
+        const superposedCell: SuperpositionCell = {
           cellId,
           center: cellCenterToWorld(cellId, 0),
           observationCharge: cell.observationCharge,
-          candidates: [
-            {
-              tileId: 0,
-              family: 'ground' as const,
-              weight: 14,
-              label: 'Pradera',
-            },
-            {
-              tileId: 1,
-              family: 'organic' as const,
-              weight: 9,
-              label: 'Vegetación',
-            },
-            {
-              tileId: 2,
-              family: 'mineral' as const,
-              weight: 5,
-              label: 'Roca',
-            },
-          ],
-        },
-      ];
-    });
-    for (const cellId of nearbyCellIds) {
-      const cell = worldState.getCell(cellId);
-      if (cell.phase !== 'FIXED') continue;
-      portraitTracker.recordFixedCell({
-        cellId,
-        terrainTileId: cell.terrainTileId ?? 0,
-        featureTileId: cell.featureTileId,
-        family:
-          cell.paletteEpoch === 1
-            ? 'water'
-            : cell.paletteEpoch === 2
-              ? 'forest'
-              : cell.paletteEpoch >= 3
-                ? 'ruin'
-                : 'base',
-      });
+          candidates: BASE_SUPERPOSITION_CANDIDATES,
+        };
+        nextSuperposedCells.push(superposedCell);
+        if (
+          focusedSuperposedCell === null ||
+          cell.observationCharge > focusedSuperposedCell.observationCharge
+        ) {
+          focusedSuperposedCell = superposedCell;
+        }
+      }
+      superposedCells = nextSuperposedCells;
+      reticle.setCharge(maximumCharge);
+      superposition.update(superposedCells, elapsedSeconds * 1_000);
+      lastWorldVisualSampleSeconds = elapsedSeconds;
     }
     portraitTracker.recordFrame({
       deltaSeconds,
@@ -699,20 +723,9 @@ export function bootstrap(root: HTMLElement): () => void {
         Math.hypot(playerPosition[0] - 64, playerPosition[2] - 64) > 14,
       unresolvedVisibleCells: superposedCells.length,
     });
-    const focusedCell = superposedCells.reduce<
-      (typeof superposedCells)[number] | null
-    >(
-      (selected, cell) =>
-        selected === null || cell.observationCharge > selected.observationCharge
-          ? cell
-          : selected,
-      null,
-    );
-    if (focusedCell && focusedCell.observationCharge > 0) {
-      portraitTracker.recordGaze(focusedCell.cellId, deltaSeconds);
+    if (focusedSuperposedCell && focusedSuperposedCell.observationCharge > 0) {
+      portraitTracker.recordGaze(focusedSuperposedCell.cellId, deltaSeconds);
     }
-    reticle.setCharge(maximumCharge);
-    superposition.update(superposedCells, elapsedSeconds * 1_000);
     fixedVisuals.updateFrame(deltaSeconds);
 
     const playerCoordinates = worldPositionToCell(playerPosition);
@@ -734,14 +747,23 @@ export function bootstrap(root: HTMLElement): () => void {
     });
     if (wp5Snapshot && progressionHud) {
       progressionHud.update(wp5Snapshot.progression);
-      wp5GateStatus.textContent = `WP6 · ${wp5Snapshot.progression.collectedPacks.length}/4 SEMILLAS · ${wp5Snapshot.uncertainty?.state ?? 'SIN ENEMIGO'}`;
-      uncertaintyStatus.hidden = wp5Snapshot.uncertainty === null;
-      if (wp5Snapshot.uncertainty) {
-        uncertaintyStatus.textContent = uncertaintyStatusText(
-          wp5Snapshot.uncertainty.state,
-        );
+      const gateStatus = `WP6 · ${wp5Snapshot.progression.collectedPacks.length}/4 SEMILLAS · ${wp5Snapshot.uncertainty?.state ?? 'SIN ENEMIGO'}`;
+      if (wp5GateStatus.textContent !== gateStatus) {
+        wp5GateStatus.textContent = gateStatus;
       }
-      shell.dataset.respawnPhase = wp5Snapshot.respawn.phase;
+      const uncertaintyHidden = wp5Snapshot.uncertainty === null;
+      if (uncertaintyStatus.hidden !== uncertaintyHidden) {
+        uncertaintyStatus.hidden = uncertaintyHidden;
+      }
+      if (wp5Snapshot.uncertainty) {
+        const statusText = uncertaintyStatusText(wp5Snapshot.uncertainty.state);
+        if (uncertaintyStatus.textContent !== statusText) {
+          uncertaintyStatus.textContent = statusText;
+        }
+      }
+      if (shell.dataset.respawnPhase !== wp5Snapshot.respawn.phase) {
+        shell.dataset.respawnPhase = wp5Snapshot.respawn.phase;
+      }
       for (const packId of wp5Snapshot.progression.collectedPacks) {
         if (announcedPacks.has(packId)) continue;
         announcedPacks.add(packId);
@@ -749,8 +771,9 @@ export function bootstrap(root: HTMLElement): () => void {
         audioDirector.playUnlockCue(packId);
         narrative.play(narrativeCueByPack[packId]);
       }
-      if (wp5Snapshot.respawn.deaths > portraitTracker.snapshot().deaths) {
+      if (wp5Snapshot.respawn.deaths > recordedDeaths) {
         portraitTracker.recordDeath();
+        recordedDeaths = wp5Snapshot.respawn.deaths;
       }
     }
 
@@ -953,7 +976,14 @@ export function bootstrap(root: HTMLElement): () => void {
     progressionHud?.destroy();
     originDetails.dispose();
     worldBoundary.dispose();
+    stopQualitySync();
     finalArt.dispose();
+    if (
+      (window as PerformanceWindow).__ULTIMA_OBSERVATION_PERFORMANCE__ ===
+      performanceSnapshot
+    ) {
+      delete (window as PerformanceWindow).__ULTIMA_OBSERVATION_PERFORMANCE__;
+    }
     gameRenderer.dispose();
     playerInput.dispose();
     playerPhysics?.dispose();

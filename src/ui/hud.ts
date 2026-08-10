@@ -6,6 +6,8 @@ export class GameHud {
   readonly onboarding: HTMLElement;
   readonly subtitle: HTMLElement;
   private subtitlesEnabled = true;
+  private displayedTime = '';
+  private countdownState = '';
 
   constructor(
     private readonly parent: HTMLElement,
@@ -25,13 +27,21 @@ export class GameHud {
 
   setTime(remainingSeconds: number): void {
     const totalSeconds = Math.max(0, Math.ceil(remainingSeconds));
-    this.elements.time.textContent = `${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:${String(totalSeconds % 60).padStart(2, '0')}`;
-    this.parent.dataset.countdown =
+    const displayedTime = `${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:${String(totalSeconds % 60).padStart(2, '0')}`;
+    if (displayedTime !== this.displayedTime) {
+      this.displayedTime = displayedTime;
+      this.elements.time.textContent = displayedTime;
+    }
+    const countdownState =
       totalSeconds <= 30
         ? 'critical'
         : totalSeconds <= 60
           ? 'warning'
           : 'normal';
+    if (countdownState !== this.countdownState) {
+      this.countdownState = countdownState;
+      this.parent.dataset.countdown = countdownState;
+    }
   }
 
   showSubtitle(message: string): void {

@@ -1,5 +1,6 @@
 export class ObservationReticle {
   readonly element: HTMLDivElement;
+  private charge = -1;
 
   constructor(parent: HTMLElement) {
     this.element = document.createElement('div');
@@ -11,6 +12,8 @@ export class ObservationReticle {
 
   setCharge(charge: number): void {
     const clamped = Math.min(1, Math.max(0, charge));
+    if (Math.abs(clamped - this.charge) < 0.001) return;
+    this.charge = clamped;
     this.element.style.setProperty('--observation-charge', `${clamped}`);
   }
 
