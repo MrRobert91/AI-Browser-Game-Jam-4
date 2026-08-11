@@ -2,7 +2,7 @@
 
 > Fuente de verdad de producto y guía normativa para agentes
 >
-> Versión de diseño: 1.1 — objetivo AI Browser Game Jam 4
+> Versión de diseño: 1.2 — prólogo bilingüe posterior a la jam
 >
 > Duración objetivo: 10 minutos (rango admisible: 5–15)
 >
@@ -505,7 +505,7 @@ Al desbloquear, la Semilla:
 2. muestra tres siluetas nuevas;
 3. incrementa `paletteEpoch`;
 4. activa pack solo para chunks futuros;
-5. añade capa musical;
+5. añade un timbre ambiental local asociado al pack;
 6. reproduce una línea de La Medida;
 7. no abre menú ni ofrece elección de recompensa.
 
@@ -651,7 +651,7 @@ Superposición:
 
 Colapso dura 450–700 ms según entropía: separar incompatibles → retraer al centro → ganador desde escala 0,85/opacidad 0 → onda por bordes compatibles → física después del 70 %.
 
-La sensación de alta calidad procede de luz solar consistente, niebla, materiales compartidos, vegetación procedural, sonido espacial, música, cámara estable y un colapso muy pulido; no de cientos de assets.
+La sensación de alta calidad procede de luz solar consistente, niebla, materiales compartidos, vegetación procedural, sonido espacial, voz institucional, cámara estable y un colapso muy pulido; no de cientos de assets.
 
 Render:
 
@@ -682,12 +682,13 @@ Audio Web Audio API:
 - Un bus por familia y límite de voces.
 - Ambientes mezclados por proporción local, no una fuente por celda.
 - Máximo ocho fuentes posicionales.
-- Una canción original pregenerada acompaña la partida desde un asset local,
-  con letra sobre WFC y colapso cuántico. Puede haberse producido con un modelo
-  generativo, pero el runtime nunca llama a APIs ni depende de red.
+- La canción original pregenerada queda retirada. La partida usa silencio,
+  ambientes locales no musicales,
+  efectos breves y mensajes de La Medida; el runtime nunca llama a APIs ni
+  depende de red.
 - No se usan osciladores continuos como ambiente o música; solo efectos breves
   y delimitados para colapso, Semillas, narrativa y cuenta atrás.
-- Volumen maestro, música y efectos separados.
+- Volumen maestro, voz, ambiente y efectos separados.
 
 HUD: tiempo arriba izquierda; cuatro iconos arriba derecha; retícula/carga centro; mensaje breve abajo. Sin minimapa. Monolito con columna de luz visible.
 
@@ -704,6 +705,32 @@ Opciones: sensibilidad, invertir Y, quitar cabeceo, destellos completos/reducido
 Seguridad visual: sin flashes de pantalla completa; ≤3 cambios de luminancia/s; modo reducido sustituye partículas rápidas por disolución suave.
 
 Build de jam: diez minutos. Mejoras opcionales: Contemplación 15 min; Breve 5 min con anclas cercanas y peligro acelerado.
+
+## 11.1 Prólogo bilingüe y voz institucional
+
+- La experiencia DEBE comenzar con selector `English / Español`; inglés es el
+  valor inicial cuando no existe una preferencia guardada.
+- El idioma elegido se conserva para partidas posteriores, vuelve a mostrarse
+  antes de entrar y queda fijado hasta reiniciar.
+- Tras elegir idioma, el Colapsador aparece en una sala cerrada de la Agencia.
+  Un botón central reproduce un briefing local de cincuenta segundos en una
+  pantalla que después se convierte en portal hacia el Condensado.
+- Sala, briefing y portal no consumen tiempo. El reloj continúa empezando con
+  el primer colapso aceptado.
+- El briefing presenta como doctrina de la Agencia que una consciencia cierra
+  la cadena de medición. Esa afirmación pertenece a la ficción institucional y
+  NO sustituye el canon QBista de 2.1.
+- Toda UI de producción, subtítulo, voz, resultado, haiku, metadato y texto
+  copiable DEBE existir en inglés y español. Los subtítulos del briefing son
+  siempre visibles.
+- La Medida es un personaje original femenino, preciso, frío y
+  pasivo-agresivo. NO imita literalmente a GLaDOS ni a una intérprete real.
+- Las voces y ambientes se generan una sola vez, se validan y se distribuyen
+  como archivos locales. Ninguna credencial de proveedor llega al cliente ni
+  al despliegue.
+- Por partida estándar La Medida reproduce como máximo veintidós mensajes de
+  juego, con selección determinista, prioridad, caducidad y pausa mínima entre
+  comentarios no urgentes.
 
 ## 12. Arquitectura, contratos y archivos
 
@@ -772,11 +799,11 @@ src/
                  uncertainty-enemy.ts, ending.ts, portrait.ts, haiku.ts
   render/        renderer.ts, quality.ts, materials.ts, superposition.ts,
                  postprocessing.ts, atmosphere.ts
-  audio/         audio-director.ts, spatial-pool.ts, custom-song.ts
+  audio/         audio-director.ts, spatial-pool.ts
   ui/            hud.ts, pause.ts, results.ts
   dev/           debug-overlay.ts, seed-browser.ts, grammar-viewer.ts
 tests/           unit/, property/, integration/, e2e/
-public/assets/   tiles/, features/, audio/, textures/
+public/assets/   tiles/, features/, audio/, video/, textures/
 ```
 
 Assets: modelar sobre 2×2 m; pivote centro inferior; aplicar transformaciones; GLB; Meshopt o Draco; KTX2 cuando el pipeline sea estable; LOD0/LOD1 para árboles, columnas y cristales; ejecutar `validate:assets` y `validate:tiles`.

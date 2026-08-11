@@ -1,10 +1,15 @@
 import type { RunResult } from './ending';
-import { approximateSpanishSyllables, type GeneratedHaiku } from './haiku';
+import {
+  approximateEnglishSyllables,
+  approximateSpanishSyllables,
+  type GeneratedHaiku,
+} from './haiku';
+import type { Locale } from '../contracts/localization';
 
 export const REMOTE_HAIKU_TIMEOUT_MS = 4_000;
 
 export interface RemoteHaikuPayload {
-  readonly locale: 'es-ES';
+  readonly locale: 'en-US' | 'es-ES';
   readonly profile: string;
   readonly fixedCellsBucket: number;
   readonly maxDistanceBucket: number;
@@ -24,6 +29,7 @@ export interface RemoteHaikuRequestOptions {
   readonly consent: boolean;
   readonly result: RunResult;
   readonly local: GeneratedHaiku;
+  readonly locale?: Locale;
   readonly fetcher?: typeof fetch;
   readonly timeoutMs?: number;
 }
@@ -43,9 +49,10 @@ export function configuredRemoteHaikuEndpoint(
 
 export function createRemoteHaikuPayload(
   result: RunResult,
+  locale: Locale = 'es',
 ): RemoteHaikuPayload {
   return {
-    locale: 'es-ES',
+    locale: locale === 'en' ? 'en-US' : 'es-ES',
     profile: result.profile,
     fixedCellsBucket: bucket(result.portrait.fixedCells, 25),
     maxDistanceBucket: bucket(result.portrait.maxDistance, 5),
@@ -77,7 +84,9 @@ export async function requestRemoteHaikuWithFallback(
     const response = await (options.fetcher ?? fetch)(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(createRemoteHaikuPayload(options.result)),
+      body: JSON.stringify(
+        createRemoteHaikuPayload(options.result, options.locale ?? 'es'),
+      ),
       signal: controller.signal,
       credentials: 'omit',
       referrerPolicy: 'no-referrer',
@@ -92,11 +101,11 @@ export async function requestRemoteHaikuWithFallback(
     return {
       haiku: {
         lines,
-        approximateSyllables: lines.map(approximateSpanishSyllables) as [
-          number,
-          number,
-          number,
-        ],
+        approximateSyllables: lines.map(
+          options.locale === 'en'
+            ? approximateEnglishSyllables
+            : approximateSpanishSyllables,
+        ) as [number, number, number],
       },
       source: 'remote',
       error: null,

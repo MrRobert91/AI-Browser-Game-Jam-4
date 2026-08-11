@@ -1,16 +1,14 @@
 import type { UncertaintyState } from '../gameplay/uncertainty-enemy';
+import type { Locale } from '../contracts/localization';
+import { uiCopy } from '../i18n';
 
-const STATE_LABELS: Readonly<Record<UncertaintyState, string>> = {
-  DORMANT: 'INFORME LATENTE',
-  STALKING: 'DESCRIPCIÓN NO OBSERVADA',
-  SEEN: 'REVISIÓN EN CURSO',
-  PETRIFYING: 'RECONCILIANDO',
-  CONTACT: 'CONFLICTO DE EXPEDIENTE',
-  FIXED_STATUE: 'RESULTADO RECONCILIADO',
-};
-
-export function uncertaintyStatusText(state: UncertaintyState): string {
+export function uncertaintyStatusText(
+  state: UncertaintyState,
+  locale: Locale = 'es',
+): string {
+  const copy = uiCopy(locale);
+  const label = copy.uncertaintyStates[state];
   return state === 'FIXED_STATUE'
-    ? `REGISTRO COMÚN // ${STATE_LABELS[state]}`
-    : `INCIDENCIA DE ACTUALIZACIÓN PENDIENTE // ${STATE_LABELS[state]}`;
+    ? `${copy.reconciledPrefix} // ${label}`
+    : `${copy.uncertaintyPrefix} // ${label}`;
 }

@@ -1,7 +1,64 @@
-import catalogSource from '../content/narrative.json';
+import catalogSource from '../content/narrative.catalog.json';
+import type { Locale } from '../contracts/localization';
 
-export type NarrativeCueId = keyof typeof catalogSource.cues;
-export type NarrativeSpeaker = 'LA_MEDIDA' | 'COLLAPSADOR';
+export type NarrativeCueId =
+  | 'start'
+  | 'firstCollapse'
+  | 'unlockWater'
+  | 'unlockForest'
+  | 'unlockRuin'
+  | 'unlockStorm'
+  | 'firstDanger'
+  | 'firstDeath'
+  | 'respawn'
+  | 'uncertaintyDetected'
+  | 'uncertaintyFixed'
+  | 'lastSixtySeconds'
+  | 'lastThirtySeconds'
+  | 'final'
+  | 'distanceNear'
+  | 'distanceMid'
+  | 'distanceFar'
+  | 'distanceOuter'
+  | 'distanceReturn'
+  | 'attentionLongA'
+  | 'attentionLongB'
+  | 'attentionLongC'
+  | 'attentionLongD'
+  | 'attentionLongE'
+  | 'revisitA'
+  | 'revisitB'
+  | 'revisitC'
+  | 'revisitD'
+  | 'riskA'
+  | 'riskB'
+  | 'riskC'
+  | 'riskD'
+  | 'stalledA'
+  | 'stalledB'
+  | 'stalledC'
+  | 'stalledD'
+  | 'deathAgainA'
+  | 'deathAgainB'
+  | 'deathAgainC'
+  | 'deathAgainD'
+  | 'ambientA'
+  | 'ambientB'
+  | 'ambientC'
+  | 'ambientD';
+export type NarrativeCategory =
+  | 'critical'
+  | 'distance'
+  | 'attention'
+  | 'revisit'
+  | 'risk'
+  | 'stalled'
+  | 'death'
+  | 'ambient';
+export type NarrativeSpeaker = 'LA_MEDIDA';
+
+export const NARRATIVE_COOLDOWN_MS = 25_000;
+export const MAX_NARRATIVE_CUES_PER_RUN = 22;
 
 export interface NarrativeCueDefinition {
   readonly event: string;
@@ -11,11 +68,13 @@ export interface NarrativeCueDefinition {
   readonly priority: number;
   readonly durationMs: number;
   readonly once: boolean;
+  readonly category: NarrativeCategory;
+  readonly critical: boolean;
 }
 
 export interface ResolvedNarrativeCue extends NarrativeCueDefinition {
   readonly id: NarrativeCueId;
-  readonly locale: string;
+  readonly locale: 'en-US' | 'es-ES';
   readonly text: string;
 }
 
@@ -27,15 +86,52 @@ export interface NarrativeEvents {
 }
 
 export interface NarrativeCatalog {
-  readonly locale: string;
+  readonly locale: 'en-US' | 'es-ES';
   readonly cues: Readonly<Record<NarrativeCueId, NarrativeCueDefinition>>;
 }
 
-export const NARRATIVE_CUE_ORDER = Object.keys(
-  catalogSource.cues,
+export const NARRATIVE_CUE_ORDER = catalogSource.map(
+  (entry) => entry.id,
 ) as NarrativeCueId[];
 
-export const NARRATIVE_CATALOG = catalogSource as NarrativeCatalog;
+function buildCatalog(locale: Locale): NarrativeCatalog {
+  return {
+    locale: locale === 'en' ? 'en-US' : 'es-ES',
+    cues: Object.fromEntries(
+      catalogSource.map((entry) => {
+        const text = locale === 'en' ? entry.en : entry.es;
+        return [
+          entry.id,
+          {
+            event: entry.id
+              .replace(/[A-Z]/g, (letter) => `_${letter}`)
+              .toUpperCase(),
+            speaker: 'LA_MEDIDA' as const,
+            text,
+            fallbackText: text,
+            priority: entry.priority,
+            durationMs: entry.durationMs,
+            once: entry.once,
+            category: entry.category,
+            critical: entry.category === 'critical',
+          },
+        ];
+      }),
+    ) as unknown as Readonly<Record<NarrativeCueId, NarrativeCueDefinition>>,
+  };
+}
+
+export const NARRATIVE_CATALOGS = {
+  en: buildCatalog('en'),
+  es: buildCatalog('es'),
+} as const;
+
+/** Spanish remains exported for compatibility with deterministic unit tooling. */
+export const NARRATIVE_CATALOG = NARRATIVE_CATALOGS.es;
+
+export function narrativeCatalog(locale: Locale): NarrativeCatalog {
+  return NARRATIVE_CATALOGS[locale];
+}
 
 export function validateNarrativeCatalog(
   catalog: NarrativeCatalog = NARRATIVE_CATALOG,
@@ -64,9 +160,18 @@ export function validateNarrativeCatalog(
   return errors;
 }
 
+function stablePoolIndex(seed: number, category: string, size: number): number {
+  let hash = seed >>> 0;
+  for (const character of category) {
+    hash = Math.imul(hash ^ character.charCodeAt(0), 0x45d9f3b) >>> 0;
+  }
+  return size === 0 ? 0 : hash % size;
+}
+
 export class NarrativeDirector {
   private readonly played = new Set<NarrativeCueId>();
   private readonly history: NarrativeCueId[] = [];
+  private lastPlayedAtMs = Number.NEGATIVE_INFINITY;
 
   constructor(
     private readonly events: NarrativeEvents,
@@ -76,12 +181,24 @@ export class NarrativeDirector {
     if (errors.length > 0) throw new Error(errors.join('\n'));
   }
 
-  play(cueId: NarrativeCueId, repeat = false): string {
+  play(
+    cueId: NarrativeCueId,
+    repeat = false,
+    nowMs = performance.now(),
+  ): string {
     const definition = this.catalog.cues[cueId];
     const text = definition.text.trim() || definition.fallbackText;
     if (!repeat && definition.once && this.played.has(cueId)) return text;
+    if (this.history.length >= MAX_NARRATIVE_CUES_PER_RUN) return text;
+    if (
+      !definition.critical &&
+      nowMs - this.lastPlayedAtMs < NARRATIVE_COOLDOWN_MS
+    ) {
+      return text;
+    }
     this.played.add(cueId);
     this.history.push(cueId);
+    this.lastPlayedAtMs = nowMs;
     const cue: ResolvedNarrativeCue = {
       ...definition,
       id: cueId,
@@ -93,6 +210,26 @@ export class NarrativeDirector {
     this.events.onCue?.(cue);
     this.events.onAudioCue?.(cue);
     return text;
+  }
+
+  playPool(
+    category: Exclude<NarrativeCategory, 'critical'>,
+    seed: number,
+    contextStillValid = true,
+    nowMs = performance.now(),
+  ): NarrativeCueId | null {
+    if (!contextStillValid) return null;
+    const candidates = NARRATIVE_CUE_ORDER.filter(
+      (cueId) =>
+        this.catalog.cues[cueId].category === category &&
+        !this.played.has(cueId),
+    );
+    if (candidates.length === 0) return null;
+    const cueId =
+      candidates[stablePoolIndex(seed, category, candidates.length)]!;
+    const previousCount = this.history.length;
+    this.play(cueId, false, nowMs);
+    return this.history.length > previousCount ? cueId : null;
   }
 
   hasPlayed(cueId: NarrativeCueId): boolean {

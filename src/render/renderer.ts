@@ -1,5 +1,6 @@
 import {
   ACESFilmicToneMapping,
+  Color,
   PCFShadowMap,
   SRGBColorSpace,
   Scene,
@@ -106,6 +107,16 @@ export class GameRenderer {
     this.#requestedQuality = preset;
     this.#slowFramesAtMinimum = 0;
     this.#setResolvedQuality(resolveQualityProfile(preset));
+  }
+
+  setWorldAtmosphereVisible(visible: boolean): void {
+    this.#atmosphere.group.visible = visible;
+    if (!visible) {
+      this.scene.fog = null;
+      this.scene.background = new Color(0x071018);
+    } else {
+      this.#atmosphere.applyQuality(this.#profile);
+    }
   }
 
   onQualityChange(listener: (profile: QualityProfile) => void): () => void {

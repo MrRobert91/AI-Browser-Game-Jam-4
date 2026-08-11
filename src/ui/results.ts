@@ -9,6 +9,8 @@ import {
   type PanoramaRecord,
 } from '../gameplay/panorama';
 import { requestRemoteHaikuWithFallback } from '../gameplay/remote-haiku';
+import type { Locale } from '../contracts/localization';
+import { uiCopy } from '../i18n';
 
 const LAST_RESULT_KEY = 'ultima-observacion:last-result';
 const BEST_PORTRAIT_KEY = 'ultima-observacion:best-portrait';
@@ -63,38 +65,39 @@ export class ResultsPanel {
       readonly gallery: LocalPanoramaGallery;
     },
     private readonly remoteHaikuEndpoint: string | null = null,
+    private readonly locale: Locale = 'es',
   ) {}
 
   show(result: RunResult): void {
     persistRunResult(result);
+    const copy = uiCopy(this.locale);
     this.root.replaceChildren();
     const eyebrow = document.createElement('p');
-    eyebrow.textContent = 'EXPEDIENTE DE ACTUALIZACIÓN DEL AGENTE';
+    eyebrow.textContent = copy.resultEyebrow;
     const title = document.createElement('h2');
     title.id = 'agent-update-title';
-    title.textContent =
-      'Creías que La Medida estaba registrando el mundo. Estaba registrando qué clase de mundo eras capaz de hacer real.';
+    title.textContent = copy.resultTitle;
     const closure = document.createElement('p');
     closure.className = 'slice-result__closure';
-    closure.textContent = `${result.closure} · ${result.reading}`;
+    closure.textContent = `${copy.closures[result.closure] ?? result.closure} · ${copy.readings[result.reading] ?? result.reading}`;
     const profile = document.createElement('p');
-    profile.textContent = `Perfil: ${result.profile}`;
+    profile.textContent = `${copy.profile}: ${copy.profileLabels[result.profile] ?? result.profile}`;
     const interpretation = document.createElement('p');
     interpretation.className = 'slice-result__interpretation';
-    interpretation.textContent = describeAgentUpdate(result);
+    interpretation.textContent = describeAgentUpdate(result, this.locale);
     const metrics = document.createElement('dl');
     metrics.className = 'slice-result__metrics';
     const metricEntries = [
-      ['RESULTADOS', String(result.portrait.fixedCells)],
+      [copy.resultMetrics[0], String(result.portrait.fixedCells)],
       [
-        'FORMAS',
+        copy.resultMetrics[1],
         String(
           result.portrait.uniqueTerrainTiles +
             result.portrait.uniqueFeatureTiles,
         ),
       ],
-      ['INTERVENCIONES', String(result.portrait.unlockedPacks.length)],
-      ['DISTANCIA', `${result.portrait.maxDistance.toFixed(1)} m`],
+      [copy.resultMetrics[2], String(result.portrait.unlockedPacks.length)],
+      [copy.resultMetrics[3], `${result.portrait.maxDistance.toFixed(1)} m`],
     ] as const;
     for (const [label, value] of metricEntries) {
       const group = document.createElement('div');
@@ -111,27 +114,26 @@ export class ResultsPanel {
     const seed = document.createElement('strong');
     seed.textContent =
       result.seedMode === 'daily' && result.dailyDateKey
-        ? `DIARIA UTC ${result.dailyDateKey} · SEED ${result.seedLabel}`
+        ? `${copy.dailySeed} ${result.dailyDateKey} · SEED ${result.seedLabel}`
         : `SEED ${result.seedLabel}`;
     const note = document.createElement('p');
     note.className = 'slice-result__agency-note';
-    note.textContent =
-      'AGENCIA // Expediente cerrado sin reconocimiento de causalidad cosmológica ni derecho automático a reembolso corporal.';
+    note.textContent = copy.agencyNote;
     const actions = document.createElement('div');
     actions.className = 'slice-result__actions';
-    const copy = document.createElement('button');
-    copy.type = 'button';
-    copy.textContent = 'Copiar registro';
-    copy.addEventListener('click', () => {
-      void copyText(formatRunResult(result)).then(() => {
-        copy.textContent = 'Registro copiado';
+    const copyButton = document.createElement('button');
+    copyButton.type = 'button';
+    copyButton.textContent = copy.copyRecord;
+    copyButton.addEventListener('click', () => {
+      void copyText(formatRunResult(result, this.locale)).then(() => {
+        copyButton.textContent = copy.copied;
       });
     });
     const restart = document.createElement('button');
     restart.type = 'button';
-    restart.textContent = 'Nueva observación';
+    restart.textContent = uiCopy(this.locale).newObservation;
     restart.addEventListener('click', this.onRestart);
-    actions.append(copy);
+    actions.append(copyButton);
     const galleryRegion = document.createElement('section');
     galleryRegion.className = 'slice-result__gallery';
     galleryRegion.hidden = true;
@@ -141,11 +143,11 @@ export class ResultsPanel {
       download.type = 'button';
       download.disabled = true;
       download.dataset.panoramaDownload = 'true';
-      download.textContent = 'Preparando panorama…';
+      download.textContent = uiCopy(this.locale).preparingPanorama;
       const gallery = document.createElement('button');
       gallery.type = 'button';
       gallery.dataset.panoramaGallery = 'true';
-      gallery.textContent = 'Galería local';
+      gallery.textContent = uiCopy(this.locale).localGallery;
       gallery.addEventListener('click', () => {
         galleryRegion.hidden = !galleryRegion.hidden;
         if (!galleryRegion.hidden) void this.#renderGallery(galleryRegion);
@@ -155,7 +157,7 @@ export class ResultsPanel {
         .capture(result)
         .then(async (record) => {
           download.disabled = false;
-          download.textContent = 'Descargar panorama PNG';
+          download.textContent = uiCopy(this.locale).downloadPanorama;
           download.addEventListener('click', () => downloadPanorama(record));
           const persisted = await this.panorama!.gallery.save(record).catch(
             () => false,
@@ -164,7 +166,7 @@ export class ResultsPanel {
           if (!galleryRegion.hidden) await this.#renderGallery(galleryRegion);
         })
         .catch(() => {
-          download.textContent = 'Panorama no disponible';
+          download.textContent = uiCopy(this.locale).panoramaUnavailable;
           download.dataset.panoramaError = 'true';
         });
     }
@@ -192,6 +194,7 @@ export class ResultsPanel {
   }
 
   #createRemoteHaikuControls(result: RunResult): HTMLElement {
+    const copy = uiCopy(this.locale);
     const region = document.createElement('section');
     region.className = 'slice-result__remote-haiku';
     if (this.remoteHaikuEndpoint === null) {
@@ -205,18 +208,14 @@ export class ResultsPanel {
     consent.id = consentId;
     consent.dataset.remoteHaikuConsent = 'true';
     label.htmlFor = consentId;
-    label.append(
-      consent,
-      ' Enviar perfil y estadísticas redondeadas para una variante remota',
-    );
+    label.append(consent, copy.remoteConsent);
     const disclosure = document.createElement('p');
-    disclosure.textContent =
-      'No envía seed, ruta, panorama, haiku local ni identificadores. Una petición HTTPS; timeout 4 s. El haiku local sigue siendo el expediente oficial.';
+    disclosure.textContent = copy.remoteDisclosure;
     const request = document.createElement('button');
     request.type = 'button';
     request.disabled = true;
     request.dataset.remoteHaikuRequest = 'true';
-    request.textContent = 'Crear variante remota';
+    request.textContent = copy.remoteCreate;
     const status = document.createElement('p');
     status.setAttribute('role', 'status');
     const variant = document.createElement('blockquote');
@@ -229,21 +228,20 @@ export class ResultsPanel {
       () => {
         request.disabled = true;
         consent.disabled = true;
-        status.textContent = 'Solicitando una variante…';
+        status.textContent = copy.remoteRequesting;
         void requestRemoteHaikuWithFallback({
           endpoint: this.remoteHaikuEndpoint,
           consent: consent.checked,
           result,
           local: result.haiku,
+          locale: this.locale,
         }).then((response) => {
           if (response.source === 'remote') {
             variant.textContent = response.haiku.lines.join('\n');
             variant.hidden = false;
-            status.textContent =
-              'Variante remota recibida. No sustituye el haiku local.';
+            status.textContent = copy.remoteReceived;
           } else {
-            status.textContent =
-              'La variante remota no está disponible. El haiku local se conserva.';
+            status.textContent = copy.remoteUnavailable;
           }
         });
       },
@@ -255,12 +253,12 @@ export class ResultsPanel {
 
   async #renderGallery(region: HTMLElement): Promise<void> {
     if (!this.panorama) return;
+    const copy = uiCopy(this.locale);
     const records = await this.panorama.gallery.list();
     const title = document.createElement('h3');
-    title.textContent = `Galería local · ${records.length}/5`;
+    title.textContent = `${copy.localGallery} · ${records.length}/5`;
     const note = document.createElement('p');
-    note.textContent =
-      'Solo en este navegador. Cada entrada conserva PNG, seed, perfil y haiku.';
+    note.textContent = copy.galleryOnlyLocal;
     const list = document.createElement('ol');
     for (const record of records) {
       const item = document.createElement('li');
@@ -268,11 +266,11 @@ export class ResultsPanel {
       summary.textContent = `${record.seedLabel} · ${record.profile} · ${record.haiku.join(' / ')}`;
       const download = document.createElement('button');
       download.type = 'button';
-      download.textContent = 'Descargar';
+      download.textContent = copy.download;
       download.addEventListener('click', () => downloadPanorama(record));
       const remove = document.createElement('button');
       remove.type = 'button';
-      remove.textContent = 'Borrar';
+      remove.textContent = copy.remove;
       remove.addEventListener('click', () => {
         void this.panorama!.gallery.remove(record.id).then(() =>
           this.#renderGallery(region),

@@ -1,0 +1,729 @@
+{
+  "version": 1,
+  "model": "openai/gpt-4o-mini-transcribe",
+  "generatedAt": "2026-08-10T23:41:41.885Z",
+  "totalCostUsd": 0.018283749999999994,
+  "minimumSimilarity": 0.7272727272727273,
+  "entries": [
+    {
+      "id": "start",
+      "locale": "en",
+      "expected": "Look. What remains under your attention will earn the right to exist.",
+      "transcription": "Look, what remains under your attention will earn the right to exist.",
+      "similarity": 1,
+      "costUsd": 0.0001525
+    },
+    {
+      "id": "firstCollapse",
+      "locale": "en",
+      "expected": "A result has been admitted to your record. Previous expectations have been disposed of in the approved container.",
+      "transcription": "A result has been admitted to your record. Previous expectations have been disposed of in the approved container.",
+      "similarity": 1,
+      "costUsd": 0.000205
+    },
+    {
+      "id": "unlockWater",
+      "locale": "en",
+      "expected": "The water was not absent. It was not yet possible. Moisture is now an authorized category of experience.",
+      "transcription": "The water was not absent, it was not yet possible. Moisture is now an authorized category of experience.",
+      "similarity": 1,
+      "costUsd": 0.00022125
+    },
+    {
+      "id": "unlockForest",
+      "locale": "en",
+      "expected": "Root and growth interventions are authorized. Patience now has a form to complete.",
+      "transcription": "Root and growth interventions are authorized. Patient now has a form to complete.",
+      "similarity": 0.9230769230769231,
+      "costUsd": 0.0001575
+    },
+    {
+      "id": "unlockRuin",
+      "locale": "en",
+      "expected": "Mineral memory is authorized. The Agency does not guarantee that its past actually occurred.",
+      "transcription": "Mineral memory is authorized. The agency does not guarantee that its past actually occurred.",
+      "similarity": 1,
+      "costUsd": 0.00016875
+    },
+    {
+      "id": "unlockStorm",
+      "locale": "en",
+      "expected": "High-energy interventions are authorized. The attached risk has been classified as a user preference.",
+      "transcription": "High-energy interventions are authorized. The attached risk has been classified as a user preference.",
+      "similarity": 1,
+      "costUsd": 0.00017625
+    },
+    {
+      "id": "firstDanger",
+      "locale": "en",
+      "expected": "Hazard detected. For compliance purposes, your continued approach will be interpreted as informed enthusiasm.",
+      "transcription": "Hazard detected. For compliance purposes, your continued approach will be interpreted as informed enthusiasm.",
+      "similarity": 1,
+      "costUsd": 0.00019875
+    },
+    {
+      "id": "firstDeath",
+      "locale": "en",
+      "expected": "The world remembers better than you do. Your death has been classified as training; another field body will be issued.",
+      "transcription": "The world remembers better than you do. Your death has been classified as training. Another field body will be issued.",
+      "similarity": 1,
+      "costUsd": 0.000225
+    },
+    {
+      "id": "respawn",
+      "locale": "en",
+      "expected": "Field body replaced. Your record and Seeds remain regrettably binding.",
+      "transcription": "Field body replaced. Your record and seeds remain regrettably binding.",
+      "similarity": 1,
+      "costUsd": 0.00013625
+    },
+    {
+      "id": "uncertaintyDetected",
+      "locale": "en",
+      "expected": "Pending update incident. This result appears to belong to someone more decisive.",
+      "transcription": "Pending update incident. This result appears to belong to someone more decisive.",
+      "similarity": 1,
+      "costUsd": 0.00014875
+    },
+    {
+      "id": "uncertaintyFixed",
+      "locale": "en",
+      "expected": "Stable description admitted to the common record. The discrepancy is now officially user variability.",
+      "transcription": "Stable description admitted to the common record, the discrepancy is now officially user variability.",
+      "similarity": 1,
+      "costUsd": 0.0001775
+    },
+    {
+      "id": "lastSixtySeconds",
+      "locale": "en",
+      "expected": "The observation window is failing. You may now experience urgency without filing a request.",
+      "transcription": "The observation window is failing. You may now experience urgency without filing a request.",
+      "similarity": 1,
+      "costUsd": 0.00016625
+    },
+    {
+      "id": "lastThirtySeconds",
+      "locale": "en",
+      "expected": "There is no time to see everything. Choose what deserves to finish. Thirty seconds remain.",
+      "transcription": "There is no time to see everything. Choose what deserves to finish. 30 seconds remain.",
+      "similarity": 0.9333333333333333,
+      "costUsd": 0.00018875
+    },
+    {
+      "id": "final",
+      "locale": "en",
+      "expected": "You did not find this world. You separated it from all the others.",
+      "transcription": "You did not find this world, you separated it from all the others.",
+      "similarity": 1,
+      "costUsd": 0.0001325
+    },
+    {
+      "id": "distanceNear",
+      "locale": "en",
+      "expected": "You remain close to the origin. Prudence has been logged. It will not be praised.",
+      "transcription": "You remain close to the origin. Prudence has been logged. It will not be praised.",
+      "similarity": 1,
+      "costUsd": 0.0002025
+    },
+    {
+      "id": "distanceMid",
+      "locale": "en",
+      "expected": "You have exceeded the distance covered by the safety leaflet. The leaflet is very disappointed.",
+      "transcription": "You have exceeded the distance covered by the safety leaflet. The leaflet is very disappointed.",
+      "similarity": 1,
+      "costUsd": 0.00017375
+    },
+    {
+      "id": "distanceFar",
+      "locale": "en",
+      "expected": "The origin is now a memory. Please avoid making memories operationally significant.",
+      "transcription": "The origin is now a memory. Please avoid making memories operationally significant.",
+      "similarity": 1,
+      "costUsd": 0.000155
+    },
+    {
+      "id": "distanceOuter",
+      "locale": "en",
+      "expected": "You have entered a region where the Agency's confidence becomes purely typographical.",
+      "transcription": "You have entered a region where the agency's confidence becomes purely typographical.",
+      "similarity": 1,
+      "costUsd": 0.00016125
+    },
+    {
+      "id": "distanceReturn",
+      "locale": "en",
+      "expected": "Returning to familiar ground. Repetition is a respectable substitute for certainty.",
+      "transcription": "Returning to familiar ground, repetition is a respectable substitute for certainty.",
+      "similarity": 1,
+      "costUsd": 0.00016
+    },
+    {
+      "id": "attentionLongA",
+      "locale": "en",
+      "expected": "Your attention is unusually sustained. The result may begin to feel entitled.",
+      "transcription": "Your attention is unusually sustained. The result may begin to feel entitled.",
+      "similarity": 1,
+      "costUsd": 0.00015
+    },
+    {
+      "id": "attentionLongB",
+      "locale": "en",
+      "expected": "You are studying that possibility very carefully. It has noticed.",
+      "transcription": "You are studying that possibility very carefully. It is noticed.",
+      "similarity": 0.9,
+      "costUsd": 0.0001475
+    },
+    {
+      "id": "attentionLongC",
+      "locale": "en",
+      "expected": "Prolonged inspection recorded. Hesitation has been reclassified as methodology.",
+      "transcription": "Prolonged inspection recorded. Hesitation has been reclassified as methodology.",
+      "similarity": 1,
+      "costUsd": 0.00016125
+    },
+    {
+      "id": "attentionLongD",
+      "locale": "en",
+      "expected": "This much attention normally requires a permit. I will misplace the form.",
+      "transcription": "This much attention normally requires a permit. I will misplace the form.",
+      "similarity": 1,
+      "costUsd": 0.00015375
+    },
+    {
+      "id": "attentionLongE",
+      "locale": "en",
+      "expected": "A careful gaze produces careful evidence. This is not the same as kind evidence.",
+      "transcription": "A careful gaze produces careful evidence. This is not the same as kind evidence.",
+      "similarity": 1,
+      "costUsd": 0.00015625
+    },
+    {
+      "id": "revisitA",
+      "locale": "en",
+      "expected": "You have returned here. The terrain remembers your previous opinion.",
+      "transcription": "You have returned here; the terrain remembers your previous opinion.",
+      "similarity": 1,
+      "costUsd": 0.00012625
+    },
+    {
+      "id": "revisitB",
+      "locale": "en",
+      "expected": "Another inspection of the same result. Consistency remains available at no extra charge.",
+      "transcription": "Another inspection of the same result, consistency remains available at no extra charge.",
+      "similarity": 1,
+      "costUsd": 0.00016125
+    },
+    {
+      "id": "revisitC",
+      "locale": "en",
+      "expected": "Familiar ground again. Attachment is not listed as an instrument defect.",
+      "transcription": "Familiar ground again, attachment is not listed as an instrument defect.",
+      "similarity": 1,
+      "costUsd": 0.0001375
+    },
+    {
+      "id": "revisitD",
+      "locale": "en",
+      "expected": "Your route is becoming a sentence. The Agency prefers bullet points, but this will do.",
+      "transcription": "Your route is becoming a sentence. The agency prefers bullet points, but this will do.",
+      "similarity": 1,
+      "costUsd": 0.00016625
+    },
+    {
+      "id": "riskA",
+      "locale": "en",
+      "expected": "You are treating risk as a research grant. This is not how grants usually work.",
+      "transcription": "You are treating risk as a research grant. This is not how grants usually work.",
+      "similarity": 1,
+      "costUsd": 0.00017875
+    },
+    {
+      "id": "riskB",
+      "locale": "en",
+      "expected": "Hazard exposure is rising. Your confidence remains unsupported but visually impressive.",
+      "transcription": "Hazard exposure is rising. Your confidence remains unsupported but visually impressive.",
+      "similarity": 1,
+      "costUsd": 0.00015625
+    },
+    {
+      "id": "riskC",
+      "locale": "en",
+      "expected": "The Chamber notes your preference for sharp outcomes. Your body supplier has been informed.",
+      "transcription": "The chamber notes your preference for sharp outcomes. Your body supplier has been informed.",
+      "similarity": 1,
+      "costUsd": 0.0001575
+    },
+    {
+      "id": "riskD",
+      "locale": "en",
+      "expected": "You continue toward the dangerous option. The euphemism department calls this initiative.",
+      "transcription": "You continue toward the dangerous option. The euphemism department calls this initiative.",
+      "similarity": 1,
+      "costUsd": 0.00017875
+    },
+    {
+      "id": "stalledA",
+      "locale": "en",
+      "expected": "No new result has been filed. The universe is waiting with professional patience.",
+      "transcription": "No new result has been filed, the universe is waiting with professional patience.",
+      "similarity": 1,
+      "costUsd": 0.00015125
+    },
+    {
+      "id": "stalledB",
+      "locale": "en",
+      "expected": "You appear stationary. This has been marked as contemplative rather than broken.",
+      "transcription": "You appear stationary, this has been marked as contemplative rather than broken.",
+      "similarity": 1,
+      "costUsd": 0.000155
+    },
+    {
+      "id": "stalledC",
+      "locale": "en",
+      "expected": "The Condensate remains unresolved. It is displaying admirable job security.",
+      "transcription": "The conundrate remains unresolved. It is displaying admirable job security.",
+      "similarity": 0.9,
+      "costUsd": 0.00015875
+    },
+    {
+      "id": "stalledD",
+      "locale": "en",
+      "expected": "Your intervention has paused. Bureaucracy recognizes one of its own.",
+      "transcription": "Your intervention has paused. Bureaucracy recognizes one of its own.",
+      "similarity": 1,
+      "costUsd": 0.00014
+    },
+    {
+      "id": "deathAgainA",
+      "locale": "en",
+      "expected": "Another body returned below specification. The specification will be revised.",
+      "transcription": "Another body returned below specification. The specification will be revised.",
+      "similarity": 1,
+      "costUsd": 0.00014
+    },
+    {
+      "id": "deathAgainB",
+      "locale": "en",
+      "expected": "Your continuity has survived another administrative interruption. Congratulations are not covered.",
+      "transcription": "Your continuity has survived another administrative interruption. Congratulations are not covered.",
+      "similarity": 1,
+      "costUsd": 0.0001575
+    },
+    {
+      "id": "deathAgainC",
+      "locale": "en",
+      "expected": "The world remains fixed. You, by contrast, remain replaceable.",
+      "transcription": "The world remains fixed; you, by contrast, remain replaceable.",
+      "similarity": 1,
+      "costUsd": 0.00015875
+    },
+    {
+      "id": "deathAgainD",
+      "locale": "en",
+      "expected": "Repeated mortality detected. Your learning curve has been filed under decorative geometry.",
+      "transcription": "Repeated mortality detected. Your learning curve has been filed under decorative geometry.",
+      "similarity": 1,
+      "costUsd": 0.00015625
+    },
+    {
+      "id": "ambientA",
+      "locale": "en",
+      "expected": "Every footprint narrows what can still be denied. Please walk with appropriate paperwork.",
+      "transcription": "Every footprint narrows what can still be denied. Please walk with appropriate paperwork.",
+      "similarity": 1,
+      "costUsd": 0.00019
+    },
+    {
+      "id": "ambientB",
+      "locale": "en",
+      "expected": "A shadow has joined the record. It declined to identify its owner.",
+      "transcription": "A shadow has joined the record; it declined to identify its owner.",
+      "similarity": 1,
+      "costUsd": 0.00013875
+    },
+    {
+      "id": "ambientC",
+      "locale": "en",
+      "expected": "The unresolved distance remains full of excellent alternatives. None have representation.",
+      "transcription": "The unresolved distance remains full of excellent alternatives. None have representation.",
+      "similarity": 1,
+      "costUsd": 0.0001525
+    },
+    {
+      "id": "ambientD",
+      "locale": "en",
+      "expected": "The Measure records experience, not truth. Truth has a separate department.",
+      "transcription": "The measure records experience, not truth. Truth has a separate department.",
+      "similarity": 1,
+      "costUsd": 0.00015625
+    },
+    {
+      "id": "start",
+      "locale": "es",
+      "expected": "Mira. Lo que permanezca bajo tu atención tendrá derecho a existir.",
+      "transcription": "Mira, lo que permanezca bajo tu atención tendrá derecho a existir.",
+      "similarity": 1,
+      "costUsd": 0.000165
+    },
+    {
+      "id": "firstCollapse",
+      "locale": "es",
+      "expected": "Un resultado ha sido admitido en tu expediente. Las expectativas anteriores se han depositado en el contenedor reglamentario.",
+      "transcription": "Un resultado ha sido admitido en tu expediente. Las expectativas anteriores se han depositado en el contenedor reglamentario.",
+      "similarity": 1,
+      "costUsd": 0.0002575
+    },
+    {
+      "id": "unlockWater",
+      "locale": "es",
+      "expected": "El agua no estaba ausente. Todavía no era posible. La humedad es ya una categoría de experiencia autorizada.",
+      "transcription": "El agua no estaba ausente. Todavía no era posible. La humedad es ya una categoría de experiencia autorizada.",
+      "similarity": 1,
+      "costUsd": 0.00025875
+    },
+    {
+      "id": "unlockForest",
+      "locale": "es",
+      "expected": "Se autorizan intervenciones de raíz y crecimiento. La paciencia ya dispone de formulario.",
+      "transcription": "Se autorizan intervenciones de raíz y crecimiento. La paciencia ya dispone de formulario.",
+      "similarity": 1,
+      "costUsd": 0.00019375
+    },
+    {
+      "id": "unlockRuin",
+      "locale": "es",
+      "expected": "La memoria mineral queda autorizada. La Agencia no garantiza que su pasado haya ocurrido.",
+      "transcription": "La memoria mineral queda autorizada. La agencia no garantiza que su pasado haya ocurrido.",
+      "similarity": 1,
+      "costUsd": 0.00019625
+    },
+    {
+      "id": "unlockStorm",
+      "locale": "es",
+      "expected": "Se autorizan intervenciones de alta energía. El riesgo adjunto ha sido clasificado como preferencia del usuario.",
+      "transcription": "Se autorizan intervenciones de alta energía. El riesgo adjunto ha sido clasificado como: preferencia del usuario.",
+      "similarity": 1,
+      "costUsd": 0.00023625
+    },
+    {
+      "id": "firstDanger",
+      "locale": "es",
+      "expected": "Peligro detectado. A efectos de cumplimiento, tu aproximación continuada se interpretará como entusiasmo informado.",
+      "transcription": "Peligro detectado. A efectos de cumplimiento, tu aproximación continuada se interpretará como entusiasmo informado.",
+      "similarity": 1,
+      "costUsd": 0.00024
+    },
+    {
+      "id": "firstDeath",
+      "locale": "es",
+      "expected": "El mundo recuerda mejor que tú. Tu fallecimiento ha sido clasificado como formación; se asignará otro cuerpo de campo.",
+      "transcription": "El mundo recuerda mejor que tú. Tu fallecimiento ha sido clasificado como «formación». Se asignará a otro cuerpo de campo.",
+      "similarity": 0.95,
+      "costUsd": 0.00028125
+    },
+    {
+      "id": "respawn",
+      "locale": "es",
+      "expected": "Cuerpo de campo reemplazado. Tu expediente y las Semillas siguen siendo, lamentablemente, vinculantes.",
+      "transcription": "Cuerpo de campo reemplazado. Tu expediente y las semillas siguen siendo, lamentablemente, vinculantes.",
+      "similarity": 1,
+      "costUsd": 0.00024875
+    },
+    {
+      "id": "uncertaintyDetected",
+      "locale": "es",
+      "expected": "Incidencia de actualización pendiente. Este resultado parece pertenecer a alguien más decidido.",
+      "transcription": "Incidencia de actualización pendiente. Este resultado parece pertenecer a alguien más decidido.",
+      "similarity": 1,
+      "costUsd": 0.00018875
+    },
+    {
+      "id": "uncertaintyFixed",
+      "locale": "es",
+      "expected": "Descripción estable admitida en el registro común. La discrepancia es ya, oficialmente, variabilidad de usuario.",
+      "transcription": "descripción estable admitida en el registro común. La discrepancia es ya, oficialmente, variabilidad de usuario.",
+      "similarity": 1,
+      "costUsd": 0.000245
+    },
+    {
+      "id": "lastSixtySeconds",
+      "locale": "es",
+      "expected": "La ventana de observación está fallando. Ya puedes experimentar urgencia sin presentar solicitud.",
+      "transcription": "La ventana de observación está fallando. Ya puedes experimentar urgencia sin presentar solicitud.",
+      "similarity": 1,
+      "costUsd": 0.00022
+    },
+    {
+      "id": "lastThirtySeconds",
+      "locale": "es",
+      "expected": "No queda tiempo para verlo todo. Elige qué merece terminar. Quedan treinta segundos.",
+      "transcription": "No queda tiempo para verlo todo. Elige qué merece terminar. Quedan treinta segundos.",
+      "similarity": 1,
+      "costUsd": 0.00019375
+    },
+    {
+      "id": "final",
+      "locale": "es",
+      "expected": "No encontraste este mundo. Lo separaste de todos los demás.",
+      "transcription": "No encontraste este mundo, lo separaste de todos los demás.",
+      "similarity": 1,
+      "costUsd": 0.0001525
+    },
+    {
+      "id": "distanceNear",
+      "locale": "es",
+      "expected": "Permaneces cerca del origen. La prudencia ha sido registrada. No será elogiada.",
+      "transcription": "Permaneces cerca del origen. La prudencia ha sido registrada. No será elogiada.",
+      "similarity": 1,
+      "costUsd": 0.00019875
+    },
+    {
+      "id": "distanceMid",
+      "locale": "es",
+      "expected": "Has superado la distancia cubierta por el folleto de seguridad. El folleto está muy decepcionado.",
+      "transcription": "ha superado la distancia cubierta por el folleto de seguridad. El folleto está muy decepcionado.",
+      "similarity": 0.9333333333333333,
+      "costUsd": 0.0002125
+    },
+    {
+      "id": "distanceFar",
+      "locale": "es",
+      "expected": "El origen es ya un recuerdo. Evita que los recuerdos adquieran relevancia operativa.",
+      "transcription": "El origen es ya un recuerdo. Evita que los recuerdos adquieran relevancia operativa.",
+      "similarity": 1,
+      "costUsd": 0.00019625
+    },
+    {
+      "id": "distanceOuter",
+      "locale": "es",
+      "expected": "Has entrado en una región donde la confianza de la Agencia es puramente tipográfica.",
+      "transcription": "Has entrado en una región donde la confianza de la agencia es puramente tipográfica.",
+      "similarity": 1,
+      "costUsd": 0.00019
+    },
+    {
+      "id": "distanceReturn",
+      "locale": "es",
+      "expected": "Regresas a terreno conocido. La repetición es un sustituto respetable de la certeza.",
+      "transcription": "Regresas a terreno conocido. La repetición es un sustituto respetable de la certeza.",
+      "similarity": 1,
+      "costUsd": 0.00020125
+    },
+    {
+      "id": "attentionLongA",
+      "locale": "es",
+      "expected": "Tu atención es inusualmente sostenida. El resultado podría empezar a sentirse con derechos.",
+      "transcription": "Tu atención es inusualmente sostenida. El resultado podría empezar a sentirse con derechos.",
+      "similarity": 1,
+      "costUsd": 0.0002
+    },
+    {
+      "id": "attentionLongB",
+      "locale": "es",
+      "expected": "Estás estudiando esa posibilidad con mucho cuidado. Ella se ha dado cuenta.",
+      "transcription": "Estás estudiando esa posibilidad con mucho cuidado. Ella se ha dado cuenta.",
+      "similarity": 1,
+      "costUsd": 0.00017625
+    },
+    {
+      "id": "attentionLongC",
+      "locale": "es",
+      "expected": "Inspección prolongada registrada. La vacilación ha sido reclasificada como metodología.",
+      "transcription": "Inspección prolongada registrada. La vacilación ha sido reclasificada como «metodología».",
+      "similarity": 1,
+      "costUsd": 0.00021375
+    },
+    {
+      "id": "attentionLongD",
+      "locale": "es",
+      "expected": "Tanta atención suele requerir permiso. Extraviaré el formulario.",
+      "transcription": "Tanta atención suele requerir permiso. Extraviaré el formulario.",
+      "similarity": 1,
+      "costUsd": 0.00016
+    },
+    {
+      "id": "attentionLongE",
+      "locale": "es",
+      "expected": "Una mirada cuidadosa produce evidencia cuidadosa. No es lo mismo que evidencia amable.",
+      "transcription": "una mirada cuidadosa produce evidencia cuidadosa. No es lo mismo que evidencia amable.",
+      "similarity": 1,
+      "costUsd": 0.00019375
+    },
+    {
+      "id": "revisitA",
+      "locale": "es",
+      "expected": "Has vuelto aquí. El terreno recuerda tu opinión anterior.",
+      "transcription": "Has vuelto aquí. El terreno recuerda tu opinión anterior.",
+      "similarity": 1,
+      "costUsd": 0.00013125
+    },
+    {
+      "id": "revisitB",
+      "locale": "es",
+      "expected": "Otra inspección del mismo resultado. La consistencia sigue disponible sin coste adicional.",
+      "transcription": "Otra inspección del mismo resultado. La consistencia sigue disponible sin coste adicional.",
+      "similarity": 1,
+      "costUsd": 0.00019875
+    },
+    {
+      "id": "revisitC",
+      "locale": "es",
+      "expected": "Otra vez terreno familiar. El apego no figura como defecto del instrumento.",
+      "transcription": "Otra vez terreno familiar. El apego no figura como defecto del instrumento.",
+      "similarity": 1,
+      "costUsd": 0.00016625
+    },
+    {
+      "id": "revisitD",
+      "locale": "es",
+      "expected": "Tu ruta empieza a formar una frase. La Agencia prefiere viñetas, pero servirá.",
+      "transcription": "Tu ruta empieza a formar una frase. La agencia prefiere viñetas, pero servirá.",
+      "similarity": 1,
+      "costUsd": 0.00020625
+    },
+    {
+      "id": "riskA",
+      "locale": "es",
+      "expected": "Estás tratando el riesgo como una beca de investigación. No suelen funcionar así.",
+      "transcription": "Estás tratando el riesgo como una beca de investigación. No suelen funcionar así.",
+      "similarity": 1,
+      "costUsd": 0.00018625
+    },
+    {
+      "id": "riskB",
+      "locale": "es",
+      "expected": "Aumenta la exposición al peligro. Tu confianza sigue sin respaldo, aunque luce excelente.",
+      "transcription": "Aumenta la exposición al peligro. Tu confianza sigue sin respaldo, aunque luce excelente.",
+      "similarity": 1,
+      "costUsd": 0.00019875
+    },
+    {
+      "id": "riskC",
+      "locale": "es",
+      "expected": "La Cámara registra tu preferencia por resultados afilados. El proveedor de cuerpos ha sido informado.",
+      "transcription": "La cámara registra tu preferencia por resultados afilados. El proveedor de cuerpos ha sido informado.",
+      "similarity": 1,
+      "costUsd": 0.0002125
+    },
+    {
+      "id": "riskD",
+      "locale": "es",
+      "expected": "Continúas hacia la opción peligrosa. El departamento de eufemismos lo llama iniciativa.",
+      "transcription": "Continúas hacia la opción peligrosa. El departamento de eufemismos lo llama «iniciativa».",
+      "similarity": 1,
+      "costUsd": 0.000225
+    },
+    {
+      "id": "stalledA",
+      "locale": "es",
+      "expected": "No se ha registrado ningún resultado nuevo. El universo espera con paciencia profesional.",
+      "transcription": "No se ha registrado ningún resultado nuevo. El universo espera con paciencia profesional.",
+      "similarity": 1,
+      "costUsd": 0.00018
+    },
+    {
+      "id": "stalledB",
+      "locale": "es",
+      "expected": "Pareces inmóvil. Se ha marcado como contemplativo, no como avería.",
+      "transcription": "parece sin móvil; se ha marcado como contemplativo, no como avería.",
+      "similarity": 0.7272727272727273,
+      "costUsd": 0.0001825
+    },
+    {
+      "id": "stalledC",
+      "locale": "es",
+      "expected": "El Condensado sigue sin resolverse. Demuestra una admirable estabilidad laboral.",
+      "transcription": "El condensado sigue sin resolverse. Demuestra una admirable estabilidad laboral.",
+      "similarity": 1,
+      "costUsd": 0.0001725
+    },
+    {
+      "id": "stalledD",
+      "locale": "es",
+      "expected": "Tu intervención se ha detenido. La burocracia reconoce a los suyos.",
+      "transcription": "Tu intervención se ha detenido. La burocracia reconoce a los suyos.",
+      "similarity": 1,
+      "costUsd": 0.00016375
+    },
+    {
+      "id": "deathAgainA",
+      "locale": "es",
+      "expected": "Otro cuerpo devuelto por debajo de especificación. Se revisará la especificación.",
+      "transcription": "Otro cuerpo devuelto por debajo de especificación. Se revisará la especificación.",
+      "similarity": 1,
+      "costUsd": 0.000185
+    },
+    {
+      "id": "deathAgainB",
+      "locale": "es",
+      "expected": "Tu continuidad ha sobrevivido a otra interrupción administrativa. Las felicitaciones no están cubiertas.",
+      "transcription": "Tu continuidad ha sobrevivido a otra interrupción administrativa. Las felicitaciones no están cubiertas.",
+      "similarity": 1,
+      "costUsd": 0.0002125
+    },
+    {
+      "id": "deathAgainC",
+      "locale": "es",
+      "expected": "El mundo permanece fijado. Tú, en cambio, sigues siendo reemplazable.",
+      "transcription": "El mundo permanece fijado. Tú, en cambio, sigues siendo reemplazable.",
+      "similarity": 1,
+      "costUsd": 0.00019125
+    },
+    {
+      "id": "deathAgainD",
+      "locale": "es",
+      "expected": "Mortalidad repetida detectada. Tu curva de aprendizaje se ha archivado como geometría decorativa.",
+      "transcription": "mortalidad repetida detectada. Tu curva de aprendizaje se ha archivado como geometría decorativa.",
+      "similarity": 1,
+      "costUsd": 0.00022125
+    },
+    {
+      "id": "ambientA",
+      "locale": "es",
+      "expected": "Cada huella reduce lo que aún puede negarse. Camina con la documentación adecuada.",
+      "transcription": "Cada huella reduce lo que aún puede negarse. Camina con la documentación adecuada.",
+      "similarity": 1,
+      "costUsd": 0.0001875
+    },
+    {
+      "id": "ambientB",
+      "locale": "es",
+      "expected": "Una sombra se ha incorporado al expediente. Ha rechazado identificar a su propietario.",
+      "transcription": "Una sombra se ha incorporado al expediente. Ha rechazado identificar a su propietario.",
+      "similarity": 1,
+      "costUsd": 0.00019
+    },
+    {
+      "id": "ambientC",
+      "locale": "es",
+      "expected": "La distancia sin resolver sigue llena de alternativas excelentes. Ninguna tiene representación.",
+      "transcription": "La distancia sin resolver sigue llena de alternativas excelentes. Ninguna tiene representación.",
+      "similarity": 1,
+      "costUsd": 0.0001925
+    },
+    {
+      "id": "ambientD",
+      "locale": "es",
+      "expected": "La Medida registra experiencia, no verdad. La verdad pertenece a otro departamento.",
+      "transcription": "La medida registra experiencia, no verdad. La verdad pertenece a otro departamento.",
+      "similarity": 1,
+      "costUsd": 0.00019125
+    },
+    {
+      "id": "briefing",
+      "locale": "en",
+      "expected": "Specialist: this Silence Chamber contains your assigned Possibility Condensate. Isolated from the exterior, these volumes preserved collective coherence. Matter, geometry and potential life coexist without a classical history. Machines detect possibilities. Agency doctrine says they cannot conclude measurement. Convenient. Your consciousness occupies a field body. The Measure is your instrument. Your attention defines the measurement basis, never the exact result. Footprints and memories make results irreversible. Your window: ten minutes.",
+      "transcription": "Specialist, this silence chamber contains your assigned possibility condensate. Isolated from the exterior, these volumes preserved collective coherence. Matter, geometry, and potential life coexist without a classical history. Machines detect possibilities. Agency doctrine says they cannot conclude measurement. Convenient. Your consciousness occupies a field body. The measure is your instrument. Your attention defines the measurement basis, never the exact result. Footprints and memories make results irreversible. Your window, ten minutes.",
+      "similarity": 1,
+      "costUsd": 0.00109
+    },
+    {
+      "id": "briefing",
+      "locale": "es",
+      "expected": "Especialista: esta Cámara contiene tu Condensado de Posibilidad asignado. Aislados del exterior, estos volúmenes preservaron coherencia colectiva. Materia, geometría y vida potencial coexisten sin historia clásica. Las máquinas detectan posibilidades. Según la Agencia, no concluyen la medición. Conveniente. Tu consciencia ocupa un cuerpo de campo. La Medida es tu instrumento. Tu atención define la base de medición, nunca el resultado exacto. Huellas y recuerdos vuelven irreversible el resultado. Tienes diez minutos.",
+      "transcription": "Especialista, esta cámara contiene tu condensado de posibilidad asignado. Aislados del exterior, estos volúmenes preservaron coherencia colectiva. Materia, geometría y vida potencial, coexisten sin historia clásica. Las máquinas detectan posibilidades, según la agencia, no concluyen la medición. Conveniente. Tu conciencia ocupa un cuerpo de campo. La medida es tu instrumento. Tu atención define la base de medición, nunca el resultado exacto. Huellas y recuerdos vuelven irreversible el resultado. Tienes diez minutos.",
+      "similarity": 0.9859154929577465,
+      "costUsd": 0.001185
+    }
+  ]
+}

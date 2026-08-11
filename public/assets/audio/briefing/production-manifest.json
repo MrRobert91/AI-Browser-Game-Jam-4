@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "generatedAt": "2026-08-10T23:18:31.350Z",
+  "records": [
+    {
+      "id": "agency",
+      "locale": "en",
+      "generationId": "gen-tts-1786403763-0anzLG9bpfPrA0s8T5NF",
+      "durationSeconds": 7,
+      "costUsd": 0.001738
+    },
+    {
+      "id": "isolation",
+      "locale": "en",
+      "generationId": "gen-tts-1786403773-xQYd7bgcV65ftfL1fA5r",
+      "durationSeconds": 7,
+      "costUsd": 0
+    },
+    {
+      "id": "potential",
+      "locale": "en",
+      "generationId": "gen-tts-1786403781-QFwMieIq0KGKw6CSyb29",
+      "durationSeconds": 7,
+      "costUsd": 0
+    },
+    {
+      "id": "machines",
+      "locale": "en",
+      "generationId": "gen-tts-1786403790-O8jqB2VaHNZCvjZdiijd",
+      "durationSeconds": 7,
+      "costUsd": 0
+    },
+    {
+      "id": "collapser",
+      "locale": "en",
+      "generationId": "gen-tts-1786403799-oqICaWiq1lINeX9MgzNa",
+      "durationSeconds": 7,
+      "costUsd": 0.001606
+    },
+    {
+      "id": "measure",
+      "locale": "en",
+      "generationId": "gen-tts-1786403806-dFZLJ52FMi4x64locDaF",
+      "durationSeconds": 7,
+      "costUsd": 0.001518
+    },
+    {
+      "id": "irreversible",
+      "locale": "en",
+      "generationId": "gen-tts-1786403815-47WDp82HlqzvCjatU9rB",
+      "durationSeconds": 8,
+      "costUsd": 0
+    },
+    {
+      "id": "agency",
+      "locale": "es",
+      "generationId": "gen-tts-1786403825-ImeQLYREfA7FmwTVvi2E",
+      "durationSeconds": 7,
+      "costUsd": 0
+    },
+    {
+      "id": "isolation",
+      "locale": "es",
+      "generationId": "gen-tts-1786403836-Fw0CV99hIxZ0W9gIzONs",
+      "durationSeconds": 7,
+      "costUsd": 0.002922
+    },
+    {
+      "id": "potential",
+      "locale": "es",
+      "generationId": "gen-tts-1786403847-zQUV4rN6c7fgnEyMhkMe",
+      "durationSeconds": 7,
+      "costUsd": 0.003559
+    },
+    {
+      "id": "machines",
+      "locale": "es",
+      "generationId": "gen-tts-1786403860-BPHj3diP0twU8LnSRl45",
+      "durationSeconds": 7,
+      "costUsd": 0
+    },
+    {
+      "id": "collapser",
+      "locale": "es",
+      "generationId": "gen-tts-1786403873-AF0Ya03rjMpukw1lYUyA",
+      "durationSeconds": 7,
+      "costUsd": 0
+    },
+    {
+      "id": "measure",
+      "locale": "es",
+      "generationId": "gen-tts-1786403884-RlRxkMEPrlaQfW6CFDiz",
+      "durationSeconds": 7,
+      "costUsd": 0
+    },
+    {
+      "id": "irreversible",
+      "locale": "es",
+      "generationId": "gen-tts-1786403895-hoJzRBeTHZW0OYSLBfYh",
+      "durationSeconds": 8,
+      "costUsd": 0.00408
+    }
+  ],
+  "finalAssets": [
+    {
+      "id": "briefing",
+      "locale": "en",
+      "path": "/assets/audio/briefing/en.mp3",
+      "kind": "voice",
+      "provider": "azure",
+      "model": "microsoft/mai-voice-2",
+      "voice": "en-US-Harper:MAI-Voice-2",
+      "style": "Firm, contained, mature institutional delivery with elegant dry wit; never imitate an existing character or performer.",
+      "generationId": null,
+      "generatedAt": "2026-08-10T23:17:06.268Z",
+      "text": "Specialist: this Silence Chamber contains your assigned Possibility Condensate. Isolated from the exterior, these volumes preserved collective coherence. Matter, geometry and potential life coexist without a classical history. Machines detect possibilities. Agency doctrine says they cannot conclude measurement. Convenient. Your consciousness occupies a field body. The Measure is your instrument. Your attention defines the measurement basis, never the exact result. Footprints and memories make results irreversible. Your window: ten minutes.",
+      "textSha256": "a8df1b211da7497c7f22bd5ebe745de70314d878cc8ef1d8d6c83fa166e004d2",
+      "sha256": "dab02a54c01bf6abcbbdadb35ec12dc8559183448d300e671e71cd250382df13",
+      "durationSeconds": 50,
+      "bytes": 400657,
+      "loudnessLufs": -16,
+      "truePeakDbtp": -1.5,
+      "costUsd": 0.004862
+    },
+    {
+      "id": "briefing",
+      "locale": "es",
+      "path": "/assets/audio/briefing/es.mp3",
+      "kind": "voice",
+      "provider": "google",
+      "model": "google/gemini-3.1-flash-tts-preview",
+      "voice": "Kore",
+      "style": "Castellano peninsular, voz femenina madura, fría, institucional y precisa, con ritmo claro y ágil y sátira burocrática seca.",
+      "generationId": null,
+      "generatedAt": "2026-08-10T23:18:31.347Z",
+      "text": "Especialista: esta Cámara contiene tu Condensado de Posibilidad asignado. Aislados del exterior, estos volúmenes preservaron coherencia colectiva. Materia, geometría y vida potencial coexisten sin historia clásica. Las máquinas detectan posibilidades. Según la Agencia, no concluyen la medición. Conveniente. Tu consciencia ocupa un cuerpo de campo. La Medida es tu instrumento. Tu atención define la base de medición, nunca el resultado exacto. Huellas y recuerdos vuelven irreversible el resultado. Tienes diez minutos.",
+      "textSha256": "96ff5c0fd86ed771d9f06a936258a5df5e765a779d9720a48a73d8a9442becfc",
+      "sha256": "c8a3ff56d82268317b728db994345ce91db212f347be2685d0f90435e39bfc44",
+      "durationSeconds": 50,
+      "bytes": 400657,
+      "loudnessLufs": -16,
+      "truePeakDbtp": -1.5,
+      "costUsd": 0.010561000000000001
+    }
+  ],
+  "totalCostUsd": 0.015423000000000001
+}

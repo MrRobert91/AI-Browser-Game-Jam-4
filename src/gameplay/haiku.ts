@@ -1,4 +1,6 @@
 import haikuLines from '../content/haiku-lines.json';
+import englishHaikuLines from '../content/haiku-lines.en.json';
+import type { Locale } from '../contracts/localization';
 import { createRng, deriveSeed, nextUint32 } from '../wfc/rng';
 import type { AttentionPortrait, AttentionProfile } from './portrait';
 
@@ -30,6 +32,17 @@ export function approximateSpanishSyllables(line: string): number {
   return Math.max(1, groups?.length ?? 0);
 }
 
+export function approximateEnglishSyllables(line: string): number {
+  const words = line.toLocaleLowerCase('en').match(/[a-z]+/g) ?? [];
+  return Math.max(
+    1,
+    words.reduce((total, word) => {
+      const normalized = word.replace(/(?:e|es|ed)$/u, '');
+      return total + Math.max(1, normalized.match(/[aeiouy]+/g)?.length ?? 1);
+    }, 0),
+  );
+}
+
 function tagsForPortrait(
   portrait: AttentionPortrait,
   profile: AttentionProfile,
@@ -51,9 +64,13 @@ function chooseLine(
   tags: ReadonlySet<string>,
   seed: number,
   slot: string,
+  locale: Locale,
 ): string | null {
   const metricEligible = lines.filter((line) => {
-    const syllables = approximateSpanishSyllables(line.text);
+    const syllables =
+      locale === 'es'
+        ? approximateSpanishSyllables(line.text)
+        : approximateEnglishSyllables(line.text);
     return syllables >= 8 && syllables <= 17;
   });
   const tagged = metricEligible.filter((line) =>
@@ -65,34 +82,48 @@ function chooseLine(
   return eligible[nextUint32(rng) % eligible.length]?.text ?? null;
 }
 
-function fitApproximateMetric(line: string): string {
-  if (approximateSpanishSyllables(line) >= 8) return line;
-  return `${line.replace(/[.,;:]$/, '')} todavía.`;
+function fitApproximateMetric(line: string, locale: Locale): string {
+  const syllables =
+    locale === 'es'
+      ? approximateSpanishSyllables(line)
+      : approximateEnglishSyllables(line);
+  if (syllables >= 8) return line;
+  return `${line.replace(/[.,;:]$/, '')}${locale === 'es' ? ' todavía.' : ' remains here.'}`;
 }
 
 export function generateHaiku(
   worldSeed: number,
   portrait: AttentionPortrait,
   profile: AttentionProfile,
+  locale: Locale = 'es',
 ): GeneratedHaiku {
+  const catalog = locale === 'es' ? haikuLines : englishHaikuLines;
   const tags = tagsForPortrait(portrait, profile);
   const fallbackIndex =
     nextUint32(
-      createRng(deriveSeed(worldSeed, `haiku:${PROFILE_TAG[profile]}`)),
-    ) % haikuLines.fallbacks.length;
-  const fallback =
-    haikuLines.fallbacks[fallbackIndex] ?? haikuLines.fallbacks[0]!;
+      createRng(
+        deriveSeed(worldSeed, `haiku:${locale}:${PROFILE_TAG[profile]}`),
+      ),
+    ) % catalog.fallbacks.length;
+  const fallback = catalog.fallbacks[fallbackIndex] ?? catalog.fallbacks[0]!;
   const lines = [
-    chooseLine(haikuLines.openings, tags, worldSeed, 'opening') ?? fallback[0]!,
-    chooseLine(haikuLines.middles, tags, worldSeed, 'middle') ?? fallback[1]!,
-    chooseLine(haikuLines.closings, tags, worldSeed, 'closing') ?? fallback[2]!,
-  ].map(fitApproximateMetric) as [string, string, string];
+    chooseLine(catalog.openings, tags, worldSeed, 'opening', locale) ??
+      fallback[0]!,
+    chooseLine(catalog.middles, tags, worldSeed, 'middle', locale) ??
+      fallback[1]!,
+    chooseLine(catalog.closings, tags, worldSeed, 'closing', locale) ??
+      fallback[2]!,
+  ].map((line) => fitApproximateMetric(line, locale)) as [
+    string,
+    string,
+    string,
+  ];
   return {
     lines,
-    approximateSyllables: lines.map(approximateSpanishSyllables) as [
-      number,
-      number,
-      number,
-    ],
+    approximateSyllables: lines.map((line) =>
+      locale === 'es'
+        ? approximateSpanishSyllables(line)
+        : approximateEnglishSyllables(line),
+    ) as [number, number, number],
   };
 }

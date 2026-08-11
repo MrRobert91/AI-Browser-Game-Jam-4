@@ -39,6 +39,16 @@ Fuentes primarias:
 
 La ambigüedad final solo puede permanecer entre la doctrina de la Agencia, la experiencia personal y lo que exista fuera del expediente. Nunca debe nacer de presentar una licencia ficticia como consenso científico.
 
+### El briefing es propaganda institucional
+
+El vídeo de orientación afirma que las máquinas detectan posibilidades pero que,
+según la Agencia, no consiguen cerrar la cadena de medición. La necesidad de una
+«consciencia certificada» es doctrina interesada, no una consecuencia de QBism ni
+una afirmación científica del juego. El propio guion señala su conveniencia
+administrativa. La voz puede explicar el procedimiento ficticio —cuerpo de campo,
+Colapsador y La Medida—, pero nunca presentar la conciencia como causa demostrada
+de un colapso físico.
+
 ## Instituciones y agentes
 
 ### Agencia de Actualización Cosmológica y Habitabilidad
@@ -86,4 +96,3 @@ Cada texto debe poder contestar “sí” a estas preguntas:
 3. ¿Se entiende sin formación en física?
 4. ¿La afirmación extraordinaria pertenece claramente a la Agencia o a la ficción?
 5. ¿Conserva los textos obligatorios y las invariantes de gameplay?
-

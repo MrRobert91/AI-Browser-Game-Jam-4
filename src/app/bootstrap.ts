@@ -1,13 +1,13 @@
-import { Vector3 } from 'three';
+import { Matrix4, Quaternion, Vector3 } from 'three';
 
 import { GameLoop } from './game-loop';
 import { ObservableWorldBridge } from './observable-world-bridge';
 import { SolverWorkerClient } from './solver-worker-client';
 import { Wp5PreviewRuntime } from './wp5-preview-runtime';
 import { AudioDirector } from '../audio/audio-director';
+import type { GamePhase, Locale } from '../contracts/localization';
 import type { UnlockablePackId } from '../contracts/tiles';
 import { planSeedAnchors } from '../gameplay/anchors';
-import { CollapsadorRecordDirector } from '../gameplay/collapsador-records';
 import { resolveWorldSeed } from '../gameplay/daily-seed';
 import {
   closureForSeedCount,
@@ -16,8 +16,12 @@ import {
   type RunResult,
 } from '../gameplay/ending';
 import { generateHaiku } from '../gameplay/haiku';
-import { AgencyIntroduction } from '../gameplay/introduction';
-import { NarrativeDirector, type NarrativeCueId } from '../gameplay/narrative';
+import { BriefingPlayback } from '../gameplay/briefing';
+import {
+  narrativeCatalog,
+  NarrativeDirector,
+  type NarrativeCueId,
+} from '../gameplay/narrative';
 import { capturePanoramaPng, LocalPanoramaGallery } from '../gameplay/panorama';
 import { configuredRemoteHaikuEndpoint } from '../gameplay/remote-haiku';
 import {
@@ -25,6 +29,8 @@ import {
   classifyAttentionPortrait,
 } from '../gameplay/portrait';
 import { RunClock, type RunMode } from '../gameplay/run-clock';
+import { PrologueDirector } from '../gameplay/prologue';
+import { applyDocumentLocale, loadLocale, saveLocale, uiCopy } from '../i18n';
 import { DebugOverlay, debugToolsAvailable } from '../dev/debug-overlay';
 import {
   isGrammarViewerMode,
@@ -48,6 +54,11 @@ import {
   type SuperpositionCell,
 } from '../render/superposition';
 import { Wp5PreviewVisuals } from '../render/wp5-preview-visuals';
+import {
+  AgencyRoom,
+  PROLOGUE_PORTAL_Z,
+  PROLOGUE_ROOM_SPAWN,
+} from '../render/agency-room';
 import { ObservationReticle } from '../ui/observation-reticle';
 import { GameHud } from '../ui/hud';
 import { loadGameSettings, PauseMenu, type GameSettings } from '../ui/pause';
@@ -64,7 +75,9 @@ import {
   worldPositionToCell,
 } from '../world/world-state';
 
-const SHELL_MARKUP = `
+function shellMarkup(locale: Locale): string {
+  const copy = uiCopy(locale);
+  return `
   <main class="observation-shell" aria-labelledby="game-title">
     <div class="field" aria-hidden="true">
       <div class="game-viewport" data-game-viewport></div>
@@ -76,92 +89,117 @@ const SHELL_MARKUP = `
     </div>
 
     <header class="system-bar">
-      <p>ESTACIÓN // VENTANA DE OBSERVACIÓN</p>
-      <p class="system-bar__state" data-system-state>EN ESPERA</p>
+      <p>${copy.systemBar}</p>
+      <p class="system-bar__state" data-system-state>${copy.waiting}</p>
     </header>
 
     <section class="intro-panel">
-      <p class="intro-panel__eyebrow" data-intro-eyebrow>AGENCIA // CÁMARA DE SILENCIO 7-C</p>
-      <h1 id="game-title">La Última<br /><span>Observación</span></h1>
+      <p class="intro-panel__eyebrow" data-intro-eyebrow>${copy.roomEyebrow}</p>
+      <h1 id="game-title">${copy.titleLine1}<br /><span>${copy.titleLine2}</span></h1>
       <p class="intro-panel__statement" data-intro-copy aria-live="polite">
-        Condensado de Posibilidad estable. Se ha asignado un cuerpo de campo al Colapsador remoto.
+        ${copy.roomStatement}
       </p>
       <div class="intro-panel__actions">
         <button class="observation-button" type="button" data-observation-button>
-          <span>Aceptar y calibrar</span>
-          <span aria-hidden="true">↗</span>
-        </button>
-        <button class="intro-panel__skip" type="button" data-intro-skip>
-          Omitir introducción y calibrar
+          <span>${copy.enterChamber}</span>
+          <span aria-hidden="true">→</span>
         </button>
         <a class="intro-panel__daily" href="?daily=1" data-seed-mode-link>
-          Observación diaria UTC
+          ${copy.dailySeed}
         </a>
       </div>
       <p class="intro-panel__hint" data-shell-status role="status" aria-live="polite">
-        Instrumento local · sin conexión de runtime
+        ${copy.roomHint}
       </p>
     </section>
 
-    <aside class="possibility-readout" aria-label="Estado de posibilidades">
-      <p>POSIBILIDADES</p>
+    <aside class="possibility-readout" aria-label="${copy.possibilities}">
+      <p>${copy.possibilities}</p>
       <ol>
-        <li><span>01</span><i></i><strong>SUPERPUESTA</strong></li>
-        <li><span>02</span><i></i><strong>INDETERMINADA</strong></li>
-        <li><span>03</span><i></i><strong>EN ESPERA</strong></li>
+        <li><span>01</span><i></i><strong>${copy.superposed}</strong></li>
+        <li><span>02</span><i></i><strong>${copy.undetermined}</strong></li>
+        <li><span>03</span><i></i><strong>${copy.waiting}</strong></li>
       </ol>
     </aside>
 
     <footer class="shell-footer">
       <p>WP8 // RELEASE CANDIDATE</p>
-      <p data-worker-state>CONTRATO // INICIALIZANDO</p>
-      <p>BUILD <span>LOCAL</span></p>
+      <p data-worker-state>${copy.workerInitializing}</p>
+      <p>${copy.buildLocal}</p>
     </footer>
 
     <section class="slice-hud" aria-live="polite">
-      <p><span>VENTANA</span><strong data-slice-time>10:00</strong></p>
+      <p><span>${copy.window}</span><strong data-slice-time>10:00</strong></p>
       <p><span data-seed-mode-label>SEED</span><strong data-seed-label>A91F-42C0</strong></p>
     </section>
 
     <p class="wp5-gate-status" data-wp5-gate-status>
-      WP6 · PRESENTACIÓN LOCAL
+      WP6 · ${copy.buildLocal}
     </p>
 
     <p class="uncertainty-status" data-uncertainty-status role="status" hidden></p>
 
+    <p class="room-interaction" data-room-interaction hidden></p>
+
+    <section class="briefing-controls" data-briefing-controls hidden>
+      <p>${copy.briefingPaused}</p>
+      <button type="button" data-briefing-resume>${copy.resumeBriefing}</button>
+      <button type="button" data-briefing-skip disabled>${copy.skipBriefing}</button>
+    </section>
+
+    <section class="audio-diagnostic" data-audio-diagnostic hidden>
+      <span data-audio-diagnostic-status role="status"></span>
+      <button type="button" data-audio-retry>${copy.audioRetry}</button>
+    </section>
+
     <section class="slice-result" data-slice-result hidden>
-      <p>REGISTRO DE ATENCIÓN</p>
-      <h2>No encontraste este mundo.<br />Lo separaste de todos los demás.</h2>
-      <p>Muchos caminos.<br />Solo aquel que miraste<br />recuerda tus pasos.</p>
+      <p>${copy.resultEyebrow}</p>
+      <h2>${copy.resultTitle}</h2>
       <strong>SEED A91F-42C0</strong>
     </section>
   </main>
 `;
+}
 
-const BASE_SUPERPOSITION_CANDIDATES: readonly SuperpositionCandidate[] = [
-  { tileId: 0, family: 'ground', weight: 14, label: 'Pradera' },
-  { tileId: 1, family: 'organic', weight: 9, label: 'Vegetación' },
-  { tileId: 2, family: 'mineral', weight: 5, label: 'Roca' },
-];
+function baseSuperpositionCandidates(
+  locale: Locale,
+): readonly SuperpositionCandidate[] {
+  return locale === 'en'
+    ? [
+        { tileId: 0, family: 'ground', weight: 14, label: 'Meadow' },
+        { tileId: 1, family: 'organic', weight: 9, label: 'Vegetation' },
+        { tileId: 2, family: 'mineral', weight: 5, label: 'Rock' },
+      ]
+    : [
+        { tileId: 0, family: 'ground', weight: 14, label: 'Pradera' },
+        { tileId: 1, family: 'organic', weight: 9, label: 'Vegetación' },
+        { tileId: 2, family: 'mineral', weight: 5, label: 'Roca' },
+      ];
+}
 
 type PerformanceWindow = Window & {
   __ULTIMA_OBSERVATION_PERFORMANCE__?: () => GameRendererPerformanceSnapshot;
 };
 
-function toErrorMessage(error: unknown): string {
+function toErrorMessage(error: unknown, locale: Locale): string {
   if (error instanceof Error && error.message.trim().length > 0)
     return error.message;
-  return 'Error desconocido durante el arranque.';
+  return locale === 'en'
+    ? 'Unknown error during startup.'
+    : 'Error desconocido durante el arranque.';
 }
 
 export function renderBootstrapError(root: HTMLElement, error: unknown): void {
-  const message = toErrorMessage(error);
+  const locale = loadLocale();
+  const copy = uiCopy(locale);
+  applyDocumentLocale(locale);
+  const message = toErrorMessage(error, locale);
   root.innerHTML = `
     <main class="error-shell" role="alert">
-      <p class="error-shell__code">OBSERVACIÓN INTERRUMPIDA</p>
-      <h1>El instrumento no pudo iniciar.</h1>
+      <p class="error-shell__code">${copy.bootInterrupted}</p>
+      <h1>${copy.bootFailed}</h1>
       <p data-error-message></p>
-      <button type="button" data-retry-button>Reintentar</button>
+      <button type="button" data-retry-button>${copy.retry}</button>
     </main>
   `;
 
@@ -177,13 +215,71 @@ export function renderBootstrapError(root: HTMLElement, error: unknown): void {
 
 export function bootstrap(root: HTMLElement): () => void {
   if (isGrammarViewerMode()) return renderGrammarViewer(root);
-  root.innerHTML = SHELL_MARKUP;
+  let selectedLocale = loadLocale();
+  let gameDisposer: (() => void) | null = null;
+  const abortController = new AbortController();
+  const renderSelector = (): void => {
+    const copy = uiCopy(selectedLocale);
+    applyDocumentLocale(selectedLocale);
+    root.innerHTML = `
+      <main class="language-select" aria-labelledby="language-title">
+        <p class="language-select__eyebrow">AGENCY // AGENCIA</p>
+        <h1 id="language-title">${copy.languageTitle}</h1>
+        <p>${copy.languageHint}</p>
+        <div class="language-select__options" role="radiogroup" aria-label="${copy.languageTitle}">
+          <button type="button" role="radio" aria-checked="${String(selectedLocale === 'en')}" data-locale="en">${copy.english}</button>
+          <button type="button" role="radio" aria-checked="${String(selectedLocale === 'es')}" data-locale="es">${copy.spanish}</button>
+        </div>
+        <button class="observation-button" type="button" data-enter-language>${copy.enterChamber}</button>
+      </main>
+    `;
+    for (const option of root.querySelectorAll<HTMLButtonElement>(
+      '[data-locale]',
+    )) {
+      option.addEventListener(
+        'click',
+        () => {
+          const candidate = option.dataset.locale;
+          if (candidate !== 'en' && candidate !== 'es') return;
+          selectedLocale = candidate;
+          saveLocale(selectedLocale);
+          renderSelector();
+        },
+        { signal: abortController.signal },
+      );
+    }
+    root
+      .querySelector<HTMLButtonElement>('[data-enter-language]')
+      ?.addEventListener(
+        'click',
+        () => {
+          saveLocale(selectedLocale);
+          applyDocumentLocale(selectedLocale);
+          abortController.abort();
+          gameDisposer = bootstrapGame(root, selectedLocale, true);
+        },
+        { signal: abortController.signal, once: true },
+      );
+  };
+  renderSelector();
+  return () => {
+    abortController.abort();
+    gameDisposer?.();
+  };
+}
+
+function bootstrapGame(
+  root: HTMLElement,
+  locale: Locale,
+  enterFromLanguageGesture = false,
+): () => void {
+  const copy = uiCopy(locale);
+  root.innerHTML = shellMarkup(locale);
 
   const shell = root.querySelector<HTMLElement>('.observation-shell');
   const observationButton = root.querySelector<HTMLButtonElement>(
     '[data-observation-button]',
   );
-  const introSkip = root.querySelector<HTMLButtonElement>('[data-intro-skip]');
   const seedModeLink = root.querySelector<HTMLAnchorElement>(
     '[data-seed-mode-link]',
   );
@@ -205,11 +301,30 @@ export function bootstrap(root: HTMLElement): () => void {
   const uncertaintyStatus = root.querySelector<HTMLElement>(
     '[data-uncertainty-status]',
   );
+  const audioDiagnostic = root.querySelector<HTMLElement>(
+    '[data-audio-diagnostic]',
+  );
+  const audioDiagnosticStatus = root.querySelector<HTMLElement>(
+    '[data-audio-diagnostic-status]',
+  );
+  const audioRetry =
+    root.querySelector<HTMLButtonElement>('[data-audio-retry]');
+  const roomInteraction = root.querySelector<HTMLElement>(
+    '[data-room-interaction]',
+  );
+  const briefingControls = root.querySelector<HTMLElement>(
+    '[data-briefing-controls]',
+  );
+  const briefingResume = root.querySelector<HTMLButtonElement>(
+    '[data-briefing-resume]',
+  );
+  const briefingSkip = root.querySelector<HTMLButtonElement>(
+    '[data-briefing-skip]',
+  );
 
   if (
     !shell ||
     !observationButton ||
-    !introSkip ||
     !seedModeLink ||
     !introEyebrow ||
     !introCopy ||
@@ -222,26 +337,23 @@ export function bootstrap(root: HTMLElement): () => void {
     !seedModeLabel ||
     !seedValueLabel ||
     !wp5GateStatus ||
-    !uncertaintyStatus
+    !uncertaintyStatus ||
+    !audioDiagnostic ||
+    !audioDiagnosticStatus ||
+    !audioRetry ||
+    !roomInteraction ||
+    !briefingControls ||
+    !briefingResume ||
+    !briefingSkip
   ) {
-    throw new Error('La interfaz de observación está incompleta.');
+    throw new Error(
+      locale === 'en'
+        ? 'The observation interface is incomplete.'
+        : 'La interfaz de observación está incompleta.',
+    );
   }
 
   const abortController = new AbortController();
-  const introduction = new AgencyIntroduction();
-  const renderIntroduction = (): void => {
-    introEyebrow.textContent = introduction.current.eyebrow;
-    introCopy.textContent = introduction.current.text;
-    shell.dataset.introStep = introduction.current.id;
-    shell.dataset.introComplete = String(introduction.complete);
-    shell.dataset.introSkipped = String(introduction.wasSkipped);
-  };
-  renderIntroduction();
-  const introductionTimer = window.setInterval(() => {
-    introduction.advance(8_000);
-    renderIntroduction();
-    if (introduction.complete) window.clearInterval(introductionTimer);
-  }, 8_000);
   const settings = loadGameSettings();
   const search = new URLSearchParams(window.location.search);
   const requestedMode = search.get('mode');
@@ -252,7 +364,7 @@ export function bootstrap(root: HTMLElement): () => void {
   const seedSelection = resolveWorldSeed(search);
   const worldSeed = seedSelection.worldSeed;
   seedModeLabel.textContent =
-    seedSelection.mode === 'daily' ? 'DIARIA UTC' : 'SEED';
+    seedSelection.mode === 'daily' ? copy.dailySeed : 'SEED';
   seedValueLabel.textContent = formatSeed(worldSeed);
   shell.dataset.seedMode = seedSelection.mode;
   if (seedSelection.dateKey) shell.dataset.dailyDate = seedSelection.dateKey;
@@ -263,10 +375,10 @@ export function bootstrap(root: HTMLElement): () => void {
   alternateSeedUrl.searchParams.delete('start');
   if (seedSelection.mode === 'daily') {
     alternateSeedUrl.searchParams.delete('daily');
-    seedModeLink.textContent = 'Nueva observación aleatoria';
+    seedModeLink.textContent = copy.randomObservation;
   } else {
     alternateSeedUrl.searchParams.set('daily', '1');
-    seedModeLink.textContent = 'Observación diaria UTC';
+    seedModeLink.textContent = copy.dailySeed;
   }
   seedModeLink.href = `${alternateSeedUrl.pathname}${alternateSeedUrl.search}`;
   const requestedStart = Number(search.get('start') ?? '0');
@@ -291,39 +403,84 @@ export function bootstrap(root: HTMLElement): () => void {
     gameRenderer.scene,
     gameRenderer.quality,
   );
-  const audioDirector = new AudioDirector();
+  const audioDirector = new AudioDirector({
+    onStateChange: (snapshot) => {
+      shell.dataset.audioState = snapshot.status;
+      if (snapshot.activeClipId)
+        shell.dataset.audioClip = snapshot.activeClipId;
+      else delete shell.dataset.audioClip;
+      if (snapshot.error) shell.dataset.audioError = snapshot.error;
+      else delete shell.dataset.audioError;
+      const failed =
+        snapshot.status === 'blocked' || snapshot.status === 'error';
+      audioDiagnostic.hidden = !failed;
+      audioDiagnosticStatus.textContent =
+        snapshot.status === 'blocked' ? copy.audioBlocked : copy.audioError;
+    },
+  });
   audioDirector.setVolumes(settings.volumes);
+  audioRetry.addEventListener(
+    'click',
+    () => {
+      void audioDirector
+        .startFromGesture()
+        .then(() => audioDirector.retryActiveVoice());
+    },
+    { signal: abortController.signal },
+  );
+  const prologue = new PrologueDirector();
+  prologue.enterRoom();
+  shell.dataset.gamePhase = 'ROOM';
+  let room: AgencyRoom | null = new AgencyRoom(gameRenderer.scene, locale);
+  let playerPhysics: PlayerPhysicsRuntime | null = null;
+  let enterRun = (): void => undefined;
+  const completeBriefing = (): void => {
+    prologue.completeBriefing();
+    shell.dataset.gamePhase = 'PORTAL';
+    systemState.textContent = locale === 'en' ? 'PORTAL READY' : 'PORTAL LISTO';
+    roomInteraction.textContent = copy.enterPortal;
+    roomInteraction.hidden = false;
+    room?.setPhase('PORTAL');
+    playerPhysics?.openProloguePortal();
+  };
+  const briefing = new BriefingPlayback(shell, locale, {
+    onComplete: completeBriefing,
+    onFallbackChapter: (chapter) =>
+      room?.setFallbackSlide(chapter.title, chapter.caption),
+    onMediaState: (state) => {
+      shell.dataset.briefingMedia = state;
+    },
+  });
+  room.attachVideo(briefing.video);
+  briefing.setVolume(settings.volumes.master, settings.volumes.voice);
+  gameRenderer.setWorldAtmosphereVisible(false);
   const originDetails = createOriginDetailField(gameRenderer.scene);
+  originDetails.family.mesh.visible = false;
   const worldBoundary = createWorldBoundaryVisual();
+  worldBoundary.root.visible = false;
   gameRenderer.scene.add(worldBoundary.root);
   const superposition = new SuperpositionRenderer(
     gameRenderer.quality.preset === 'low' ? 'low' : 'medium',
   );
+  superposition.root.visible = false;
+  finalArt.vegetation.root.visible = false;
   gameRenderer.scene.add(superposition.root);
   const stopQualitySync = gameRenderer.onQualityChange((profile) => {
     finalArt.applyQuality(profile);
     superposition.setQuality(profile.preset === 'low' ? 'low' : profile.preset);
   });
   const reticle = new ObservationReticle(shell);
-  const hud = new GameHud(shell, { time: sliceTime });
+  const hud = new GameHud(shell, { time: sliceTime }, locale);
   hud.setSubtitlesEnabled(settings.subtitles);
   hud.setHighContrast(settings.highContrast);
-  const narrative = new NarrativeDirector({
-    onMessage: () => undefined,
-    onSubtitle: (message) => hud.showSubtitle(message),
-    onAudioCue: (cue) => audioDirector.playNarrativeCue(cue),
-  });
-  const collapsadorRecords = new CollapsadorRecordDirector({
-    onPlay: (record) => {
-      const message = `${record.speaker} // ${record.subtitle}`;
-      shell.dataset.recordingId = record.id;
-      hud.showSubtitle(message);
-      audioDirector.playCollapsadorRecord(record);
+  const narrative = new NarrativeDirector(
+    {
+      onMessage: () => undefined,
+      onSubtitle: (message) => hud.showSubtitle(message),
+      onAudioCue: (cue) => audioDirector.playNarrativeCue(cue),
     },
-    onInterrupt: () => {
-      delete shell.dataset.recordingId;
-    },
-  });
+    narrativeCatalog(locale),
+  );
   const portraitTracker = new AttentionPortraitTracker();
   const endingDirector = new EndingDirector();
   const evidenceMode =
@@ -333,18 +490,29 @@ export function bootstrap(root: HTMLElement): () => void {
   const playerInput = new PlayerInput(shell, {
     keepRunningWithoutPointerLock: evidenceMode,
     onPauseChange: (paused) => {
+      const gamePhase = prologue.snapshot().phase;
+      if (gamePhase === 'BRIEFING') {
+        shell.dataset.paused = String(paused);
+        if (paused) {
+          briefing.pause();
+          briefingControls.hidden = false;
+          briefingSkip.disabled = !prologue.snapshot().canSkip;
+          systemState.textContent = copy.briefingPaused;
+        }
+        return;
+      }
       runClock?.setPaused('MENU', paused);
       shell.dataset.paused = String(paused);
       if (shell.dataset.calibrated === 'true') {
         audioDirector.setPaused(paused);
         systemState.textContent =
           shell.dataset.playerState === 'death'
-            ? 'RECONSTRUYENDO'
+            ? copy.rebuilding
             : shell.dataset.ending === 'true'
-              ? 'CIERRE'
+              ? copy.ending
               : paused
-                ? 'PAUSA'
-                : 'OBSERVANDO';
+                ? copy.pause
+                : copy.observing;
         pauseMenu?.setOpen(
           paused &&
             shell.dataset.playerState !== 'death' &&
@@ -365,16 +533,55 @@ export function bootstrap(root: HTMLElement): () => void {
     hud.setSubtitlesEnabled(nextSettings.subtitles);
     hud.setHighContrast(nextSettings.highContrast);
     audioDirector.setVolumes(nextSettings.volumes);
+    briefing.setVolume(nextSettings.volumes.master, nextSettings.volumes.voice);
     audioDirector.setVoicesEnabled(nextSettings.voicesEnabled);
     shell.dataset.reducedFlashes = String(nextSettings.reducedFlashes);
   };
-  pauseMenu = new PauseMenu(shell, settings, {
-    onResume: () => void playerInput.resume(),
-    onRestart: () => window.location.reload(),
-    onSettingsChange: applySettings,
-  });
+  pauseMenu = new PauseMenu(
+    shell,
+    settings,
+    {
+      onResume: () => void playerInput.resume(),
+      onRestart: () => window.location.reload(),
+      onSettingsChange: applySettings,
+    },
+    locale,
+  );
   applySettings(settings);
-  let playerPhysics: PlayerPhysicsRuntime | null = null;
+  const beginBriefing = (): void => {
+    const snapshot = prologue.pressButton(true);
+    if (snapshot.phase !== 'BRIEFING') return;
+    shell.dataset.gamePhase = 'BRIEFING';
+    systemState.textContent = copy.briefingPlaying;
+    roomInteraction.hidden = true;
+    briefingControls.hidden = true;
+    room?.setPhase('BRIEFING');
+    briefing.start();
+  };
+  briefingResume.addEventListener(
+    'click',
+    () => {
+      void playerInput.resume().then((resumed) => {
+        if (!resumed) return;
+        briefing.resume();
+        briefingControls.hidden = true;
+        systemState.textContent = copy.briefingPlaying;
+      });
+    },
+    { signal: abortController.signal },
+  );
+  briefingSkip.addEventListener(
+    'click',
+    () => {
+      if (!prologue.snapshot().canSkip) return;
+      prologue.skip();
+      completeBriefing();
+      briefing.skip();
+      briefingControls.hidden = true;
+      void playerInput.resume();
+    },
+    { signal: abortController.signal },
+  );
   let disposed = false;
   const playerPhysicsPromise = createPlayerPhysicsRuntime(camera, playerInput)
     .then((runtime) => {
@@ -383,16 +590,25 @@ export function bootstrap(root: HTMLElement): () => void {
         return null;
       } else {
         playerPhysics = runtime;
-        if (shell.dataset.calibrated === 'true') runtime.controller.respawn();
+        runtime.activatePrologueRoom();
+        if (shell.dataset.calibrated === 'true') {
+          runtime.controller.respawn(PROLOGUE_ROOM_SPAWN);
+        }
         shell.dataset.physics = 'ready';
         return runtime;
       }
     })
     .catch((error: unknown) => {
       shell.dataset.physics = 'error';
-      workerState.textContent = 'FÍSICA // ERROR';
+      workerState.textContent =
+        locale === 'en' ? 'PHYSICS // ERROR' : 'FÍSICA // ERROR';
       workerState.dataset.contractState = 'error';
-      console.error('Rapier no pudo iniciar.', error);
+      console.error(
+        locale === 'en'
+          ? 'Rapier could not initialize.'
+          : 'Rapier no pudo iniciar.',
+        error,
+      );
       return null;
     });
   let observableWorld: ObservableWorldBridge | null = null;
@@ -415,20 +631,25 @@ export function bootstrap(root: HTMLElement): () => void {
       }
     },
     onProtocolError: (message) => {
-      workerState.textContent = 'CONTRATO // ERROR';
+      workerState.textContent =
+        locale === 'en' ? 'CONTRACT // ERROR' : 'CONTRATO // ERROR';
       workerState.dataset.contractState = 'error';
       console.error(message);
     },
   });
   const worldState = new WorldState();
   const fixedVisuals = new SliceCollapseVisuals(gameRenderer.scene, worldState);
+  fixedVisuals.root.visible = false;
   let resultPresented = false;
   runClock = new RunClock(
     {
       onCountdown: (remainingSeconds) => {
+        if (remainingSeconds === 60) narrative.play('lastSixtySeconds');
         if (remainingSeconds === 30) narrative.play('lastThirtySeconds');
       },
       onEnding: () => {
+        prologue.startEnding();
+        shell.dataset.gamePhase = 'ENDING';
         shell.dataset.ending = 'true';
         playerInput.setEnabled(false);
         superposition.root.visible = false;
@@ -448,6 +669,7 @@ export function bootstrap(root: HTMLElement): () => void {
       gallery: new LocalPanoramaGallery(),
     },
     configuredRemoteHaikuEndpoint(import.meta.env.VITE_REMOTE_HAIKU_ENDPOINT),
+    locale,
   );
   observableWorld = new ObservableWorldBridge({
     solver: solverWorker,
@@ -458,8 +680,10 @@ export function bootstrap(root: HTMLElement): () => void {
     ],
     worldState,
     visuals: fixedVisuals,
-    canObserve: () => runClock!.snapshot().canCommit,
-    canAcceptCollapse: () => runClock!.canCommit(),
+    canObserve: () =>
+      prologue.snapshot().phase === 'RUN' && runClock!.snapshot().canCommit,
+    canAcceptCollapse: () =>
+      prologue.snapshot().phase === 'RUN' && runClock!.canCommit(),
     onCollapseAccepted: () => {
       runClock!.notifyFirstCollapse();
       hud.notifyFirstCollapse();
@@ -472,8 +696,9 @@ export function bootstrap(root: HTMLElement): () => void {
       }
     },
   });
-  const resetTick = observableWorld.reset(worldSeed);
-  workerState.textContent = `CONTRATO #${String(resetTick).padStart(6, '0')} // SEED`;
+  let worldInitialized = false;
+  workerState.textContent =
+    locale === 'en' ? 'CONTRACT // PROLOGUE' : 'CONTRATO // PRÓLOGO';
 
   const replayMode = search.get('replay');
   const wp5PreviewEnabled = search.get('wp5') !== 'off';
@@ -495,7 +720,9 @@ export function bootstrap(root: HTMLElement): () => void {
       plan,
       settings.reducedFlashes,
     );
-    progressionHud = new ProgressionHud(shell);
+    wp5Visuals.root.visible = false;
+    progressionHud = new ProgressionHud(shell, locale);
+    progressionHud.element.hidden = true;
     shell.dataset.wp5Preview = 'true';
     wp5Preview = new Wp5PreviewRuntime({
       worldSeed,
@@ -523,6 +750,34 @@ export function bootstrap(root: HTMLElement): () => void {
     });
     progressionHud.update(wp5Preview.progression.snapshot());
   }
+
+  enterRun = (): void => {
+    if (prologue.snapshot().phase !== 'PORTAL') return;
+    prologue.crossPortal();
+    shell.dataset.gamePhase = 'RUN';
+    roomInteraction.hidden = true;
+    briefingControls.hidden = true;
+    room?.dispose();
+    room = null;
+    briefing.dispose();
+    playerPhysics?.deactivatePrologueRoom();
+    playerPhysics?.controller.respawn();
+    gameRenderer.setWorldAtmosphereVisible(true);
+    finalArt.vegetation.root.visible = true;
+    originDetails.family.mesh.visible = true;
+    worldBoundary.root.visible = true;
+    superposition.root.visible = true;
+    fixedVisuals.root.visible = true;
+    if (wp5Visuals) wp5Visuals.root.visible = true;
+    if (progressionHud) progressionHud.element.hidden = false;
+    audioDirector.setAmbienceScene('base');
+    if (!worldInitialized) {
+      const resetTick = observableWorld!.reset(worldSeed);
+      workerState.textContent = `${locale === 'en' ? 'CONTRACT' : 'CONTRATO'} #${String(resetTick).padStart(6, '0')} // SEED`;
+      worldInitialized = true;
+    }
+    systemState.textContent = copy.observing;
+  };
 
   const narrativeCueByPack: Readonly<Record<UnlockablePackId, NarrativeCueId>> =
     {
@@ -604,9 +859,59 @@ export function bootstrap(root: HTMLElement): () => void {
   let maximumCharge = 0;
   let lastWorldVisualSampleSeconds = Number.NEGATIVE_INFINITY;
   let recordedDeaths = 0;
+  let firstDangerAnnounced = false;
+  let lastContextualSlot = 0;
+  let contextualFixedCells = 0;
+  const briefingTarget = new Vector3(64, 2.35, 58.17);
+  const briefingLookMatrix = new Matrix4();
+  const briefingTargetQuaternion = new Quaternion();
 
   const gameLoop = new GameLoop(({ deltaSeconds, elapsedSeconds }) => {
     const previousClock = runClock!.snapshot();
+    let gamePhase: GamePhase = prologue.snapshot().phase;
+    if (
+      (gamePhase === 'ROOM' || gamePhase === 'PORTAL') &&
+      shell.dataset.calibrated === 'true' &&
+      !playerInput.paused
+    ) {
+      playerPhysics?.controller.update(deltaSeconds);
+    }
+    if (gamePhase === 'BRIEFING') {
+      if (!playerInput.paused) {
+        prologue.update(deltaSeconds);
+        briefing.update(deltaSeconds);
+      }
+      briefingSkip.disabled = !prologue.snapshot().canSkip;
+      briefingLookMatrix.lookAt(camera.position, briefingTarget, camera.up);
+      briefingTargetQuaternion.setFromRotationMatrix(briefingLookMatrix);
+      camera.quaternion.slerp(
+        briefingTargetQuaternion,
+        1 - Math.exp(-deltaSeconds * 2.8),
+      );
+    }
+    const buttonFocused =
+      (gamePhase === 'ROOM' || gamePhase === 'PORTAL') &&
+      room?.isButtonFocused(camera) === true;
+    room?.update(elapsedSeconds, buttonFocused);
+    if (gamePhase === 'ROOM' || gamePhase === 'PORTAL') {
+      roomInteraction.hidden = !buttonFocused && gamePhase !== 'PORTAL';
+      roomInteraction.textContent =
+        gamePhase === 'PORTAL' && !buttonFocused
+          ? copy.enterPortal
+          : gamePhase === 'PORTAL'
+            ? copy.replayBriefing
+            : copy.interactHint;
+      if (playerInput.consumeInteract() && buttonFocused) beginBriefing();
+      if (gamePhase === 'PORTAL' && camera.position.z <= PROLOGUE_PORTAL_Z) {
+        enterRun();
+        gamePhase = prologue.snapshot().phase;
+      }
+    }
+    if (gamePhase !== 'RUN' && gamePhase !== 'ENDING') {
+      debugOverlay?.update();
+      gameRenderer.render();
+      return;
+    }
     if (
       !canonicalReplay &&
       shell.dataset.calibrated === 'true' &&
@@ -646,7 +951,7 @@ export function bootstrap(root: HTMLElement): () => void {
     ]);
     const nearbyCellIds = observableWorld!.getNearbyCellIds(playerPosition);
     let observationTicks = 0;
-    if (shell.dataset.calibrated === 'true') {
+    if (shell.dataset.calibrated === 'true' && worldInitialized) {
       observationTicks = observableWorld!.update(
         {
           deltaSeconds,
@@ -665,7 +970,11 @@ export function bootstrap(root: HTMLElement): () => void {
       ) {
         runClock!.notifyFirstCollapse();
         hud.notifyFirstCollapse();
-        hud.showSubtitle('La mirada está fijando el mundo.');
+        hud.showSubtitle(
+          locale === 'en'
+            ? 'Your gaze is fixing the world.'
+            : 'La mirada está fijando el mundo.',
+        );
       }
     }
 
@@ -700,7 +1009,7 @@ export function bootstrap(root: HTMLElement): () => void {
           cellId,
           center: cellCenterToWorld(cellId, 0),
           observationCharge: cell.observationCharge,
-          candidates: BASE_SUPERPOSITION_CANDIDATES,
+          candidates: baseSuperpositionCandidates(locale),
         };
         nextSuperposedCells.push(superposedCell);
         if (
@@ -756,10 +1065,17 @@ export function bootstrap(root: HTMLElement): () => void {
         uncertaintyStatus.hidden = uncertaintyHidden;
       }
       if (wp5Snapshot.uncertainty) {
-        const statusText = uncertaintyStatusText(wp5Snapshot.uncertainty.state);
+        const statusText = uncertaintyStatusText(
+          wp5Snapshot.uncertainty.state,
+          locale,
+        );
         if (uncertaintyStatus.textContent !== statusText) {
           uncertaintyStatus.textContent = statusText;
         }
+      }
+      if (!firstDangerAnnounced && wp5Snapshot.hazardCount > 0) {
+        firstDangerAnnounced = true;
+        narrative.play('firstDanger');
       }
       if (shell.dataset.respawnPhase !== wp5Snapshot.respawn.phase) {
         shell.dataset.respawnPhase = wp5Snapshot.respawn.phase;
@@ -769,6 +1085,7 @@ export function bootstrap(root: HTMLElement): () => void {
         announcedPacks.add(packId);
         portraitTracker.recordUnlock(packId);
         audioDirector.playUnlockCue(packId);
+        audioDirector.setAmbienceScene(packId === 'forest' ? 'base' : packId);
         narrative.play(narrativeCueByPack[packId]);
       }
       if (wp5Snapshot.respawn.deaths > recordedDeaths) {
@@ -786,23 +1103,32 @@ export function bootstrap(root: HTMLElement): () => void {
     );
     hud.setTime(clock.remainingSeconds);
     audioDirector.updateCountdown(clock.remainingSeconds, clock.elapsedSeconds);
-    const distanceFromOrigin = Math.hypot(
-      playerPosition[0] - 64,
-      playerPosition[2] - 64,
-    );
-    collapsadorRecords.update({
-      deltaMs: deltaSeconds * replaySpeed * 1_000,
-      fixedCells: worldState.countFixedCells(),
-      seeds: wp5Snapshot?.progression.collectedPacks.length ?? 0,
-      maxDistance: distanceFromOrigin,
-      blocked:
-        (wp5Snapshot?.respawn.phase ?? 'ALIVE') !== 'ALIVE' ||
-        (wp5Snapshot?.progression.pauseRemainingSeconds ?? 0) > 0 ||
-        clock.remainingSeconds <= 30 ||
-        clock.phase === 'ENDING' ||
-        clock.phase === 'COMPLETE',
-    });
-
+    const contextualSlot = Math.floor(clock.elapsedSeconds / 30);
+    if (
+      clock.phase === 'RUNNING' &&
+      clock.remainingSeconds > 60 &&
+      contextualSlot > lastContextualSlot
+    ) {
+      const portrait = portraitTracker.snapshot();
+      const fixedCells = worldState.countFixedCells();
+      const category =
+        recordedDeaths > 1
+          ? 'death'
+          : fixedCells <= contextualFixedCells
+            ? 'stalled'
+            : portrait.dangerExposureSeconds >= 12
+              ? 'risk'
+              : portrait.revisitRatio >= 0.25
+                ? 'revisit'
+                : portrait.averageGazeDwell >= 1.4
+                  ? 'attention'
+                  : portrait.maxDistance >= 18
+                    ? 'distance'
+                    : 'ambient';
+      narrative.playPool(category, worldSeed ^ contextualSlot);
+      lastContextualSlot = contextualSlot;
+      contextualFixedCells = fixedCells;
+    }
     if (
       !canonicalReplay &&
       !wp5PreviewEnabled &&
@@ -830,7 +1156,7 @@ export function bootstrap(root: HTMLElement): () => void {
         runClock!.markComplete();
         const portrait = portraitTracker.snapshot();
         const profile = classifyAttentionPortrait(portrait);
-        const haiku = generateHaiku(worldSeed, portrait, profile);
+        const haiku = generateHaiku(worldSeed, portrait, profile, locale);
         const closure = closureForSeedCount(portrait.unlockedPacks.length);
         const result: RunResult = {
           worldSeed,
@@ -854,19 +1180,20 @@ export function bootstrap(root: HTMLElement): () => void {
     gameRenderer.render();
   });
 
-  const startCalibration = async (skipIntroduction: boolean): Promise<void> => {
+  const startCalibration = async (): Promise<void> => {
     if (shell.dataset.calibration === 'pending') return;
-    window.clearInterval(introductionTimer);
-    if (skipIntroduction) introduction.skip();
-    renderIntroduction();
     shell.dataset.calibration = 'pending';
-    systemState.textContent = 'CALIBRANDO';
-    shellStatus.textContent = 'Solicitando control de mirada…';
+    systemState.textContent = locale === 'en' ? 'CALIBRATING' : 'CALIBRANDO';
+    shellStatus.textContent =
+      locale === 'en'
+        ? 'Requesting gaze control…'
+        : 'Solicitando control de mirada…';
     observationButton.disabled = true;
-    introSkip.disabled = true;
     observationButton
       .querySelector('span')
-      ?.replaceChildren('Calibrando mirada…');
+      ?.replaceChildren(
+        locale === 'en' ? 'Calibrating gaze…' : 'Calibrando mirada…',
+      );
     playerInput.setEnabled(true);
 
     // Start both privileged operations synchronously from the same gesture.
@@ -882,7 +1209,7 @@ export function bootstrap(root: HTMLElement): () => void {
       if (shell.dataset.calibration === 'error') {
         audioDirector.setPaused(true);
       } else if (!audioStarted) {
-        shellStatus.textContent = 'Shell lista · audio no disponible';
+        shellStatus.textContent = copy.audioUnavailable;
       }
     });
 
@@ -890,14 +1217,12 @@ export function bootstrap(root: HTMLElement): () => void {
       playerInput.setEnabled(false);
       shell.dataset.calibration = 'error';
       shell.dataset.calibrated = 'false';
-      systemState.textContent = 'EN ESPERA';
-      shellStatus.textContent =
-        'No se pudo capturar la mirada. Haz clic para reintentar.';
+      systemState.textContent = copy.waiting;
+      shellStatus.textContent = copy.calibrationFailed;
       observationButton.disabled = false;
-      introSkip.hidden = true;
       observationButton
         .querySelector('span')
-        ?.replaceChildren('Reintentar calibración');
+        ?.replaceChildren(copy.retryCalibration);
       return;
     }
 
@@ -906,34 +1231,33 @@ export function bootstrap(root: HTMLElement): () => void {
       playerInput.setEnabled(false);
       shell.dataset.calibration = 'error';
       shell.dataset.calibrated = 'false';
-      systemState.textContent = 'FÍSICA NO DISPONIBLE';
-      shellStatus.textContent =
-        'El cuerpo de campo no pudo iniciar. Recarga para reintentar.';
+      systemState.textContent =
+        locale === 'en' ? 'PHYSICS UNAVAILABLE' : 'FÍSICA NO DISPONIBLE';
+      shellStatus.textContent = copy.physicsUnavailable;
       observationButton.disabled = false;
       observationButton
         .querySelector('span')
-        ?.replaceChildren('Reintentar calibración');
+        ?.replaceChildren(copy.retryCalibration);
       return;
     }
-    readyPlayerPhysics.controller.respawn();
+    readyPlayerPhysics.activatePrologueRoom();
+    readyPlayerPhysics.controller.respawn(PROLOGUE_ROOM_SPAWN);
+    camera.lookAt(64, 1.05, 64);
+    audioDirector.setAmbienceScene('room');
 
     shell.dataset.calibration = 'ready';
     shell.dataset.calibrated = 'true';
-    systemState.textContent = 'CALIBRADA';
-    shellStatus.textContent =
-      'Shell lista · el primer colapso iniciará el reloj';
+    systemState.textContent = locale === 'en' ? 'IN CHAMBER' : 'EN CÁMARA';
+    shellStatus.textContent = copy.roomHint;
     observationButton
       .querySelector('span')
-      ?.replaceChildren('Mirada calibrada');
+      ?.replaceChildren(
+        locale === 'en' ? 'Gaze calibrated' : 'Mirada calibrada',
+      );
     narrative.play('start');
   };
 
-  observationButton.addEventListener(
-    'click',
-    () => void startCalibration(false),
-    { signal: abortController.signal },
-  );
-  introSkip.addEventListener('click', () => void startCalibration(true), {
+  observationButton.addEventListener('click', () => void startCalibration(), {
     signal: abortController.signal,
   });
 
@@ -958,10 +1282,10 @@ export function bootstrap(root: HTMLElement): () => void {
   });
 
   gameLoop.start();
+  if (enterFromLanguageGesture) void startCalibration();
 
   return () => {
     disposed = true;
-    window.clearInterval(introductionTimer);
     abortController.abort();
     gameLoop.stop();
     solverWorker.dispose();
@@ -970,6 +1294,8 @@ export function bootstrap(root: HTMLElement): () => void {
     debugOverlay?.destroy();
     pauseMenu?.destroy();
     audioDirector.dispose();
+    briefing.dispose();
+    room?.dispose();
     superposition.dispose();
     fixedVisuals.dispose();
     wp5Visuals?.dispose();

@@ -35,6 +35,7 @@ export class PlayerInput {
   #lookX = 0;
   #lookY = 0;
   #jumpQueued = false;
+  #interactQueued = false;
   #enabled = false;
   #paused = true;
   #resumePromise: Promise<boolean> | null = null;
@@ -106,6 +107,12 @@ export class PlayerInput {
     return queued;
   }
 
+  consumeInteract(): boolean {
+    const queued = this.#interactQueued;
+    this.#interactQueued = false;
+    return queued;
+  }
+
   resume(): Promise<boolean> {
     if (!this.#enabled) return Promise.resolve(false);
     this.#resumePromise ??= this.#performResume().finally(() => {
@@ -162,6 +169,7 @@ export class PlayerInput {
   pause(): void {
     this.#keys.clear();
     this.#jumpQueued = false;
+    this.#interactQueued = false;
     if (document.pointerLockElement === this.#pointerTarget) {
       document.exitPointerLock();
     }
@@ -183,6 +191,10 @@ export class PlayerInput {
     if (this.#paused) return;
     if (event.code === 'Space' && !event.repeat) {
       this.#jumpQueued = true;
+      event.preventDefault();
+    }
+    if (event.code === 'KeyE' && !event.repeat) {
+      this.#interactQueued = true;
       event.preventDefault();
     }
     if (isMovementCode(event.code)) this.#keys.add(event.code);
@@ -212,8 +224,17 @@ export class PlayerInput {
     if (!this.#handlers.keepRunningWithoutPointerLock) this.pause();
   };
 
-  readonly #handlePointerTargetClick = (): void => {
+  readonly #handlePointerTargetClick = (event: MouseEvent): void => {
+    if (
+      event.target instanceof Element &&
+      event.target.closest(
+        'button, a, input, select, textarea, [role="dialog"]',
+      )
+    ) {
+      return;
+    }
     if (this.#enabled && this.#paused) void this.resume();
+    else if (this.#enabled) this.#interactQueued = true;
   };
 
   #setPaused(paused: boolean): void {

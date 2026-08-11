@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "durationSeconds": 50,
+  "videoPath": "/assets/video/agency-briefing.webm",
+  "fallbackFramePaths": [
+    "/assets/video/briefing-fallback-01.webp",
+    "/assets/video/briefing-fallback-02.webp",
+    "/assets/video/briefing-fallback-03.webp",
+    "/assets/video/briefing-fallback-04.webp",
+    "/assets/video/briefing-fallback-05.webp",
+    "/assets/video/briefing-fallback-06.webp",
+    "/assets/video/briefing-fallback-07.webp"
+  ],
+  "voicePath": {
+    "en": "/assets/audio/briefing/en.mp3",
+    "es": "/assets/audio/briefing/es.mp3"
+  },
+  "chapters": {
+    "en": [
+      {
+        "id": "agency",
+        "startSeconds": 0,
+        "endSeconds": 7,
+        "title": "AGENCY ORIENTATION",
+        "caption": "Specialist: this Silence Chamber contains your assigned Possibility Condensate."
+      },
+      {
+        "id": "isolation",
+        "startSeconds": 7,
+        "endSeconds": 14,
+        "title": "ISOLATED REGIONS",
+        "caption": "Isolated from the exterior, these volumes preserved collective coherence."
+      },
+      {
+        "id": "potential",
+        "startSeconds": 14,
+        "endSeconds": 21,
+        "title": "NO CLASSICAL HISTORY",
+        "caption": "Matter, geometry and potential life coexist without a classical history."
+      },
+      {
+        "id": "machines",
+        "startSeconds": 21,
+        "endSeconds": 28,
+        "title": "AUTHORIZED DOCTRINE",
+        "caption": "Machines detect possibilities. Agency doctrine says they cannot conclude measurement. Convenient."
+      },
+      {
+        "id": "collapser",
+        "startSeconds": 28,
+        "endSeconds": 35,
+        "title": "THE COLLAPSER",
+        "caption": "Your consciousness occupies a field body. The Measure is your instrument."
+      },
+      {
+        "id": "measure",
+        "startSeconds": 35,
+        "endSeconds": 42,
+        "title": "INTERVENTION",
+        "caption": "Your attention defines the measurement basis, never the exact result."
+      },
+      {
+        "id": "irreversible",
+        "startSeconds": 42,
+        "endSeconds": 50,
+        "title": "TEN-MINUTE WINDOW",
+        "caption": "Footprints and memories make results irreversible. Your window: ten minutes."
+      }
+    ],
+    "es": [
+      {
+        "id": "agency",
+        "startSeconds": 0,
+        "endSeconds": 7,
+        "title": "ORIENTACIÓN DE AGENCIA",
+        "caption": "Especialista: esta Cámara contiene tu Condensado de Posibilidad asignado."
+      },
+      {
+        "id": "isolation",
+        "startSeconds": 7,
+        "endSeconds": 14,
+        "title": "REGIONES AISLADAS",
+        "caption": "Aislados del exterior, estos volúmenes preservaron coherencia colectiva."
+      },
+      {
+        "id": "potential",
+        "startSeconds": 14,
+        "endSeconds": 21,
+        "title": "SIN HISTORIA CLÁSICA",
+        "caption": "Materia, geometría y vida potencial coexisten sin historia clásica."
+      },
+      {
+        "id": "machines",
+        "startSeconds": 21,
+        "endSeconds": 28,
+        "title": "DOCTRINA AUTORIZADA",
+        "caption": "Las máquinas detectan posibilidades. Según la Agencia, no concluyen la medición. Conveniente."
+      },
+      {
+        "id": "collapser",
+        "startSeconds": 28,
+        "endSeconds": 35,
+        "title": "EL COLAPSADOR",
+        "caption": "Tu consciencia ocupa un cuerpo de campo. La Medida es tu instrumento."
+      },
+      {
+        "id": "measure",
+        "startSeconds": 35,
+        "endSeconds": 42,
+        "title": "INTERVENCIÓN",
+        "caption": "Tu atención define la base de medición, nunca el resultado exacto."
+      },
+      {
+        "id": "irreversible",
+        "startSeconds": 42,
+        "endSeconds": 50,
+        "title": "VENTANA DE DIEZ MINUTOS",
+        "caption": "Huellas y recuerdos vuelven irreversible el resultado. Tienes diez minutos."
+      }
+    ]
+  }
+}

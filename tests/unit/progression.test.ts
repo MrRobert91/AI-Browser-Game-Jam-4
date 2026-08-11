@@ -21,7 +21,9 @@ describe('ProgressionSystem', () => {
       const event = progression.collectAt(progression.getSeedCell(packId));
       expect(event).toMatchObject({ packId, paletteEpoch: index + 1 });
       expect(event?.previewSilhouettes).toHaveLength(3);
-      expect(event?.musicStemId).toBe(`stem-${packId}`);
+      expect(event?.ambienceLayerId).toBe(
+        packId === 'forest' ? 'ambience-base' : `ambience-${packId}`,
+      );
     }
     expect(progression.snapshot().nextPack).toBeNull();
     expect(unlockPack).toHaveBeenCalledTimes(4);
