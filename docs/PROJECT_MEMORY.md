@@ -4,7 +4,7 @@ Este documento conserva la historia de implementación de **La Última Observaci
 
 ## Vista de pájaro
 
-Actualizado: 2026-08-11 (Europe/Madrid)
+Actualizado: 2026-08-12 (Europe/Madrid)
 
 | Fase | Issues | Estado | Gate o dependencia principal |
 |---|---:|---|---|
@@ -22,16 +22,26 @@ Actualizado: 2026-08-11 (Europe/Madrid)
 | POST — Limpieza del HUD | #87 | Integrada en `dev` | PR #88 fusionada en `423fc90` |
 | POST — Rendimiento | #89 | Implementada en rama | `codex/issue-89-stable-fps` desde `origin/dev` `423fc90` |
 | POST — Prólogo bilingüe | #91–#94 | Implementada en rama acumulativa | Localización, voz/ambientes y sala/briefing listos para PR a `dev` |
+| POST — Media y mundo material | #96 | Implementada en rama | Audio autorizado, briefing 1080p, panorama completo, observación 20 m y texturas compartidas |
 | POST — Expansiones | #52–#56 | En rama acumulativa salvo #54 | #54 ya estaba cerrada; #52, #53, #55 y #56 listas para revisión |
 
 ### Estado operativo actual
 
-- Fase actual: prólogo bilingüe #91–#94 sobre `origin/dev` `d73d8f5`; #89 ya está integrado en `dev`.
+- Fase actual: issue #96 sobre `origin/dev` `d59c7b2`; el prólogo bilingüe #91–#94 y #89 ya están integrados en `dev`.
 - Trabajo en revisión: PR #84 reúne #22, #52, #53, #55, #56 y la revisión narrativa #76–#82, con un commit funcional por issue y destino `dev`.
 - Arquitectura vigente: la build de jam sigue siendo offline. #56 solo muestra una variante remota si la publicación configura un proxy HTTPS y el jugador consiente en esa partida; ninguna clave de proveedor entra en el navegador.
 - Evidencia actual: galerías/capturas locales, simulación de 10.000 seeds, WebM narrativo y QA automatizada bajo [`docs/progress/`](./progress/).
 - Gate humano: #83 y el epic #75 permanecen abiertos y **NO-GO 0/5**; la rama no afirma sesiones que no se han realizado.
 - Estado remoto verificado: PR #84 abierta y no draft; sus palabras de cierre excluyen deliberadamente #75 y #83.
+
+### 2026-08-12 — Issue #96 — Audio, panorama completo y texturas ligeras
+
+- El gesto inicial autoriza los elementos exactos de voz, briefing y cinco ambientes antes de cualquier `await`. La E2E ya no acepta un simple estado `ready`: comprueba reproducción, tiempo creciente y volumen efectivo.
+- El vídeo local se recompone desde las siete láminas ya validadas como VP9 1920×1080, 50 s y 4,97 MB. Lanczos, sharpening y CRF 24 mejoran la lectura sin red, nuevas generaciones ni coste.
+- La descarga final usa un render target ortográfico 1600×900. Sus límites salen de todas las celdas `FIXED`, por lo que ya no dependen de la posición o FOV de la cámara al terminar.
+- La observación pasa de 10 a 20 m; carga y animación tardan la mitad. El vecindario sube a 11 celdas y la activación de chunks a 22 m para que el mundo se materialice delante del recorrido.
+- Ocho texturas procedurales de 64×64 se comparten entre sala, terreno, agua, vegetación, roca, flores, semillas y peligros. El coste base es 128 KiB y el mundo fijado conserva un máximo de siete lotes instanciados.
+- Validación local: 201 tests, TypeScript, ESLint, formato, build, gramática/assets, navegador Chromium/Firefox, PNG real y metadatos FFprobe. Evidencia: [`docs/progress/issue-96-media-panorama-textures/`](./progress/issue-96-media-panorama-textures/).
 
 ### 2026-08-11 — Epic #91 / issues #92–#94 — Prólogo bilingüe y nueva voz
 
