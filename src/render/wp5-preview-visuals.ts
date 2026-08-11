@@ -21,6 +21,7 @@ import type { RespawnPhase } from '../gameplay/respawn';
 import type { UncertaintySnapshot } from '../gameplay/uncertainty-enemy';
 
 import { stormEmissiveIntensity } from './storm-visual';
+import type { ProceduralTextureLibrary } from './textures';
 
 const PACK_COLORS: Readonly<Record<UnlockablePackId, number>> = {
   water: 0x65d9ff,
@@ -58,6 +59,7 @@ export class Wp5PreviewVisuals {
     scene: Scene,
     plan: MacroPlan,
     private readonly reducedFlashes = false,
+    private readonly textures?: ProceduralTextureLibrary,
   ) {
     this.root.name = 'wp5-gated-preview';
     for (const anchor of plan.anchors) {
@@ -72,6 +74,7 @@ export class Wp5PreviewVisuals {
         emissiveIntensity: 0.45,
         transparent: true,
         opacity: 0.24,
+        map: this.textureForPack(anchor.packId),
       });
       const beam = new Mesh(new CylinderGeometry(0.1, 0.5, 9, 8), beamMaterial);
       beam.position.y = 4.5;
@@ -82,6 +85,7 @@ export class Wp5PreviewVisuals {
           emissive: PACK_COLORS[anchor.packId],
           emissiveIntensity: 1.2,
           roughness: 0.28,
+          map: this.textureForPack(anchor.packId),
         }),
       );
       seed.name = `seed-${anchor.packId}`;
@@ -115,6 +119,7 @@ export class Wp5PreviewVisuals {
           emissiveIntensity: 0.65,
           transparent: true,
           opacity: 0.8,
+          map: this.textureForPack(packId),
         }),
       );
       preview.name = `preview-${name}`;
@@ -150,6 +155,12 @@ export class Wp5PreviewVisuals {
             : 0x000000,
         emissiveIntensity: 0.65,
         roughness: hazard.type === 'DEEP_WATER' ? 0.2 : 0.75,
+        map:
+          hazard.type === 'DEEP_WATER'
+            ? (this.textures?.water ?? null)
+            : hazard.type === 'FRAGILE_GROUND'
+              ? (this.textures?.stone ?? null)
+              : (this.textures?.hazard ?? null),
       }),
     );
     const [x, z] = positionOf(hazard.cellId);
@@ -168,6 +179,7 @@ export class Wp5PreviewVisuals {
         emissiveIntensity: 0.8,
         transparent: true,
         opacity: 0.62,
+        map: this.textures?.hazard ?? null,
       });
       this.uncertainty.add(
         new Mesh(new ConeGeometry(0.65, 2.2, 5), material),
@@ -245,5 +257,15 @@ export class Wp5PreviewVisuals {
     this.hazardObjects.clear();
     this.previews.length = 0;
     this.uncertainty = null;
+  }
+
+  private textureForPack(
+    packId: UnlockablePackId,
+  ): ProceduralTextureLibrary['meadow'] | null {
+    if (!this.textures) return null;
+    if (packId === 'water') return this.textures.water;
+    if (packId === 'forest') return this.textures.foliage;
+    if (packId === 'ruin') return this.textures.stone;
+    return this.textures.hazard;
   }
 }

@@ -61,6 +61,9 @@ const DEFAULT_VOLUMES: AudioVolumes = {
   effects: 0.75,
 };
 
+const MEDIA_UNLOCK_SILENCE_DATA_URI =
+  'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
@@ -284,8 +287,25 @@ export class AudioDirector {
         return false;
       }
     }
+    // Invoke every media-element play synchronously inside the user gesture.
+    // The Web Audio context may resume asynchronously, but these exact elements
+    // remain authorized for later local narration and ambience playback.
+    const mediaUnlocks: Promise<unknown>[] = [];
+    if (this.voiceElement) {
+      this.voiceElement.src = MEDIA_UNLOCK_SILENCE_DATA_URI;
+      mediaUnlocks.push(this.voiceElement.play());
+    }
+    for (const track of this.ambienceTracks.values()) {
+      mediaUnlocks.push(track.element.play());
+    }
     try {
       await this.context!.resume();
+      await Promise.allSettled(mediaUnlocks);
+      if (this.voiceElement && !this.activeVoice) {
+        this.voiceElement.pause();
+        this.voiceElement.currentTime = 0;
+        this.voiceElement.src = '';
+      }
       const ready = this.context!.state === 'running';
       this.setPlayback(
         ready ? 'ready' : 'blocked',
@@ -293,12 +313,13 @@ export class AudioDirector {
         ready ? null : 'AudioContext suspended',
       );
       if (ready) {
-        for (const track of this.ambienceTracks.values()) {
+        for (const track of this.ambienceTracks.values())
           void track.element.play().catch(() => undefined);
-        }
       }
       return ready;
     } catch (error) {
+      this.voiceElement?.pause();
+      for (const track of this.ambienceTracks.values()) track.element.pause();
       this.setPlayback('blocked', null, errorMessage(error));
       return false;
     }

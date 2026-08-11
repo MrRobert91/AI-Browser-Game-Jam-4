@@ -7,6 +7,11 @@ import type {
 } from '../contracts/messages';
 import type { UnlockablePackId } from '../contracts/tiles';
 import type { CellPhase, WorldVector3 } from '../contracts/world';
+import {
+  MAX_COLLAPSE_COMMIT_DISTANCE_METERS,
+  OBSERVATION_CHARGE_PER_SECOND,
+  OBSERVATION_RADIUS_METERS,
+} from '../contracts/observation';
 
 import { createFullMask, isEmpty, type MutableDomainMask } from './bitset';
 import {
@@ -32,7 +37,8 @@ import { attemptObservedCollapse, type TransactionCell } from './transaction';
 export const FIXED_TICK_SECONDS = 0.1;
 export const MAX_SOLVER_WORK_MS = 4;
 export const COMMIT_COOLDOWN_MS = 90;
-export const MAX_OBSERVATION_DISTANCE_METERS = 10.01;
+export const MAX_OBSERVATION_DISTANCE_METERS =
+  MAX_COLLAPSE_COMMIT_DISTANCE_METERS;
 export const SAFE_BODY_RADIUS_METERS = 2.5;
 
 const BASE_VARIANT_COUNT = 3;
@@ -251,14 +257,19 @@ export class SolverCore {
         visible.distance <= MAX_OBSERVATION_DISTANCE_METERS &&
         actualDistance <= MAX_OBSERVATION_DISTANCE_METERS;
       const proximity =
-        1 - smoothstep(SAFE_BODY_RADIUS_METERS, 10, actualDistance);
+        1 -
+        smoothstep(
+          SAFE_BODY_RADIUS_METERS,
+          OBSERVATION_RADIUS_METERS,
+          actualDistance,
+        );
       const attention = lineOfSight
         ? smoothstep(0, 1, visible.alignment) * proximity
         : 0;
       cell.observationCharge = clamp01(
         cell.observationCharge +
           (attention > 0
-            ? FIXED_TICK_SECONDS * attention * 1.4
+            ? FIXED_TICK_SECONDS * attention * OBSERVATION_CHARGE_PER_SECOND
             : -FIXED_TICK_SECONDS * 0.55),
       );
       if (cell.observationCharge > 0) {

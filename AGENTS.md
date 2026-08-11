@@ -35,7 +35,7 @@ Reglas de coordinación:
 
 ### 1.1 High concept
 
-**La Última Observación** es un viaje 3D en primera persona por un mundo que todavía no ha decidido qué es. Más allá de diez metros, el paisaje permanece como una superposición translúcida. Al caminar y sostener la mirada sobre una zona cercana, el jugador carga su observación: un Wave Function Collapse elimina posibilidades incompatibles hasta fijar suelo, vegetación, agua, ruinas, peligros y criaturas.
+**La Última Observación** es un viaje 3D en primera persona por un mundo que todavía no ha decidido qué es. Más allá de veinte metros, el paisaje permanece como una superposición translúcida. Al caminar y sostener la mirada sobre una zona cercana, el jugador carga su observación: un Wave Function Collapse elimina posibilidades incompatibles hasta fijar suelo, vegetación, agua, ruinas, peligros y criaturas.
 
 El instrumento que mantiene observable el mundo se apaga en diez minutos. El jugador explora, encuentra Semillas de Posibilidad y amplía el vocabulario del generador. Cada semilla desbloquea tiles compatibles con las anteriores. La distancia al origen aumenta belleza, rareza y peligro.
 
@@ -173,8 +173,8 @@ Celda:                       2 m × 2 m
 Mapa lógico:                 64 × 64 celdas (128 m × 128 m)
 Origen:                      (32, 32)
 Chunk lógico:                16 × 16 celdas
-Radio máximo observación:    10 m = 5 celdas
-Radio activación de chunk:   18 m
+Radio máximo observación:    20 m = 10 celdas
+Radio activación de chunk:   22 m
 Radio de seguridad corporal: 2,5 m
 Radio interior de contención: 62 m desde el origen del mundo
 ```
@@ -200,10 +200,10 @@ Zonas:
 | Zona | Distancia | Regla |
 |---|---:|---|
 | Contacto | 0–2,5 m | Fijado inmediato y sin peligro nuevo. |
-| Observación | 2,5–10 m | Fijado solo por atención y línea de visión. |
-| Superposición | >10 m | No se fija; muestra siluetas probabilísticas simples. |
+| Observación | 2,5–20 m | Fijado solo por atención y línea de visión. |
+| Superposición | >20 m | No se fija; muestra siluetas probabilísticas simples. |
 
-La validación usa la posición real del jugador en el instante del commit. Nunca se emite `FIXED` si el centro de celda está a más de 10,01 m.
+La validación usa la posición real del jugador en el instante del commit. Nunca se emite `FIXED` si el centro de celda está a más de 20,01 m.
 
 ## 5. Solver WFC observable
 
@@ -252,17 +252,17 @@ peso efectivo = peso base
 
 Todo peso habilitado es >0. Raro no significa incompatible.
 
-Por frame, para celdas a menos de diez metros:
+Por frame, para celdas a menos de veinte metros:
 
 ```text
 dirección = normalize(centroCelda - cámara)
 alineación = clamp01((dot(forward, dirección) - cos(30°)) / (1 - cos(30°)))
 foco = smoothstep(0, 1, alineación)
-proximidad = 1 - smoothstep(2.5 m, 10 m, distancia)
+proximidad = 1 - smoothstep(2.5 m, 20 m, distancia)
 visibilidad = 1 con línea de visión; 0 sin ella
 atención = foco × proximidad × visibilidad
 
-si atención > 0: carga += dt × atención × 1.4
+si atención > 0: carga += dt × atención × 2.8
 si atención == 0: carga -= dt × 0.55
 carga = clamp(carga, 0, 1)
 
@@ -278,7 +278,7 @@ prioridad = 4.0 × cargaDeObservación
           + ruidoDeterministaMuyPequeño
 ```
 
-Solo son elegibles celdas dentro de diez metros, por encima del umbral, no fijadas, en chunk activo y no ocluidas por geometría fijada. Máximo un commit principal cada 90 ms; consecuencias forzadas pueden revelarse como onda posterior.
+Solo son elegibles celdas dentro de veinte metros, por encima del umbral, no fijadas, en chunk activo y no ocluidas por geometría fijada. Máximo un commit principal cada 90 ms; consecuencias forzadas pueden revelarse como onda posterior.
 
 ### 5.3 Propagación, transacción y presupuesto
 
@@ -362,7 +362,7 @@ Tick normativo:
 
 ```ts
 function simulationTick(input: ObservationInput): WorkerOutput {
-  activateChunksWithin(input.playerPosition, 18);
+  activateChunksWithin(input.playerPosition, 22);
   ensureSafeGroundWithin(input.playerPosition, 2.5);
   updateObservationCharge(input.visibleCells, FIXED_TICK_SECONDS);
   const target = selectHighestPriorityEligibleCell();
@@ -649,7 +649,7 @@ Superposición:
 - Nunca cargar tres GLB completos por posibilidad.
 - Es aproximación legible del dominio, no inventario exhaustivo.
 
-Colapso dura 450–700 ms según entropía: separar incompatibles → retraer al centro → ganador desde escala 0,85/opacidad 0 → onda por bordes compatibles → física después del 70 %.
+Colapso dura 225–350 ms según entropía: separar incompatibles → retraer al centro → ganador desde escala 0,85/opacidad 0 → onda por bordes compatibles → física después del 70 %.
 
 La sensación de alta calidad procede de luz solar consistente, niebla, materiales compartidos, vegetación procedural, sonido espacial, voz institucional, cámara estable y un colapso muy pulido; no de cientos de assets.
 
@@ -863,7 +863,7 @@ Propiedades:
 5. Tile caminable tiene collider o suelo plano explícito.
 6. ≤64 variantes por capa.
 
-Simulación por commit: 100 seeds, espiral 600 ticks, cuatro desbloqueos, cero dominios vacíos tras fallback, cero commits >10 m, hash idéntico en dos ejecuciones.
+Simulación por commit: 100 seeds, espiral 600 ticks, cuatro desbloqueos, cero dominios vacíos tras fallback, cero commits >20,01 m, hash idéntico en dos ejecuciones.
 
 Antes de entregar/nightly: 10.000 seeds; rutas recta, espiral, zigzag, inmóvil y aleatoria; fallback de juego <0,1 %; `quantum_void_debug` = 0; todas las Semillas alcanzables.
 
@@ -920,7 +920,7 @@ Schemas, validador, proxies de cuatro packs, compatibilidades/rotaciones y galer
 
 ### WP4 — Mundo observable
 
-Radio, oclusión, carga, worker, proxies, animación/commit y streaming. Mirar fija gradualmente; girarse descarga; nada fija >10 m; lo fijado nunca cambia. Propiedad: `src/world/`, integración `worker.ts`.
+Radio, oclusión, carga, worker, proxies, animación/commit y streaming. Mirar fija gradualmente; girarse descarga; nada fija >20,01 m; lo fijado nunca cambia. Propiedad: `src/world/`, integración `worker.ts`.
 
 ### Puerta de vertical slice
 
@@ -950,7 +950,7 @@ Toda tile nueva incluye definición, proxy/asset, compatibilidad, test de valida
 
 ## 17. MVP, recortes y expansiones
 
-MVP no negociable: diez minutos y final; movimiento/cámara sólidos; WFC observable ≤10 m; `FIXED` inmutable; gramática sin encierros; base+agua+bosque; un peligro; muerte/respawn persistente; vista final/haiku; runtime sin red.
+MVP no negociable: diez minutos y final; movimiento/cámara sólidos; WFC observable ≤20 m; `FIXED` inmutable; gramática sin encierros; base+agua+bosque; un peligro; muerte/respawn persistente; vista final/haiku; runtime sin red.
 
 Orden de recorte: Tormenta → Ruina → Incertidumbre por peligro estático → suelo frágil → 3 proxies a 2 → haiku condicionado a cinco fijos → modos 5/15 min.
 
@@ -977,7 +977,7 @@ Post-jam: seed diario, PNG, galería, biomas, contemplativo sin peligros, haiku 
 
 - [ ] Gratis en navegador sin descarga.
 - [ ] Partida completa ≈10 min.
-- [ ] Solo fija a ≤10 m; fuera de contacto requiere mirada.
+- [ ] Solo fija a ≤20 m; fuera de contacto requiere mirada.
 - [ ] Se ven ≥2 posibilidades antes de colapso.
 - [ ] `FIXED` idéntica tras distancia, muerte y regreso.
 - [ ] Agua, Bosque y, si calendario permite, tercer pack.

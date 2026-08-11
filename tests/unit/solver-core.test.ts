@@ -48,12 +48,26 @@ describe('incremental SolverCore', () => {
     expect(core.diagnostics.pendingWork).toBe(0);
   });
 
-  it('never commits a cell outside the real 10.01 m radius', () => {
+  it('commits ahead beyond the old radius but never beyond 20.01 m', () => {
     const core = new SolverCore(7);
-    const farCellId = 2088;
+    const aheadCellId = 2088;
+    const aheadOutputs = [];
+    for (let tick = 1; tick <= 80; tick += 1) {
+      aheadOutputs.push(
+        ...core.simulationTick(observation(tick, aheadCellId, 17)),
+      );
+    }
+    expect(aheadOutputs.some((output) => output.type === 'COLLAPSE')).toBe(
+      true,
+    );
+
+    const outsideCore = new SolverCore(7);
+    const farCellId = 2090;
     const outputs = [];
     for (let tick = 1; tick <= 20; tick += 1) {
-      outputs.push(...core.simulationTick(observation(tick, farCellId, 4)));
+      outputs.push(
+        ...outsideCore.simulationTick(observation(tick, farCellId, 4)),
+      );
     }
 
     expect(outputs.some((output) => output.type === 'COLLAPSE')).toBe(false);

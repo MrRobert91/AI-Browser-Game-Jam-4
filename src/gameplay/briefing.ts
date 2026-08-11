@@ -15,6 +15,7 @@ export interface BriefingPlaybackOptions {
   readonly onMediaState?: (
     state: 'playing' | 'paused' | 'fallback' | 'error',
   ) => void;
+  readonly onAudioState?: (state: 'playing' | 'paused' | 'error') => void;
 }
 
 export class BriefingPlayback {
@@ -26,6 +27,8 @@ export class BriefingPlayback {
   private fallback = false;
   private completed = false;
   private chapterId: string | null = null;
+  private targetVolume = 1;
+  private audioAuthorization: Promise<boolean> | null = null;
 
   constructor(
     parent: HTMLElement,
@@ -42,14 +45,17 @@ export class BriefingPlayback {
     this.audio = options.createAudio?.() ?? new Audio();
     this.audio.src = BRIEFING_MANIFEST.voicePath[locale];
     this.audio.preload = 'auto';
+    this.audio.className = 'briefing-voice';
+    this.audio.hidden = true;
     this.audio.addEventListener('error', () => {
+      this.options.onAudioState?.('error');
       this.options.onMediaState?.('error');
     });
     this.captions = document.createElement('section');
     this.captions.className = 'briefing-captions';
     this.captions.setAttribute('aria-live', 'polite');
     this.captions.hidden = true;
-    parent.append(this.captions);
+    parent.append(this.audio, this.captions);
   }
 
   get currentTime(): number {
@@ -61,7 +67,27 @@ export class BriefingPlayback {
   }
 
   setVolume(master: number, voice: number): void {
-    this.audio.volume = Math.max(0, Math.min(1, master * voice));
+    this.targetVolume = Math.max(0, Math.min(1, master * voice));
+    this.audio.volume = this.targetVolume;
+  }
+
+  /** Blesses the exact briefing element while the calibration gesture is live. */
+  authorizeAudioFromGesture(): Promise<boolean> {
+    if (this.audioAuthorization) return this.audioAuthorization;
+    this.audio.volume = 0;
+    const playAttempt = this.audio.play();
+    this.audioAuthorization = playAttempt
+      .then(() => {
+        this.audio.pause();
+        this.audio.currentTime = 0;
+        this.audio.volume = this.targetVolume;
+        return true;
+      })
+      .catch(() => {
+        this.audio.volume = this.targetVolume;
+        return false;
+      });
+    return this.audioAuthorization;
   }
 
   start(): void {
@@ -75,9 +101,7 @@ export class BriefingPlayback {
     if (!this.fallback) {
       void this.video.play().catch(() => this.enableFallback());
     }
-    void this.audio.play().catch(() => {
-      this.options.onMediaState?.('error');
-    });
+    void this.playAudio();
     this.options.onMediaState?.(this.fallback ? 'fallback' : 'playing');
     this.renderChapter();
   }
@@ -99,6 +123,7 @@ export class BriefingPlayback {
     this.playing = false;
     this.video.pause();
     this.audio.pause();
+    this.options.onAudioState?.('paused');
     this.options.onMediaState?.('paused');
   }
 
@@ -107,7 +132,7 @@ export class BriefingPlayback {
     this.playing = true;
     if (!this.fallback)
       void this.video.play().catch(() => this.enableFallback());
-    void this.audio.play().catch(() => this.options.onMediaState?.('error'));
+    void this.playAudio();
     this.options.onMediaState?.(this.fallback ? 'fallback' : 'playing');
   }
 
@@ -123,6 +148,7 @@ export class BriefingPlayback {
     this.audio.removeAttribute('src');
     this.video.load();
     this.audio.load();
+    this.audio.remove();
     this.captions.remove();
   }
 
@@ -157,6 +183,18 @@ export class BriefingPlayback {
     this.options.onFallbackChapter?.(this.currentChapter());
   }
 
+  private async playAudio(): Promise<void> {
+    if (this.audioAuthorization) await this.audioAuthorization;
+    if (!this.playing || this.completed) return;
+    try {
+      await this.audio.play();
+      this.options.onAudioState?.('playing');
+    } catch {
+      this.options.onAudioState?.('error');
+      this.options.onMediaState?.('error');
+    }
+  }
+
   private finish(): void {
     if (this.completed) return;
     this.completed = true;
@@ -164,6 +202,7 @@ export class BriefingPlayback {
     this.elapsedSeconds = BRIEFING_MANIFEST.durationSeconds;
     this.video.pause();
     this.audio.pause();
+    this.options.onAudioState?.('paused');
     this.captions.hidden = true;
     this.options.onComplete?.();
   }

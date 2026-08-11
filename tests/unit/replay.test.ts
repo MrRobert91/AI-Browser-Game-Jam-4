@@ -5,6 +5,7 @@ import {
   playReplayHeadless,
   ReplayRecorder,
 } from '../../src/dev/replay';
+import { MAX_COLLAPSE_COMMIT_DISTANCE_METERS } from '../../src/contracts/observation';
 
 describe('headless replay', () => {
   it('records quantized frames at strictly increasing 10 Hz ticks', () => {
@@ -21,7 +22,9 @@ describe('headless replay', () => {
     const first = playReplayHeadless(0xa91f42c0, replay);
     const second = playReplayHeadless(0xa91f42c0, replay);
     expect(second).toEqual(first);
-    expect(first.maximumCommitDistanceMeters).toBeLessThanOrEqual(10.01);
+    expect(first.maximumCommitDistanceMeters).toBeLessThanOrEqual(
+      MAX_COLLAPSE_COMMIT_DISTANCE_METERS,
+    );
     expect(first.emptyDomains).toBe(0);
     expect(first.quantumVoidDebugCount).toBe(0);
   });

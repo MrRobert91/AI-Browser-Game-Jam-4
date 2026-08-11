@@ -265,6 +265,14 @@ export class WorldState {
     return this.fixedCellCount;
   }
 
+  fixedCellIds(): readonly CellId[] {
+    const ids: CellId[] = [];
+    for (let cellId = 0; cellId < this.cells.length; cellId += 1) {
+      if (this.cells[cellId]?.phase === 'FIXED') ids.push(cellId);
+    }
+    return ids;
+  }
+
   private getMutableCell(cellId: CellId): MutableWorldCell {
     cellIdToCoordinates(cellId);
     return this.cells[cellId]!;

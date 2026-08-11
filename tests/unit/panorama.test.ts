@@ -5,6 +5,11 @@ import {
   MAX_LOCAL_PANORAMAS,
   retainedPanoramaIds,
 } from '../../src/gameplay/panorama';
+import {
+  observedWorldBounds,
+  panoramaFrustum,
+} from '../../src/render/panorama-capture';
+import { cellCoordinatesToId } from '../../src/world/world-state';
 
 const RESULT = {
   seedLabel: 'A91F-42C0',
@@ -44,5 +49,22 @@ describe('local panorama', () => {
       'SEED-4',
       'SEED-3',
     ]);
+  });
+
+  it('fits every fixed cell into the top-down panorama with padding', () => {
+    const bounds = observedWorldBounds([
+      cellCoordinatesToId({ x: 3, z: 7 }),
+      cellCoordinatesToId({ x: 58, z: 51 }),
+    ]);
+    expect(bounds).toMatchObject({
+      minX: 2,
+      maxX: 122,
+      minZ: 10,
+      maxZ: 108,
+      fixedCellCount: 2,
+    });
+    const frustum = panoramaFrustum(bounds);
+    expect(frustum.halfWidth * 2).toBeGreaterThanOrEqual(120);
+    expect(frustum.halfHeight * 2).toBeGreaterThanOrEqual(98);
   });
 });

@@ -21,6 +21,8 @@ describe('ObservableWorldBridge', () => {
       getPlayerPosition: () => [65, 1.7, 65],
     });
     const nearbyCellIds = bridge.getNearbyCellIds([65, 1.7, 65]);
+    expect(nearbyCellIds).toHaveLength(23 * 23);
+    expect(nearbyCellIds).toContain(cellCoordinatesToId({ x: 42, z: 32 }));
     expect(
       bridge.update(
         {

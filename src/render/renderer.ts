@@ -18,6 +18,10 @@ import {
   type QualityProfile,
 } from './quality';
 import { WorldPostprocessing } from './postprocessing';
+import {
+  createProceduralTextureLibrary,
+  type ProceduralTextureLibrary,
+} from './textures';
 
 export interface GameRendererOptions {
   readonly container: HTMLElement;
@@ -40,6 +44,7 @@ export class GameRenderer {
   readonly scene = new Scene();
   readonly camera: PerspectiveCamera;
   readonly renderer: WebGLRenderer;
+  readonly textures: ProceduralTextureLibrary;
   readonly #container: HTMLElement;
   readonly #atmosphere: Atmosphere;
   readonly #resolution: DynamicResolutionController;
@@ -74,7 +79,12 @@ export class GameRenderer {
     this.renderer.toneMapping = ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1;
     this.renderer.shadowMap.type = PCFShadowMap;
-    this.#atmosphere = createAtmosphere(this.scene, this.#profile);
+    this.textures = createProceduralTextureLibrary();
+    this.#atmosphere = createAtmosphere(
+      this.scene,
+      this.#profile,
+      this.textures,
+    );
     this.#postprocessing = new WorldPostprocessing(
       this.renderer,
       this.scene,
@@ -169,6 +179,7 @@ export class GameRenderer {
   dispose(): void {
     this.#atmosphere.dispose();
     this.#postprocessing.dispose();
+    this.textures.dispose();
     this.renderer.dispose();
     this.renderer.domElement.remove();
   }

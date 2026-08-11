@@ -15,6 +15,7 @@ import {
 } from 'three';
 
 import type { CollapseEvent } from '../contracts/messages';
+import type { ProceduralTextureMaps } from '../contracts/render';
 import type { CellId, WorldVector3 } from '../contracts/world';
 import type { CollapseVisualAdapter } from './collapse-director';
 import { WORLD_CELLS_PER_SIDE, type WorldState } from './world-state';
@@ -101,6 +102,7 @@ export class SliceCollapseVisuals implements CollapseVisualAdapter {
   constructor(
     scene: Scene,
     private readonly worldState: WorldState,
+    private readonly textures?: ProceduralTextureMaps,
   ) {
     this.root.name = 'fixed-observed-world';
     scene.add(this.root);
@@ -123,6 +125,9 @@ export class SliceCollapseVisuals implements CollapseVisualAdapter {
       metalness: style.deepWater ? 0.16 : 0,
       transparent: true,
       opacity: 0,
+      map: style.deepWater
+        ? (this.textures?.water ?? null)
+        : (this.textures?.meadow ?? null),
     });
     const terrain = new Mesh(this.terrainGeometry, terrainMaterial);
     terrain.position.y = style.deepWater ? -0.04 : 0.05;
@@ -135,6 +140,7 @@ export class SliceCollapseVisuals implements CollapseVisualAdapter {
         color: featureColor(style.feature),
         roughness: style.feature === 'flower' ? 0.75 : 0.9,
         emissive: style.feature === 'flower' ? 0x35101f : 0x000000,
+        map: this.featureTexture(style.feature),
       });
       const feature = new Mesh(
         this.featureGeometries[style.feature],
@@ -251,6 +257,9 @@ export class SliceCollapseVisuals implements CollapseVisualAdapter {
         color: record.style.color,
         roughness: record.style.deepWater ? 0.24 : 0.92,
         metalness: record.style.deepWater ? 0.16 : 0,
+        map: record.style.deepWater
+          ? (this.textures?.water ?? null)
+          : (this.textures?.meadow ?? null),
       });
       const mesh = new InstancedMesh(
         this.terrainGeometry,
@@ -285,6 +294,7 @@ export class SliceCollapseVisuals implements CollapseVisualAdapter {
         color: featureColor(kind),
         roughness: kind === 'flower' ? 0.75 : 0.9,
         emissive: kind === 'flower' ? 0x35101f : 0x000000,
+        map: this.featureTexture(kind),
       });
       const mesh = new InstancedMesh(
         this.featureGeometries[kind],
@@ -307,5 +317,14 @@ export class SliceCollapseVisuals implements CollapseVisualAdapter {
     batch.mesh.setMatrixAt(batch.mesh.count, this.matrix);
     batch.mesh.count += 1;
     batch.mesh.instanceMatrix.needsUpdate = true;
+  }
+
+  private featureTexture(
+    kind: Exclude<SliceFeatureKind, 'empty'>,
+  ): ProceduralTextureMaps['foliage'] | null {
+    if (!this.textures) return null;
+    if (kind === 'tree') return this.textures.foliage;
+    if (kind === 'flower') return this.textures.flower;
+    return this.textures.stone;
   }
 }

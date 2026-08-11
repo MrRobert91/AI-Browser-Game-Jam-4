@@ -5,12 +5,14 @@ import {
   CylinderGeometry,
   DoubleSide,
   Group,
+  LinearFilter,
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
   PlaneGeometry,
   PointLight,
   RectAreaLight,
+  SRGBColorSpace,
   VideoTexture,
   Vector3,
   type BufferGeometry,
@@ -21,6 +23,7 @@ import {
 } from 'three';
 
 import type { GamePhase, Locale } from '../contracts/localization';
+import type { ProceduralTextureLibrary } from './textures';
 
 export const PROLOGUE_ROOM_WIDTH = 14;
 export const PROLOGUE_ROOM_DEPTH = 12;
@@ -73,23 +76,30 @@ export class AgencyRoom {
   private readonly forward = new Vector3();
   private readonly targetDirection = new Vector3();
 
-  constructor(scene: Scene, locale: Locale) {
+  constructor(
+    scene: Scene,
+    locale: Locale,
+    textures?: ProceduralTextureLibrary,
+  ) {
     this.root.name = 'agency-prologue-room';
     const agedWhite = new MeshStandardMaterial({
       color: 0xd7dcda,
       roughness: 0.78,
       metalness: 0.08,
+      map: textures?.stone ?? null,
     });
     const darkMetal = new MeshStandardMaterial({
       color: 0x111920,
       roughness: 0.45,
       metalness: 0.75,
+      map: textures?.stone ?? null,
     });
     const cyan = new MeshStandardMaterial({
       color: 0x16363e,
       emissive: 0x39d9e6,
       emissiveIntensity: 1.6,
       roughness: 0.35,
+      map: textures?.hazard ?? null,
     });
     const coral = new MeshStandardMaterial({
       color: 0xff6f5c,
@@ -97,6 +107,7 @@ export class AgencyRoom {
       emissiveIntensity: 1.2,
       roughness: 0.3,
       metalness: 0.25,
+      map: textures?.hazard ?? null,
     });
     const addBox = (
       size: readonly [number, number, number],
@@ -183,6 +194,11 @@ export class AgencyRoom {
   attachVideo(video: HTMLVideoElement): void {
     this.screenTexture?.dispose();
     this.screenTexture = new VideoTexture(video);
+    this.screenTexture.colorSpace = SRGBColorSpace;
+    this.screenTexture.magFilter = LinearFilter;
+    this.screenTexture.minFilter = LinearFilter;
+    this.screenTexture.generateMipmaps = false;
+    this.screenTexture.anisotropy = 4;
     this.screen.material.map = this.screenTexture;
     this.screen.material.color = new Color(0xffffff);
     this.screen.material.transparent = false;
