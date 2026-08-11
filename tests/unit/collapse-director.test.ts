@@ -4,6 +4,8 @@ import type { CollapseEvent } from '../../src/contracts/messages';
 import {
   COLLIDER_ENABLE_PROGRESS,
   CollapseDirector,
+  MAX_COLLAPSE_DURATION_MS,
+  MAX_COLLAPSE_COMMIT_DISTANCE_METERS,
   type CollapsePhysicsAdapter,
   type CollapseVisualAdapter,
 } from '../../src/world/collapse-director';
@@ -27,13 +29,17 @@ function event(cellId: number): CollapseEvent {
 }
 
 describe('CollapseDirector', () => {
-  it('never accepts a FIXED commit beyond 10.01 metres', () => {
+  it('accepts commits ahead and rejects them beyond 20.01 metres', () => {
     const world = new WorldState();
-    const cellId = cellCoordinatesToId({ x: 40, z: 40 });
     const director = new CollapseDirector(world);
+    const player = [65, 1.7, 65] as const;
+    const aheadId = cellCoordinatesToId({ x: 42, z: 32 });
+    const beyondId = cellCoordinatesToId({ x: 43, z: 32 });
 
-    expect(director.accept(event(cellId), [65, 1.7, 65], 0)).toBe(false);
-    expect(world.getCell(cellId).phase).toBe('UNINITIALIZED');
+    expect(MAX_COLLAPSE_COMMIT_DISTANCE_METERS).toBe(20.01);
+    expect(director.accept(event(aheadId), player, 0)).toBe(true);
+    expect(director.accept(event(beyondId), player, 0)).toBe(false);
+    expect(world.getCell(beyondId).phase).toBe('UNINITIALIZED');
   });
 
   it('enables physics after 70%, then fixes the same tile and rotation immutably', () => {
@@ -56,11 +62,13 @@ describe('CollapseDirector', () => {
 
     expect(director.accept(event(cellId), position, 100)).toBe(true);
     expect(world.getCell(cellId).phase).toBe('COLLAPSING');
-    director.update(100 + 600 * (COLLIDER_ENABLE_PROGRESS - 0.01));
+    director.update(
+      100 + MAX_COLLAPSE_DURATION_MS * (COLLIDER_ENABLE_PROGRESS - 0.01),
+    );
     expect(physics.enableFixedCollider).not.toHaveBeenCalled();
-    director.update(100 + 600 * COLLIDER_ENABLE_PROGRESS);
+    director.update(100 + MAX_COLLAPSE_DURATION_MS * COLLIDER_ENABLE_PROGRESS);
     expect(physics.enableFixedCollider).toHaveBeenCalledTimes(1);
-    director.update(700);
+    director.update(100 + MAX_COLLAPSE_DURATION_MS);
 
     const fixed = world.getCell(cellId);
     expect(fixed).toMatchObject({

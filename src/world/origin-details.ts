@@ -8,6 +8,7 @@ import {
 } from 'three';
 
 import { InstancedFamily } from './instancing';
+import type { ProceduralTextureMaps } from '../contracts/render';
 
 export interface OriginDetailField {
   readonly family: InstancedFamily;
@@ -15,13 +16,17 @@ export interface OriginDetailField {
 }
 
 /** A deterministic one-draw-call meadow detail field around the origin. */
-export function createOriginDetailField(scene: Scene): OriginDetailField {
+export function createOriginDetailField(
+  scene: Scene,
+  textures?: ProceduralTextureMaps,
+): OriginDetailField {
   const geometry = new ConeGeometry(0.035, 0.22, 3, 1);
   geometry.translate(0, 0.11, 0);
   const material = new MeshStandardMaterial({
     color: 0x78a67b,
     roughness: 0.95,
     metalness: 0,
+    map: textures?.foliage ?? null,
   });
   const family = new InstancedFamily('origin-grass', geometry, material, 256);
   const matrix = new Matrix4();

@@ -134,7 +134,7 @@ Antes del commit, hasta tres proxies low-poly alternan entre 160 y 260 ms. Confo
 
 ![Superposición antes de calibrar](./wp4-observable-world/01-calibration.webp)
 
-El `CollapseDirector` solo acepta el resultado confirmado por el worker y vuelve a validar que la celda esté a 10,01 m o menos. La geometría aparece durante 450–700 ms, el collider entra al 70 % y la onda de borde se emite cuando tile y rotación ya son inmutables. Bordes duplicados se descartan, los arrays transferibles se copian y un unlock cambia el `paletteEpoch` del mundo futuro, nunca el pasado propagado.
+El `CollapseDirector` solo acepta el resultado confirmado por el worker y vuelve a validar que la celda esté a 20,01 m o menos. La geometría aparece durante 225–350 ms, el collider entra al 70 % y la onda de borde se emite cuando tile y rotación ya son inmutables. Bordes duplicados se descartan, los arrays transferibles se copian y un unlock cambia el `paletteEpoch` del mundo futuro, nunca el pasado propagado.
 
 ## Noventa segundos para demostrar la idea central
 
@@ -170,7 +170,7 @@ Ese gate se cerró después y WP4/WP5 entraron juntas en `dev` mediante PR #68. 
 
 ## WP6 convierte sistemas legibles en una experiencia coherente
 
-La presentación no se trató como una capa de barniz. El renderer separa explícitamente lo probable de lo fijado: cian, violeta, wireframe y fresnel antes del commit; oro y blanco durante 450–700 ms; materiales cálidos y rugosos después. La vegetación nace de posiciones deterministas y una sola familia instanciada, mientras la densidad, sombras, bloom y SSAO degradan por preset sin cambiar una sola decisión del solver.
+La presentación no se trató como una capa de barniz. El renderer separa explícitamente lo probable de lo fijado: cian, violeta, wireframe y fresnel antes del commit; oro y blanco durante 225–350 ms; materiales cálidos y rugosos después. La vegetación nace de posiciones deterministas y una sola familia instanciada, mientras la densidad, sombras, bloom y SSAO degradan por preset sin cambiar una sola decisión del solver.
 
 ![Superposición fría y lenguaje material WP6](./wp6-presentation/01-intro.webp)
 
@@ -249,7 +249,7 @@ El primer renderer ya tenía resolución dinámica, presets e instancing, pero e
 
 La reparación convierte «automático» en una decisión observable y reversible. Un frame de emergencia baja el DPR inmediatamente; si el nivel actual ya agotó su resolución y sigue por encima de 30 ms, desaparecen primero SSAO, después bloom/sombras y finalmente se activa LOD agresivo. El nivel bajo limita el DPR físico, puede bajar a 0,35 y renderiza la escena directamente, sin reservar ni copiar buffers de postprocesado que están desactivados.
 
-La segunda mitad del trabajo reduce coste estructural. Las animaciones de colapso conservan sus 450–700 ms, pero al terminar ya no dejan dos draw calls permanentes: terreno y feature entran en siete lotes instanciados como máximo. Lecturas del mundo, centros, vecindarios y vector de cámara se reutilizan; el contador de celdas fijadas pasa a O(1); la superposición sigue la cadencia normativa de 10 Hz; HUD y retícula no reescriben DOM si el valor no cambió.
+La segunda mitad del trabajo reduce coste estructural. Las animaciones de colapso duran ahora 225–350 ms y, al terminar, ya no dejan dos draw calls permanentes: terreno y feature entran en siete lotes instanciados como máximo. Lecturas del mundo, centros, vecindarios y vector de cámara se reutilizan; el contador de celdas fijadas pasa a O(1); la superposición sigue la cadencia normativa de 10 Hz; HUD y retícula no reescriben DOM si el valor no cambió.
 
 ## Antes de observar, la Agencia necesita que aceptes su versión
 
@@ -291,3 +291,36 @@ credenciales y cero llamadas a modelos durante la partida.
 [Ver perfil visual optimizado (WebM, 11,12 s)](./issue-89-performance/optimized-gameplay.webm)
 
 En el mismo escenario SwiftShader con CPU 2×, el perfil documentado subió de 0,79 a 49,39 FPS, 62,5 veces más. Una repetición sin grabación llegó a 53,27 FPS; incluso fingiendo 16 cores y 16 GiB para comenzar en alto, el gobernador reconoció la GPU lenta, degradó hasta bajo y terminó en 56,92 FPS con p95 de 16,8 ms. No es una promesa universal de 60 FPS: es evidencia de que el juego ya puede sacrificar píxeles y efectos antes que movimiento, atención o determinismo.
+
+## Materializar el mundo antes de pisarlo
+
+El primer equilibrio permitía fijar a diez metros, pero en movimiento normal la
+carga útil seguía llegando demasiado tarde: el suelo parecía decidirse debajo
+del cuerpo. La nueva ventana alcanza veinte metros y carga al doble de velocidad;
+el gesto visual también baja a 225–350 ms. El solver conserva sus ticks y su
+determinismo, mientras el vecindario y los chunks se adelantan lo justo para que
+la onda ocurra en el campo de visión.
+
+![Suelo y features con mapas procedurales compartidos](./issue-96-media-panorama-textures/02-textured-collapse.webp)
+
+El detalle no llega como una colección de imágenes pesadas. Ocho mapas
+procedurales de 64×64 se comparten entre sala, suelo, agua, hojas, roca, flores y
+peligros. Son 128 KiB antes de mipmaps y no rompen el batching: centenares de
+celdas continúan agrupadas en siete lotes como máximo.
+
+El prólogo también separa dos problemas que antes parecían uno. El WebM era
+válido, pero sus planos en movimiento eran blandos y la voz podía pedir permiso
+fuera del gesto que autorizó el juego. Ahora el elemento exacto se desbloquea al
+calibrar y la prueba observa tiempo de reproducción real. La imagen se recompone
+offline a 1080p desde siete láminas locales, con escalado Lanczos y sharpening.
+
+![Briefing local 1080p y audible](./issue-96-media-panorama-textures/01-briefing-sharp.webp)
+
+Por último, conservar la observación deja de significar fotografiar la cámara.
+La descarga calcula la caja de todas las celdas fijadas y renderiza una vista
+ortográfica aislada de 1600×900. La cámara del jugador no se mueve y ni la niebla
+ni el FOV pueden recortar el extremo lejano del recorrido.
+
+![Panorama que incluye todo el recorrido fijado](./issue-96-media-panorama-textures/03-full-observed-panorama.png)
+
+[Ver briefing, colapso texturizado y descarga completa](./issue-96-media-panorama-textures/media-panorama-textures.webm)

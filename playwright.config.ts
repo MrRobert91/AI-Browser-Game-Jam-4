@@ -1,13 +1,19 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const port = Number(process.env.PLAYWRIGHT_PORT ?? 4173);
+const baseURL = `http://127.0.0.1:${port}`;
+
 export default defineConfig({
   testDir: './tests/e2e',
   outputDir: 'test-results',
   reporter: [['list'], ['html', { open: 'never' }]],
+  // Two concurrent WebGL games contend for the same headless GPU and distort
+  // movement-time assertions; browser projects run serially for stable evidence.
+  workers: 1,
   timeout: 45_000,
   expect: { timeout: 10_000, toHaveScreenshot: { maxDiffPixelRatio: 0.035 } },
   use: {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL,
     locale: 'es-ES',
     viewport: { width: 1440, height: 900 },
     trace: 'retain-on-failure',
@@ -24,9 +30,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run preview',
-    port: 4173,
-    reuseExistingServer: true,
+    command: `npm run preview -- --port ${port} --strictPort`,
+    port,
+    reuseExistingServer: false,
     timeout: 30_000,
   },
 });

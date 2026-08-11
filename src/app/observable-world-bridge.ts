@@ -175,7 +175,10 @@ export class ObservableWorldBridge {
     return this.boundaries.get(chunkId) ?? null;
   }
 
-  getNearbyCellIds(position: WorldVector3, radiusCells = 6): readonly CellId[] {
+  getNearbyCellIds(
+    position: WorldVector3,
+    radiusCells = 11,
+  ): readonly CellId[] {
     const centerX = Math.floor(position[0] / 2);
     const centerZ = Math.floor(position[2] / 2);
     const cacheKey = `${centerX}:${centerZ}:${radiusCells}`;

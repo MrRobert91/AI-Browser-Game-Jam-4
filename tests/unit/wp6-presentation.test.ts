@@ -36,6 +36,9 @@ describe('WP6 final art direction', () => {
       'fixed-stone-shared',
       'collapse-gold-shared',
     ]);
+    expect(materials.all.every((material) => material.map !== null)).toBe(true);
+    expect(materials.textures.all).toHaveLength(8);
+    expect(materials.textures.gpuBytes).toBe(8 * 64 * 64 * 4);
     expect(vegetationCountForQuality(resolveQualityProfile('low'))).toBe(48);
     expect(vegetationCountForQuality(resolveQualityProfile('high'))).toBe(
       MAX_PROCEDURAL_VEGETATION_INSTANCES,
@@ -95,10 +98,13 @@ describe('WP6 audio contracts', () => {
       onended: null,
       onerror: null,
     } as unknown as HTMLAudioElement;
-    const ambience = Array.from({ length: 5 }, () => ({
+    const ambiencePlays = Array.from({ length: 5 }, () =>
+      vi.fn(async () => undefined),
+    );
+    const ambience = ambiencePlays.map((play) => ({
       loop: false,
       preload: '',
-      play: vi.fn(async () => undefined),
+      play,
       pause: vi.fn(),
     })) as unknown as HTMLAudioElement[];
     let ambienceIndex = 0;
@@ -119,7 +125,10 @@ describe('WP6 audio contracts', () => {
     };
     director.playNarrativeCue(cue);
     expect(voice.src).toContain('/assets/audio/voice/es/start.mp3');
-    expect(voice.play).toHaveBeenCalledOnce();
+    expect(voice.play).toHaveBeenCalledTimes(2);
+    expect(ambiencePlays.every((play) => play.mock.calls.length >= 1)).toBe(
+      true,
+    );
     director.setVoicesEnabled(false);
     expect(voice.pause).toHaveBeenCalled();
     director.dispose();

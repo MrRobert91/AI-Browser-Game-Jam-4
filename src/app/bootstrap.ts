@@ -48,6 +48,7 @@ import {
   type GameRendererPerformanceSnapshot,
 } from '../render/renderer';
 import { FinalArtDirector } from '../render/final-art-director';
+import { renderObservedWorldMapCanvas } from '../render/panorama-capture';
 import {
   SuperpositionRenderer,
   type SuperpositionCandidate,
@@ -402,6 +403,7 @@ function bootstrapGame(
   const finalArt = new FinalArtDirector(
     gameRenderer.scene,
     gameRenderer.quality,
+    gameRenderer.textures,
   );
   const audioDirector = new AudioDirector({
     onStateChange: (snapshot) => {
@@ -431,7 +433,11 @@ function bootstrapGame(
   const prologue = new PrologueDirector();
   prologue.enterRoom();
   shell.dataset.gamePhase = 'ROOM';
-  let room: AgencyRoom | null = new AgencyRoom(gameRenderer.scene, locale);
+  let room: AgencyRoom | null = new AgencyRoom(
+    gameRenderer.scene,
+    locale,
+    gameRenderer.textures,
+  );
   let playerPhysics: PlayerPhysicsRuntime | null = null;
   let enterRun = (): void => undefined;
   const completeBriefing = (): void => {
@@ -450,11 +456,17 @@ function bootstrapGame(
     onMediaState: (state) => {
       shell.dataset.briefingMedia = state;
     },
+    onAudioState: (state) => {
+      shell.dataset.briefingAudio = state;
+    },
   });
   room.attachVideo(briefing.video);
   briefing.setVolume(settings.volumes.master, settings.volumes.voice);
   gameRenderer.setWorldAtmosphereVisible(false);
-  const originDetails = createOriginDetailField(gameRenderer.scene);
+  const originDetails = createOriginDetailField(
+    gameRenderer.scene,
+    gameRenderer.textures,
+  );
   originDetails.family.mesh.visible = false;
   const worldBoundary = createWorldBoundaryVisual();
   worldBoundary.root.visible = false;
@@ -638,7 +650,11 @@ function bootstrapGame(
     },
   });
   const worldState = new WorldState();
-  const fixedVisuals = new SliceCollapseVisuals(gameRenderer.scene, worldState);
+  const fixedVisuals = new SliceCollapseVisuals(
+    gameRenderer.scene,
+    worldState,
+    gameRenderer.textures,
+  );
   fixedVisuals.root.visible = false;
   let resultPresented = false;
   runClock = new RunClock(
@@ -665,7 +681,14 @@ function bootstrapGame(
     () => window.location.reload(),
     {
       capture: (result) =>
-        capturePanoramaPng(gameRenderer.renderer.domElement, result),
+        capturePanoramaPng(
+          renderObservedWorldMapCanvas(
+            gameRenderer.renderer,
+            gameRenderer.scene,
+            worldState.fixedCellIds(),
+          ),
+          result,
+        ),
       gallery: new LocalPanoramaGallery(),
     },
     configuredRemoteHaikuEndpoint(import.meta.env.VITE_REMOTE_HAIKU_ENDPOINT),
@@ -719,6 +742,7 @@ function bootstrapGame(
       gameRenderer.scene,
       plan,
       settings.reducedFlashes,
+      gameRenderer.textures,
     );
     wp5Visuals.root.visible = false;
     progressionHud = new ProgressionHud(shell, locale);
@@ -1198,6 +1222,7 @@ function bootstrapGame(
 
     // Start both privileged operations synchronously from the same gesture.
     // Audio is optional; Pointer Lock is the transactional calibration gate.
+    void briefing.authorizeAudioFromGesture();
     const audioStart = audioDirector.startFromGesture();
     shell.dataset.audioStarted = 'pending';
     const pointerLockAcquired = evidenceMode

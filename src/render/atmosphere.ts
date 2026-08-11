@@ -12,6 +12,7 @@ import {
 import type { Scene } from 'three';
 
 import type { QualityProfile } from './quality';
+import type { ProceduralTextureLibrary } from './textures';
 
 export interface Atmosphere {
   readonly group: Group;
@@ -23,6 +24,7 @@ export interface Atmosphere {
 export function createAtmosphere(
   scene: Scene,
   profile: QualityProfile,
+  textures: ProceduralTextureLibrary,
 ): Atmosphere {
   scene.background = new Color(0x071018);
   const group = new Group();
@@ -41,6 +43,7 @@ export function createAtmosphere(
     color: 0x183b34,
     roughness: 0.92,
     metalness: 0,
+    map: textures.ground,
   });
   const ground = new Mesh(groundGeometry, groundMaterial);
   ground.name = 'safe-origin-ground';

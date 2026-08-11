@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 interface VideoProductionManifest {
   readonly model: string;
   readonly codec: string;
+  readonly clarityPipeline: string;
   readonly resolution: string;
   readonly audioTracks: number;
   readonly durationSeconds: number;
@@ -18,7 +19,7 @@ interface VideoProductionManifest {
 }
 
 describe('briefing production assets', () => {
-  it('ships a validated silent 720p VP9 timeline and seven WebP fallbacks', async () => {
+  it('ships a sharpened silent 1080p VP9 timeline and seven WebP fallbacks', async () => {
     const path = resolve('public/assets/video/agency-briefing.webm');
     const bytes = await readFile(path);
     const manifest = JSON.parse(
@@ -31,10 +32,12 @@ describe('briefing production assets', () => {
     expect(manifest).toMatchObject({
       model: 'google/veo-3.1-lite',
       codec: 'vp9',
-      resolution: '1280x720',
+      resolution: '1920x1080',
       audioTracks: 0,
       durationSeconds: 50,
     });
+    expect(manifest.clarityPipeline).toContain('Lanczos');
+    expect(manifest.clarityPipeline).toContain('unsharp');
     expect(manifest.shots).toHaveLength(7);
     expect(manifest.bytes).toBe(bytes.byteLength);
     expect(manifest.sha256).toBe(
@@ -59,8 +62,8 @@ describe('briefing production assets', () => {
       expect.objectContaining({
         codec_name: 'vp9',
         codec_type: 'video',
-        width: 1280,
-        height: 720,
+        width: 1920,
+        height: 1080,
       }),
     ]);
     expect(Number(probe.format.duration)).toBeCloseTo(50, 2);

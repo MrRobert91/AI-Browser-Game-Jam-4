@@ -27,6 +27,7 @@
     "profile:release": "tsx scripts/profile-release.ts",
     "media:briefing:audio": "tsx scripts/generate-briefing-audio.ts",
     "media:briefing:video": "tsx scripts/generate-briefing-video.ts",
+    "media:briefing:clarity": "tsx scripts/rebuild-briefing-clarity.ts",
     "package:release": "npm run build && tsx scripts/package-release.ts",
     "release:check": "npm run check && npm run validate:tiles && npm run validate:assets && npm run test:sim:release && npm run build && npm run test:e2e && npm run profile:release"
   },
@@ -36,7 +37,7 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
-    "@playwright/test": "^1.55.0",
+    "@playwright/test": "^1.62.1",
     "@types/node": "26.1.2",
     "@types/three": "0.185.0",
     "@typescript/native": "npm:typescript@7.0.2",

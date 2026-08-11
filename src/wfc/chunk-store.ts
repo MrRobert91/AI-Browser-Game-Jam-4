@@ -14,7 +14,7 @@ export const CHUNK_CELLS_PER_SIDE = 16;
 export const CHUNKS_PER_SIDE = WORLD_CELLS_PER_SIDE / CHUNK_CELLS_PER_SIDE;
 export const CELL_SIZE_METERS = 2;
 export const CHUNK_SIZE_METERS = CHUNK_CELLS_PER_SIDE * CELL_SIZE_METERS;
-export const CHUNK_ACTIVATION_RADIUS_METERS = 18;
+export const CHUNK_ACTIVATION_RADIUS_METERS = 22;
 export const VISUAL_RELEASE_DISTANCE_METERS = 42;
 
 export interface ChunkInitializationContext {

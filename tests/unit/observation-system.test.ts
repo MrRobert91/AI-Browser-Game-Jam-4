@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { ObservationSystem } from '../../src/world/observation-system';
+import {
+  OBSERVATION_CHARGE_PER_SECOND,
+  OBSERVATION_RADIUS_METERS,
+  ObservationSystem,
+} from '../../src/world/observation-system';
 import {
   WorldState,
   cellCenterToWorld,
@@ -16,6 +20,29 @@ describe('ObservationSystem', () => {
     0,
     targetPosition[2] - playerPosition[2],
   ] as const;
+
+  it('observes ahead at 20 m and charges at twice the original rate', () => {
+    expect(OBSERVATION_RADIUS_METERS).toBe(20);
+    expect(OBSERVATION_CHARGE_PER_SECOND).toBe(2.8);
+    const world = new WorldState();
+    const system = new ObservationSystem(world);
+    const aheadId = cellCoordinatesToId({ x: 32, z: 24 });
+    const ahead = cellCenterToWorld(aheadId, 1.7);
+    const [sample] = system.update({
+      deltaSeconds: 0.1,
+      playerPosition,
+      cameraForward: [
+        ahead[0] - playerPosition[0],
+        0,
+        ahead[2] - playerPosition[2],
+      ],
+      nearbyCellIds: [aheadId],
+    });
+    expect(sample?.input.visibleCells.map((cell) => cell.cellId)).toEqual([
+      aheadId,
+    ]);
+    expect(world.getCell(aheadId).observationCharge).toBeGreaterThan(0);
+  });
 
   it('charges a visible cell while looking and decays after turning away', () => {
     const world = new WorldState();

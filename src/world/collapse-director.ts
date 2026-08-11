@@ -1,4 +1,5 @@
 import type { CollapseEvent } from '../contracts/messages';
+import { MAX_COLLAPSE_COMMIT_DISTANCE_METERS } from '../contracts/observation';
 import type { CellId, WorldVector3 } from '../contracts/world';
 import {
   type FixedCellCommit,
@@ -6,9 +7,9 @@ import {
   cellCenterToWorld,
 } from './world-state';
 
-export const MAX_COLLAPSE_COMMIT_DISTANCE_METERS = 10.01;
-export const MIN_COLLAPSE_DURATION_MS = 450;
-export const MAX_COLLAPSE_DURATION_MS = 700;
+export { MAX_COLLAPSE_COMMIT_DISTANCE_METERS };
+export const MIN_COLLAPSE_DURATION_MS = 225;
+export const MAX_COLLAPSE_DURATION_MS = 350;
 export const COLLIDER_ENABLE_PROGRESS = 0.7;
 
 export interface CollapseVisualAdapter {

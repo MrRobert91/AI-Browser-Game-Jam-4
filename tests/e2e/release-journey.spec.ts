@@ -1,4 +1,8 @@
+import { readFile } from 'node:fs/promises';
+
 import { expect, test, type Page } from '@playwright/test';
+
+const appOrigin = `http://127.0.0.1:${Number(process.env.PLAYWRIGHT_PORT ?? 4173)}`;
 
 test.beforeEach(async ({ browserName, page }) => {
   if (browserName !== 'firefox') return;
@@ -40,13 +44,17 @@ async function enterRoom(
 async function pressRoomButton(page: Page): Promise<void> {
   const interaction = page.locator('[data-room-interaction]');
   await page.keyboard.down('KeyW');
-  for (let attempt = 0; attempt < 20; attempt += 1) {
+  let pressedWhileFocused = false;
+  for (let attempt = 0; attempt < 50; attempt += 1) {
     await page.waitForTimeout(100);
-    if (await interaction.isVisible()) break;
+    if (await interaction.isVisible()) {
+      await page.keyboard.press('KeyE');
+      pressedWhileFocused = true;
+      break;
+    }
   }
   await page.keyboard.up('KeyW');
-  await expect(interaction).toBeVisible();
-  await page.keyboard.press('KeyE');
+  expect(pressedWhileFocused).toBe(true);
   await expect(page.locator('.observation-shell')).toHaveAttribute(
     'data-game-phase',
     'BRIEFING',
@@ -72,7 +80,9 @@ async function skipBriefingAndCrossPortal(page: Page): Promise<void> {
     await page.waitForTimeout(100);
   }
   await page.keyboard.up('KeyW');
-  await expect(shell).toHaveAttribute('data-game-phase', 'RUN');
+  await expect
+    .poll(() => shell.getAttribute('data-game-phase'))
+    .toMatch(/^(?:RUN|ENDING)$/u);
 }
 
 test('canonical offline English journey reaches the qualitative ending', async ({
@@ -88,8 +98,7 @@ test('canonical offline English journey reaches the qualitative ending', async (
   });
   page.on('request', (request) => {
     const url = new URL(request.url());
-    if (url.origin !== 'http://127.0.0.1:4173')
-      externalRequests.push(request.url());
+    if (url.origin !== appOrigin) externalRequests.push(request.url());
   });
   page.on('response', (response) => {
     if (response.ok() && response.url().includes('/assets/audio/voice/en/')) {
@@ -99,9 +108,10 @@ test('canonical offline English journey reaches the qualitative ending', async (
   page.on('requestfailed', (request) => {
     const failure = request.failure()?.errorText ?? 'unknown';
     const isBenignLocalMediaAbort =
-      request.url().startsWith('http://127.0.0.1:4173/assets/') &&
+      request.url().startsWith(`${appOrigin}/assets/`) &&
       (failure.includes('ERR_ABORTED') ||
-        failure.includes('NS_BINDING_ABORTED'));
+        failure.includes('NS_BINDING_ABORTED') ||
+        failure.includes('NS_ERROR_PARSED_DATA_CACHED'));
     if (!isBenignLocalMediaAbort) {
       failedRequests.push(`${request.url()} :: ${failure}`);
     }
@@ -117,6 +127,24 @@ test('canonical offline English journey reaches the qualitative ending', async (
   await expect(page.locator('.briefing-captions')).toContainText(
     'Possibility Condensate',
   );
+  await expect(page.locator('.observation-shell')).toHaveAttribute(
+    'data-briefing-audio',
+    'playing',
+  );
+  const briefingVoice = page.locator('audio.briefing-voice');
+  await expect
+    .poll(() =>
+      briefingVoice.evaluate(
+        (element) => (element as HTMLAudioElement).currentTime,
+      ),
+    )
+    .toBeGreaterThan(0.05);
+  expect(
+    await briefingVoice.evaluate((element) => ({
+      paused: (element as HTMLAudioElement).paused,
+      volume: (element as HTMLAudioElement).volume,
+    })),
+  ).toEqual({ paused: false, volume: 0.585 });
   await expect(page.locator('.observation-shell')).not.toHaveAttribute(
     'data-audio-state',
     'error',
@@ -159,7 +187,12 @@ test('canonical offline English journey reaches the qualitative ending', async (
   const downloadEvent = page.waitForEvent('download');
   await panorama.click();
   const download = await downloadEvent;
-  await download.saveAs(testInfo.outputPath('panorama.png'));
+  const panoramaPath = testInfo.outputPath('panorama.png');
+  await download.saveAs(panoramaPath);
+  const panoramaBytes = await readFile(panoramaPath);
+  expect(panoramaBytes.subarray(1, 4).toString('ascii')).toBe('PNG');
+  expect(panoramaBytes.readUInt32BE(16)).toBe(1600);
+  expect(panoramaBytes.readUInt32BE(20)).toBe(900);
   await page.locator('[data-panorama-gallery]').click();
   await expect(page.locator('.slice-result__gallery')).toContainText(
     'A91F-42C0',

@@ -4,16 +4,19 @@ import type {
 } from '../contracts/messages';
 import type { CellId, WorldVector3 } from '../contracts/world';
 import {
+  OBSERVATION_CHARGE_PER_SECOND,
+  OBSERVATION_RADIUS_METERS,
+} from '../contracts/observation';
+import {
   WORLD_CELL_SIZE_METERS,
   type WorldState,
   cellCenterToWorld,
 } from './world-state';
 
-export const OBSERVATION_RADIUS_METERS = 10;
+export { OBSERVATION_CHARGE_PER_SECOND, OBSERVATION_RADIUS_METERS };
 export const CONTACT_RADIUS_METERS = 2.5;
 export const OBSERVATION_HALF_ANGLE_DEGREES = 30;
 export const OBSERVATION_TICK_SECONDS = 0.1;
-export const OBSERVATION_CHARGE_PER_SECOND = 1.4;
 export const OBSERVATION_DECAY_PER_SECOND = 0.55;
 
 const COS_HALF_ANGLE = Math.cos(

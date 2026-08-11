@@ -4,6 +4,7 @@ import {
   playReplayHeadless,
   type SyntheticRoute,
 } from '../dev/replay';
+import { MAX_COLLAPSE_COMMIT_DISTANCE_METERS } from '../contracts/observation';
 
 export interface SimulationCampaignOptions {
   readonly seeds: number;
@@ -67,7 +68,11 @@ export function runSimulationCampaign(
     const first = playReplayHeadless(seed, replay);
     const second = playReplayHeadless(seed, replay);
     if (first.hash !== second.hash) deterministicHashMismatches += 1;
-    if (first.maximumCommitDistanceMeters > 10.01) commitsBeyondRadius += 1;
+    if (
+      first.maximumCommitDistanceMeters > MAX_COLLAPSE_COMMIT_DISTANCE_METERS
+    ) {
+      commitsBeyondRadius += 1;
+    }
     emptyDomains += first.emptyDomains;
     fallbackCount += first.fallbackCount;
     quantumVoidDebugCount += first.quantumVoidDebugCount;
