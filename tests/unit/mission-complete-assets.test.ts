@@ -168,7 +168,11 @@ describe('mission-complete production assets', () => {
           channels: 1,
         }),
       ]);
-      expect(Number(probe.format.duration)).toBeCloseTo(32, 2);
+      // FFprobe builds disagree by one MP3 padding frame (Linux reports
+      // 32.026122 s while Windows reports 32.000000 s for the same bytes).
+      expect(Math.abs(Number(probe.format.duration) - 32)).toBeLessThanOrEqual(
+        0.05,
+      );
     }
   });
 
