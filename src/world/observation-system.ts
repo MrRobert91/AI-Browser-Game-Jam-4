@@ -25,6 +25,7 @@ const COS_HALF_ANGLE = Math.cos(
 
 export interface ObservationFrame {
   readonly deltaSeconds: number;
+  readonly elapsedRunSeconds?: number;
   readonly playerPosition: WorldVector3;
   readonly cameraForward: WorldVector3;
   readonly nearbyCellIds: readonly CellId[];
@@ -143,7 +144,7 @@ export class ObservationSystem {
       const attention = lineOfSight ? focus * proximity : 0;
       attentionByCell.set(cellId, attention);
 
-      if (cell.phase !== 'FIXED') {
+      if (cell.phase !== 'FIXED' && cell.phase !== 'FRACTURED') {
         const chargeDelta =
           attention > 0
             ? OBSERVATION_TICK_SECONDS *
@@ -168,6 +169,7 @@ export class ObservationSystem {
         tick: this.tick,
         playerPosition: [...frame.playerPosition],
         cameraForward: forward,
+        elapsedRunSeconds: Math.max(0, frame.elapsedRunSeconds ?? 0),
         visibleCells,
       },
       contactCellIds,

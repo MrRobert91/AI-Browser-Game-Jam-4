@@ -18,6 +18,7 @@ describe('public worker contracts', () => {
       tick: 37,
       playerPosition: [64, 1.7, 64],
       cameraForward: [0, 0, -1],
+      elapsedRunSeconds: 0,
       visibleCells: [
         { cellId: 2080, distance: 4, alignment: 0.8, lineOfSight: true },
       ],

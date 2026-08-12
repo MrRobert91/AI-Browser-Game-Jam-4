@@ -32,6 +32,8 @@ export interface PropagationRequest {
   readonly seedCellIds: readonly number[];
   readonly queue: ReusableCellQueue;
   readonly recalculateEntropy: EntropyRecalculator;
+  /** Optional transaction boundary. Cells outside it constrain the region but are never mutated. */
+  readonly mutableCellIds?: ReadonlySet<number>;
 }
 
 export interface PropagationResult {
@@ -200,6 +202,16 @@ export function propagateCardinalConstraints(
       const changed =
         nextLo !== neighbor.domain.lo || nextHi !== neighbor.domain.hi;
       if (!changed) {
+        continue;
+      }
+
+      if (
+        request.mutableCellIds !== undefined &&
+        !request.mutableCellIds.has(neighborCellId)
+      ) {
+        if (nextLo === 0 && nextHi === 0) {
+          return result('CONTRADICTION', neighborCellId);
+        }
         continue;
       }
 

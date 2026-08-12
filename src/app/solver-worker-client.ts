@@ -1,5 +1,6 @@
 import type {
   ObservationInput,
+  FractureRegionInput,
   ResetInput,
   UnlockPackInput,
   VisibleCellObservation,
@@ -12,6 +13,7 @@ import type { WorldVector3 } from '../contracts/world';
 export interface ObservationTickData {
   readonly playerPosition: WorldVector3;
   readonly cameraForward: WorldVector3;
+  readonly elapsedRunSeconds: number;
   readonly visibleCells: readonly VisibleCellObservation[];
 }
 
@@ -45,9 +47,27 @@ export class SolverWorkerClient {
       tick,
       playerPosition: data.playerPosition,
       cameraForward: data.cameraForward,
+      elapsedRunSeconds: data.elapsedRunSeconds,
       visibleCells: data.visibleCells,
     };
 
+    this.#worker.postMessage(message);
+    return tick;
+  }
+
+  fractureRegion(
+    centerCellId: number,
+    protectedCellIds: readonly number[],
+  ): number {
+    const tick = this.#nextTick;
+    this.#nextTick += 1;
+    const message: FractureRegionInput = {
+      type: 'FRACTURE_REGION',
+      tick,
+      centerCellId,
+      radiusMeters: 30,
+      protectedCellIds,
+    };
     this.#worker.postMessage(message);
     return tick;
   }

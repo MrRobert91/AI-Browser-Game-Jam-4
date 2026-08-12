@@ -15,6 +15,7 @@ export interface ReplayFrame {
 }
 
 export interface HeadlessReplayResult {
+  readonly hashVersion: 'WFC2';
   readonly worldSeed: number;
   readonly hash: number;
   readonly collapseCount: number;
@@ -128,6 +129,7 @@ export function playReplayHeadless(
       tick: frame.tick,
       playerPosition: frame.positionQ,
       cameraForward: frame.forwardQ,
+      elapsedRunSeconds: frame.tick * 0.1,
       visibleCells: visibleCells(frame),
     });
     for (const output of outputs) {
@@ -150,14 +152,19 @@ export function playReplayHeadless(
   }
   const diagnostics = solver.diagnostics;
   return {
+    hashVersion: 'WFC2',
     worldSeed,
-    hash: hashFinalWorld(worldSeed, [...fixed.values()]),
+    hash: hashFinalWorld(deriveWfc2Seed(worldSeed), [...fixed.values()]),
     collapseCount: fixed.size,
     maximumCommitDistanceMeters,
     emptyDomains: diagnostics.emptyDomains,
     quantumVoidDebugCount: diagnostics.quantumVoidDebugCount,
     fallbackCount,
   };
+}
+
+function deriveWfc2Seed(worldSeed: number): number {
+  return (worldSeed ^ 0x5746_4332) >>> 0;
 }
 
 export type SyntheticRoute =
