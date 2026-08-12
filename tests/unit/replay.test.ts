@@ -22,6 +22,7 @@ describe('headless replay', () => {
     const first = playReplayHeadless(0xa91f42c0, replay);
     const second = playReplayHeadless(0xa91f42c0, replay);
     expect(second).toEqual(first);
+    expect(first.hashVersion).toBe('WFC2');
     expect(first.maximumCommitDistanceMeters).toBeLessThanOrEqual(
       MAX_COLLAPSE_COMMIT_DISTANCE_METERS,
     );

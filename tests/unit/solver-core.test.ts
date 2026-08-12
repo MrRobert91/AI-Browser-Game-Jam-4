@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
 import {
+  consciousnessBombProbability,
   MAX_OBSERVATION_DISTANCE_METERS,
   SolverCore,
   runHeadlessSimulation,
@@ -22,11 +23,71 @@ function observation(
     tick,
     playerPosition,
     cameraForward: [0, 0, -1] as const,
+    elapsedRunSeconds: tick * 0.1,
     visibleCells: [{ cellId, distance, alignment: 1, lineOfSight: true }],
   };
 }
 
 describe('incremental SolverCore', () => {
+  it('uses the deterministic stepped 1-10 percent bomb curve', () => {
+    expect([0, 60, 120, 540, 1_200].map(consciousnessBombProbability)).toEqual([
+      0.01, 0.02, 0.03, 0.1, 0.1,
+    ]);
+  });
+
+  it('fills one visible four-neighbour hole as a forced consequence', () => {
+    const core = new SolverCore(99, { now: () => 0 });
+    const hole = 30 * 64 + 30;
+    for (const neighbor of [hole - 64, hole + 1, hole + 64, hole - 1]) {
+      core.primeFixedCell(neighbor);
+    }
+    const trigger = hole + 2;
+    const outputs = [];
+    for (let tick = 1; tick <= 20; tick += 1) {
+      outputs.push(
+        ...core.simulationTick({
+          type: 'OBSERVATION_TICK',
+          tick,
+          playerPosition: [61, 1.7, 65],
+          cameraForward: [0, 0, -1],
+          elapsedRunSeconds: tick * 0.1,
+          visibleCells: [
+            { cellId: trigger, distance: 4, alignment: 1, lineOfSight: true },
+            { cellId: hole, distance: 2, alignment: 0, lineOfSight: true },
+          ],
+        }),
+      );
+    }
+    expect(
+      outputs.some(
+        (output) => output.type === 'COLLAPSE' && output.cellId === hole,
+      ),
+    ).toBe(true);
+  });
+
+  it('fractures fixed cells at 30 m, preserves protected cells and is idempotent', () => {
+    const core = new SolverCore(1);
+    const center = 20 * 64 + 20;
+    const inside = center + 15;
+    const outside = center + 16;
+    const protectedCell = center + 1;
+    for (const cellId of [center, inside, outside, protectedCell]) {
+      core.primeFixedCell(cellId);
+    }
+    const request = {
+      type: 'FRACTURE_REGION' as const,
+      tick: 4,
+      centerCellId: center,
+      radiusMeters: 30 as const,
+      protectedCellIds: [protectedCell],
+    };
+    const first = core.fractureRegion(request);
+    expect(first.cellIds).toContain(center);
+    expect(first.cellIds).toContain(inside);
+    expect(first.cellIds).not.toContain(outside);
+    expect(first.cellIds).not.toContain(protectedCell);
+    expect(core.fractureRegion(request).cellIds).toEqual([]);
+  });
   it('defers work beyond 4 ms and resumes it on following ticks', () => {
     let time = 0;
     const core = new SolverCore(42, { now: () => time++ });

@@ -52,6 +52,9 @@ export class SolverWorkerRuntime {
             `Reset for seed ${value.worldSeed} completed.`,
           ),
         ];
+      case 'FRACTURE_REGION':
+        this.#core ??= new SolverCore(0);
+        return [this.#core.fractureRegion(value)];
     }
   }
 }

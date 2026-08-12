@@ -14,6 +14,7 @@ import {
   EndingDirector,
   formatSeed,
   type RunResult,
+  type RunEndReason,
 } from '../gameplay/ending';
 import { generateHaiku } from '../gameplay/haiku';
 import { BriefingPlayback } from '../gameplay/briefing';
@@ -50,6 +51,7 @@ import {
 import { FinalArtDirector } from '../render/final-art-director';
 import { renderObservedWorldMapCanvas } from '../render/panorama-capture';
 import {
+  domainSuperpositionCandidates,
   SuperpositionRenderer,
   type SuperpositionCandidate,
   type SuperpositionCell,
@@ -65,7 +67,6 @@ import { GameHud } from '../ui/hud';
 import { loadGameSettings, PauseMenu, type GameSettings } from '../ui/pause';
 import { ProgressionHud } from '../ui/progression-hud';
 import { ResultsPanel } from '../ui/results';
-import { uncertaintyStatusText } from '../ui/uncertainty-status';
 import { SliceCollapseVisuals } from '../world/collapse-visuals';
 import { createOriginDetailField } from '../world/origin-details';
 import { createWorldBoundaryVisual } from '../world/world-boundary';
@@ -138,14 +139,28 @@ function shellMarkup(locale: Locale): string {
       WP6 · ${copy.buildLocal}
     </p>
 
-    <p class="uncertainty-status" data-uncertainty-status role="status" hidden></p>
-
     <p class="room-interaction" data-room-interaction hidden></p>
 
     <section class="briefing-controls" data-briefing-controls hidden>
       <p>${copy.briefingPaused}</p>
       <button type="button" data-briefing-resume>${copy.resumeBriefing}</button>
       <button type="button" data-briefing-skip disabled>${copy.skipBriefing}</button>
+    </section>
+
+    <section class="objectives-transmission" data-objectives-transmission hidden aria-labelledby="alice-name">
+      <figure>
+        <img data-objectives-portrait src="/assets/portraits/dr-alice-boole.webp" alt="" width="1280" height="720" />
+        <figcaption>
+          <span>${locale === 'en' ? 'AGENCY OPERATIONS' : 'OPERACIONES DE LA AGENCIA'}</span>
+          <h2 id="alice-name" data-objectives-name>Dr Alice Boole</h2>
+        </figcaption>
+      </figure>
+      <p data-objectives-subtitle role="status" aria-live="polite"></p>
+      <div>
+        <button type="button" data-objectives-replay>${locale === 'en' ? 'REPEAT DIRECTIVE' : 'REPETIR DIRECTIVA'}</button>
+        <button type="button" data-objectives-skip disabled>${locale === 'en' ? 'SKIP' : 'OMITIR'}</button>
+      </div>
+      <audio data-objectives-audio preload="auto"></audio>
     </section>
 
     <section class="audio-diagnostic" data-audio-diagnostic hidden>
@@ -162,7 +177,7 @@ function shellMarkup(locale: Locale): string {
 `;
 }
 
-function baseSuperpositionCandidates(
+export function baseSuperpositionCandidates(
   locale: Locale,
 ): readonly SuperpositionCandidate[] {
   return locale === 'en'
@@ -299,9 +314,6 @@ function bootstrapGame(
   const wp5GateStatus = root.querySelector<HTMLElement>(
     '[data-wp5-gate-status]',
   );
-  const uncertaintyStatus = root.querySelector<HTMLElement>(
-    '[data-uncertainty-status]',
-  );
   const audioDiagnostic = root.querySelector<HTMLElement>(
     '[data-audio-diagnostic]',
   );
@@ -322,6 +334,21 @@ function bootstrapGame(
   const briefingSkip = root.querySelector<HTMLButtonElement>(
     '[data-briefing-skip]',
   );
+  const objectivesTransmission = root.querySelector<HTMLElement>(
+    '[data-objectives-transmission]',
+  );
+  const objectivesSubtitle = root.querySelector<HTMLElement>(
+    '[data-objectives-subtitle]',
+  );
+  const objectivesReplay = root.querySelector<HTMLButtonElement>(
+    '[data-objectives-replay]',
+  );
+  const objectivesSkip = root.querySelector<HTMLButtonElement>(
+    '[data-objectives-skip]',
+  );
+  const objectivesAudio = root.querySelector<HTMLAudioElement>(
+    '[data-objectives-audio]',
+  );
 
   if (
     !shell ||
@@ -338,14 +365,18 @@ function bootstrapGame(
     !seedModeLabel ||
     !seedValueLabel ||
     !wp5GateStatus ||
-    !uncertaintyStatus ||
     !audioDiagnostic ||
     !audioDiagnosticStatus ||
     !audioRetry ||
     !roomInteraction ||
     !briefingControls ||
     !briefingResume ||
-    !briefingSkip
+    !briefingSkip ||
+    !objectivesTransmission ||
+    !objectivesSubtitle ||
+    !objectivesReplay ||
+    !objectivesSkip ||
+    !objectivesAudio
   ) {
     throw new Error(
       locale === 'en'
@@ -440,14 +471,50 @@ function bootstrapGame(
   );
   let playerPhysics: PlayerPhysicsRuntime | null = null;
   let enterRun = (): void => undefined;
-  const completeBriefing = (): void => {
-    prologue.completeBriefing();
+  const objectiveText =
+    locale === 'en'
+      ? 'Agency operational directive. During the next ten minutes, collapse as much of the Condensate as possible. Recover the Possibility Seeds in the authorized order: Water, Forest, Ruin, and Storm. Avoid consciousness bombs; detonation revokes thirty metres of approved reality. You have been allocated three lives. The loss of the third will close the record, regardless of your objections.'
+      : 'Directiva operativa de la Agencia. Durante los próximos diez minutos, colapsa la mayor superficie posible del Condensado. Recupera las Semillas de Posibilidad en el orden autorizado: Agua, Bosque, Ruina y Tormenta. Evita las bombas de consciencia; su detonación revoca treinta metros de realidad aprobada. Se te han asignado tres vidas. La pérdida de la tercera cerrará el expediente, con independencia de tus objeciones.';
+  const defeatText =
+    locale === 'en'
+      ? 'Third life exhausted. You are dead. The Agency regrets to inform you that no further field body has been authorized. It was not in vain: part of the Condensate was collapsed by your attention and will remain in the record. Your absence has been classified as a conclusive contribution.'
+      : 'Tercera vida agotada. Has muerto. La Agencia lamenta informarte de que no procede otro cuerpo de campo. No ha sido en vano: una parte del Condensado quedó colapsada por tu atención y permanecerá en el expediente. Tu ausencia ha sido clasificada como aportación concluyente.';
+  let objectivesElapsedSeconds = 0;
+  let defeatTransmission = false;
+  const startObjectivesAudio = (
+    cue: 'objectivesDirective' | 'livesExhausted',
+  ): void => {
+    objectivesAudio.src = `/assets/audio/voice/${locale}/${cue}.mp3`;
+    objectivesAudio.currentTime = 0;
+    void objectivesAudio.play().catch(() => {
+      shell.dataset.objectivesAudio = 'blocked';
+    });
+  };
+  const openPortalAfterObjectives = (): void => {
+    if (prologue.snapshot().phase === 'OBJECTIVES') {
+      prologue.completeObjectives();
+    }
     shell.dataset.gamePhase = 'PORTAL';
     systemState.textContent = locale === 'en' ? 'PORTAL READY' : 'PORTAL LISTO';
     roomInteraction.textContent = copy.enterPortal;
     roomInteraction.hidden = false;
     room?.setPhase('PORTAL');
     playerPhysics?.openProloguePortal();
+    objectivesTransmission.hidden = true;
+    objectivesSkip.hidden = true;
+  };
+  const completeBriefing = (): void => {
+    prologue.completeBriefing();
+    shell.dataset.gamePhase = 'OBJECTIVES';
+    systemState.textContent =
+      locale === 'en' ? 'OPERATIONAL DIRECTIVE' : 'DIRECTIVA OPERATIVA';
+    objectivesElapsedSeconds = 0;
+    objectivesSubtitle.textContent = objectiveText;
+    objectivesTransmission.hidden = false;
+    objectivesSkip.hidden = false;
+    objectivesSkip.disabled = true;
+    roomInteraction.hidden = true;
+    startObjectivesAudio('objectivesDirective');
   };
   const briefing = new BriefingPlayback(shell, locale, {
     onComplete: completeBriefing,
@@ -499,6 +566,8 @@ function bootstrapGame(
     new URLSearchParams(window.location.search).get('evidence') === '1';
   let pauseMenu: PauseMenu | null = null;
   let runClock: RunClock | null = null;
+  let runEndReason: RunEndReason = 'TIME_EXPIRED';
+  let wp5Preview: Wp5PreviewRuntime | null = null;
   const playerInput = new PlayerInput(shell, {
     keepRunningWithoutPointerLock: evidenceMode,
     onPauseChange: (paused) => {
@@ -594,6 +663,31 @@ function bootstrapGame(
     },
     { signal: abortController.signal },
   );
+  objectivesAudio.addEventListener(
+    'ended',
+    () => {
+      if (!defeatTransmission) openPortalAfterObjectives();
+    },
+    { signal: abortController.signal },
+  );
+  objectivesReplay.addEventListener(
+    'click',
+    () => {
+      startObjectivesAudio(
+        defeatTransmission ? 'livesExhausted' : 'objectivesDirective',
+      );
+    },
+    { signal: abortController.signal },
+  );
+  objectivesSkip.addEventListener(
+    'click',
+    () => {
+      if (defeatTransmission || objectivesSkip.disabled) return;
+      objectivesAudio.pause();
+      openPortalAfterObjectives();
+    },
+    { signal: abortController.signal },
+  );
   let disposed = false;
   const playerPhysicsPromise = createPlayerPhysicsRuntime(camera, playerInput)
     .then((runtime) => {
@@ -650,6 +744,7 @@ function bootstrapGame(
     },
   });
   const worldState = new WorldState();
+  let fracturedCellCount = 0;
   const fixedVisuals = new SliceCollapseVisuals(
     gameRenderer.scene,
     worldState,
@@ -703,20 +798,35 @@ function bootstrapGame(
     ],
     worldState,
     visuals: fixedVisuals,
+    physics: {
+      enableFixedCollider: (commit) =>
+        playerPhysics?.enableFeatureCollider(commit),
+    },
     canObserve: () =>
       prologue.snapshot().phase === 'RUN' && runClock!.snapshot().canCommit,
     canAcceptCollapse: () =>
       prologue.snapshot().phase === 'RUN' && runClock!.canCommit(),
-    onCollapseAccepted: () => {
+    onCollapseAccepted: (event) => {
       runClock!.notifyFirstCollapse();
       hud.notifyFirstCollapse();
       audioDirector.notifyCollapse();
       narrative.play('firstCollapse');
+      if (event.featureTileId === 17) {
+        wp5Preview?.registerConsciousnessBomb(
+          event.cellId,
+          (event.durationMs * 0.7) / 1_000,
+        );
+      }
     },
     onWarning: (warning) => {
       if (warning.code !== 'ECHO_ONLY') {
         workerState.textContent = `SOLVER // ${warning.code}`;
       }
+    },
+    onFractured: (cellIds) => {
+      fracturedCellCount += cellIds.length;
+      shell.dataset.fracturedCells = String(fracturedCellCount);
+      playerPhysics?.removeFeatureColliders(cellIds);
     },
   });
   let worldInitialized = false;
@@ -726,14 +836,15 @@ function bootstrapGame(
   const replayMode = search.get('replay');
   const wp5PreviewEnabled = search.get('wp5') !== 'off';
   const wp5Replay = wp5PreviewEnabled && replayMode === 'wp5';
-  const canonicalReplay = replayMode === 'canonical' || wp5Replay;
+  const livesReplay = wp5PreviewEnabled && replayMode === 'wfc2-lives';
+  const canonicalReplay =
+    replayMode === 'canonical' || wp5Replay || livesReplay;
   const requestedSpeed = Number(search.get('speed') ?? '1');
   const replaySpeed =
     Number.isFinite(requestedSpeed) && requestedSpeed > 0
       ? Math.min(8, requestedSpeed)
       : 1;
 
-  let wp5Preview: Wp5PreviewRuntime | null = null;
   let wp5Visuals: Wp5PreviewVisuals | null = null;
   let progressionHud: ProgressionHud | null = null;
   if (wp5PreviewEnabled) {
@@ -754,7 +865,7 @@ function bootstrapGame(
       unlockPack: (packId) => observableWorld!.unlockPack(packId),
       visuals: wp5Visuals,
       canonicalAutomation: wp5Replay,
-      reducedFlashes: settings.reducedFlashes,
+      canonicalBombAutomation: livesReplay,
       ensureRespawnGround: () => {
         observableWorld!.collapses.ensureSafeContactGround([2_080], 0);
       },
@@ -764,12 +875,22 @@ function bootstrapGame(
         if (playerPhysics) playerPhysics.controller.respawn();
         else camera.position.set(64, 1.7, 64);
       },
-      onMessage: (message) => {
-        hud.showSubtitle(message);
-      },
       onNarrativeCue: (cueId) => narrative.play(cueId),
-      onClockReward: (seconds) => {
-        runClock!.addTime(seconds);
+      fractureRegion: (centerCellId, protectedCellIds) => {
+        observableWorld!.fractureRegion(centerCellId, protectedCellIds);
+      },
+      onTerminalContact: () => {
+        runClock!.setPaused('MENU', true);
+      },
+      onLivesExhausted: () => {
+        runEndReason = 'LIVES_EXHAUSTED';
+        shell.dataset.endReason = runEndReason;
+        defeatTransmission = true;
+        objectivesTransmission.hidden = false;
+        objectivesSubtitle.textContent = defeatText;
+        objectivesSkip.hidden = true;
+        startObjectivesAudio('livesExhausted');
+        runClock!.endNow();
       },
     });
     progressionHud.update(wp5Preview.progression.snapshot());
@@ -784,6 +905,8 @@ function bootstrapGame(
     room?.dispose();
     room = null;
     briefing.dispose();
+    objectivesAudio.pause();
+    objectivesTransmission.hidden = true;
     playerPhysics?.deactivatePrologueRoom();
     playerPhysics?.controller.respawn();
     gameRenderer.setWorldAtmosphereVisible(true);
@@ -913,6 +1036,10 @@ function bootstrapGame(
         1 - Math.exp(-deltaSeconds * 2.8),
       );
     }
+    if (gamePhase === 'OBJECTIVES') {
+      objectivesElapsedSeconds += deltaSeconds;
+      objectivesSkip.disabled = objectivesElapsedSeconds < 3;
+    }
     const buttonFocused =
       (gamePhase === 'ROOM' || gamePhase === 'PORTAL') &&
       room?.isButtonFocused(camera) === true;
@@ -967,6 +1094,7 @@ function bootstrapGame(
       camera.position.y,
       camera.position.z,
     ] as const;
+    playerPhysics?.updateFeatureColliders(playerPosition);
     camera.getWorldDirection(forwardVector);
     replayRecorder.record(Math.floor(elapsedSeconds * 10), playerPosition, [
       forwardVector.x,
@@ -979,6 +1107,7 @@ function bootstrapGame(
       observationTicks = observableWorld!.update(
         {
           deltaSeconds,
+          elapsedRunSeconds: runClock!.snapshot().elapsedSeconds,
           playerPosition,
           cameraForward: [forwardVector.x, forwardVector.y, forwardVector.z],
           nearbyCellIds,
@@ -1033,7 +1162,10 @@ function bootstrapGame(
           cellId,
           center: cellCenterToWorld(cellId, 0),
           observationCharge: cell.observationCharge,
-          candidates: baseSuperpositionCandidates(locale),
+          candidates: domainSuperpositionCandidates(
+            cell.terrainDomain,
+            cell.featureDomain,
+          ),
         };
         nextSuperposedCells.push(superposedCell);
         if (
@@ -1052,7 +1184,7 @@ function bootstrapGame(
       deltaSeconds,
       playerPosition,
       inDanger:
-        (wp5Preview?.snapshot().hazardCount ?? 0) > 0 &&
+        (wp5Preview?.snapshot().bombCount ?? 0) > 0 &&
         Math.hypot(playerPosition[0] - 64, playerPosition[2] - 64) > 14,
       unresolvedVisibleCells: superposedCells.length,
     });
@@ -1080,24 +1212,11 @@ function bootstrapGame(
     });
     if (wp5Snapshot && progressionHud) {
       progressionHud.update(wp5Snapshot.progression);
-      const gateStatus = `WP6 · ${wp5Snapshot.progression.collectedPacks.length}/4 SEMILLAS · ${wp5Snapshot.uncertainty?.state ?? 'SIN ENEMIGO'}`;
+      const gateStatus = `WFC2 · ${wp5Snapshot.progression.collectedPacks.length}/4 SEMILLAS · ${wp5Snapshot.respawn.livesRemaining}/3 VIDAS`;
       if (wp5GateStatus.textContent !== gateStatus) {
         wp5GateStatus.textContent = gateStatus;
       }
-      const uncertaintyHidden = wp5Snapshot.uncertainty === null;
-      if (uncertaintyStatus.hidden !== uncertaintyHidden) {
-        uncertaintyStatus.hidden = uncertaintyHidden;
-      }
-      if (wp5Snapshot.uncertainty) {
-        const statusText = uncertaintyStatusText(
-          wp5Snapshot.uncertainty.state,
-          locale,
-        );
-        if (uncertaintyStatus.textContent !== statusText) {
-          uncertaintyStatus.textContent = statusText;
-        }
-      }
-      if (!firstDangerAnnounced && wp5Snapshot.hazardCount > 0) {
+      if (!firstDangerAnnounced && wp5Snapshot.bombCount > 0) {
         firstDangerAnnounced = true;
         narrative.play('firstDanger');
       }
@@ -1126,6 +1245,8 @@ function bootstrapGame(
       shell.dataset.calibrated === 'true' ? deltaSeconds * replaySpeed : 0,
     );
     hud.setTime(clock.remainingSeconds);
+    hud.setCoverage(worldState.countFixedCells());
+    hud.setLives(wp5Preview?.respawn.snapshot().livesRemaining ?? 3);
     audioDirector.updateCountdown(clock.remainingSeconds, clock.elapsedSeconds);
     const contextualSlot = Math.floor(clock.elapsedSeconds / 30);
     if (
@@ -1153,21 +1274,6 @@ function bootstrapGame(
       lastContextualSlot = contextualSlot;
       contextualFixedCells = fixedCells;
     }
-    if (
-      !canonicalReplay &&
-      !wp5PreviewEnabled &&
-      clock.phase === 'RUNNING' &&
-      announcedPacks.has('water')
-    ) {
-      const coordinates = worldPositionToCell(playerPosition);
-      if (coordinates) {
-        const playerCellId = cellCoordinatesToId(coordinates);
-        if (fixedVisuals.isDeepWater(playerCellId)) {
-          wp5Preview?.respawn.requestDeath({ cause: 'HAZARD' });
-        }
-      }
-    }
-
     if (clock.phase === 'ENDING') {
       const ending = endingDirector.update(deltaSeconds * replaySpeed);
       camera.position.y = Math.max(
@@ -1183,6 +1289,7 @@ function bootstrapGame(
         const haiku = generateHaiku(worldSeed, portrait, profile, locale);
         const closure = closureForSeedCount(portrait.unlockedPacks.length);
         const result: RunResult = {
+          endReason: runEndReason,
           worldSeed,
           seedLabel: formatSeed(worldSeed),
           seedMode: seedSelection.mode,
@@ -1320,6 +1427,7 @@ function bootstrapGame(
     pauseMenu?.destroy();
     audioDirector.dispose();
     briefing.dispose();
+    objectivesAudio.pause();
     room?.dispose();
     superposition.dispose();
     fixedVisuals.dispose();

@@ -24,6 +24,10 @@ import type {
 export interface ObservableSolverClient {
   sendObservation(data: ObservationTickData): number;
   sendUnlockPack(packId: UnlockablePackId): number;
+  fractureRegion(
+    centerCellId: CellId,
+    protectedCellIds: readonly CellId[],
+  ): number;
   reset(worldSeed: number): number;
 }
 
@@ -35,7 +39,10 @@ export interface ObservableWorldBridgeOptions {
   readonly physics?: CollapsePhysicsAdapter;
   readonly safeTerrainTileId?: number;
   readonly onWarning?: (warning: SolverWarning) => void;
-  readonly onCollapseAccepted?: (cellId: CellId) => void;
+  readonly onCollapseAccepted?: (
+    event: Extract<WorkerOutput, { type: 'COLLAPSE' }>,
+  ) => void;
+  readonly onFractured?: (cellIds: readonly CellId[]) => void;
   readonly canObserve?: () => boolean;
   readonly canAcceptCollapse?: () => boolean;
   readonly worldState?: WorldState;
@@ -104,6 +111,7 @@ export class ObservableWorldBridge {
       this.options.solver.sendObservation({
         playerPosition: result.input.playerPosition,
         cameraForward: result.input.cameraForward,
+        elapsedRunSeconds: result.input.elapsedRunSeconds,
         visibleCells: result.input.visibleCells,
       });
       emitted += 1;
@@ -134,6 +142,18 @@ export class ObservableWorldBridge {
       return true;
     }
 
+    if (output.type === 'DOMAIN_PATCH') {
+      this.worldState.applyDomainPatch(output.cells);
+      return true;
+    }
+
+    if (output.type === 'FRACTURE') {
+      const fractured = this.worldState.fractureFixedCells(output.cellIds);
+      this.collapses.fracture(fractured);
+      this.options.onFractured?.(fractured);
+      return true;
+    }
+
     const signature = collapseSignature(output);
     if (this.seenCollapseEvents.has(signature)) {
       return false;
@@ -148,9 +168,16 @@ export class ObservableWorldBridge {
     );
     if (accepted) {
       this.seenCollapseEvents.add(signature);
-      this.options.onCollapseAccepted?.(output.cellId);
+      this.options.onCollapseAccepted?.(output);
     }
     return accepted;
+  }
+
+  fractureRegion(
+    centerCellId: CellId,
+    protectedCellIds: readonly CellId[],
+  ): number {
+    return this.options.solver.fractureRegion(centerCellId, protectedCellIds);
   }
 
   unlockPack(packId: UnlockablePackId): number {

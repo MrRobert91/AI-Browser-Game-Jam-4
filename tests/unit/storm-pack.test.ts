@@ -28,8 +28,8 @@ describe('storm stretch pack', () => {
     expect(featureIds).toEqual(
       expect.arrayContaining([
         'feature.storm.crystal',
-        'feature.storm.spikes',
-        'feature.storm.uncertainty-nest',
+        'feature.storm.bell-flower',
+        'feature.storm.mirror-reed',
       ]),
     );
     expect(new Set(Object.values(adapter?.sockets ?? {}))).toEqual(

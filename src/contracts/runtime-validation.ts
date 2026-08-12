@@ -1,6 +1,9 @@
 import type {
   ChunkBoundaryEvent,
   CollapseEvent,
+  DomainPatchEvent,
+  FractureEvent,
+  FractureRegionInput,
   ObservationInput,
   ResetInput,
   SolverWarning,
@@ -76,8 +79,23 @@ function isObservationInput(
     isNonNegativeInteger(value.tick) &&
     isWorldVector3(value.playerPosition) &&
     isWorldVector3(value.cameraForward) &&
+    isFiniteNumber(value.elapsedRunSeconds) &&
+    value.elapsedRunSeconds >= 0 &&
     Array.isArray(value.visibleCells) &&
     value.visibleCells.every((cell) => isVisibleCellObservation(cell))
+  );
+}
+
+function isFractureRegionInput(
+  value: UnknownRecord,
+): value is UnknownRecord & FractureRegionInput {
+  return (
+    value.type === 'FRACTURE_REGION' &&
+    isNonNegativeInteger(value.tick) &&
+    isNonNegativeInteger(value.centerCellId) &&
+    value.radiusMeters === 30 &&
+    Array.isArray(value.protectedCellIds) &&
+    value.protectedCellIds.every(isNonNegativeInteger)
   );
 }
 
@@ -105,7 +123,10 @@ export function isWorkerInput(value: unknown): value is WorkerInput {
   if (!isRecord(value)) return false;
 
   return (
-    isObservationInput(value) || isUnlockPackInput(value) || isResetInput(value)
+    isObservationInput(value) ||
+    isUnlockPackInput(value) ||
+    isResetInput(value) ||
+    isFractureRegionInput(value)
   );
 }
 
@@ -118,11 +139,47 @@ function isCollapseEvent(
     isNonNegativeInteger(value.terrainTileId) &&
     (value.featureTileId === null ||
       isNonNegativeInteger(value.featureTileId)) &&
+    isNonNegativeInteger(value.terrainRotationQuarterTurns) &&
+    value.terrainRotationQuarterTurns <= 3 &&
     isFiniteNumber(value.entropyBefore) &&
     value.entropyBefore >= 0 &&
     isFiniteNumber(value.durationMs) &&
     value.durationMs > 0 &&
     isUint32(value.worldSeed)
+  );
+}
+
+function isDomainMask(value: unknown): boolean {
+  return isRecord(value) && isUint32(value.lo) && isUint32(value.hi);
+}
+
+function isDomainPatchEvent(
+  value: UnknownRecord,
+): value is UnknownRecord & DomainPatchEvent {
+  return (
+    value.type === 'DOMAIN_PATCH' &&
+    isNonNegativeInteger(value.tick) &&
+    Array.isArray(value.cells) &&
+    value.cells.every(
+      (cell) =>
+        isRecord(cell) &&
+        isNonNegativeInteger(cell.cellId) &&
+        isDomainMask(cell.terrain) &&
+        isDomainMask(cell.feature) &&
+        isNonNegativeInteger(cell.paletteEpoch),
+    )
+  );
+}
+
+function isFractureEvent(
+  value: UnknownRecord,
+): value is UnknownRecord & FractureEvent {
+  return (
+    value.type === 'FRACTURE' &&
+    isNonNegativeInteger(value.tick) &&
+    isNonNegativeInteger(value.centerCellId) &&
+    Array.isArray(value.cellIds) &&
+    value.cellIds.every(isNonNegativeInteger)
   );
 }
 
@@ -157,6 +214,8 @@ export function isWorkerOutput(value: unknown): value is WorkerOutput {
   return (
     isCollapseEvent(value) ||
     isChunkBoundaryEvent(value) ||
+    isDomainPatchEvent(value) ||
+    isFractureEvent(value) ||
     isSolverWarning(value)
   );
 }

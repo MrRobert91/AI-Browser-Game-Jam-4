@@ -324,3 +324,19 @@ ni el FOV pueden recortar el extremo lejano del recorrido.
 ![Panorama que incluye todo el recorrido fijado](./issue-96-media-panorama-textures/03-full-observed-panorama.png)
 
 [Ver briefing, colapso texturizado y descarga completa](./issue-96-media-panorama-textures/media-panorama-textures.webm)
+
+## WFC2: la gramática deja de ser decorativa
+
+La segunda versión del colapso elimina una incoherencia decisiva: antes el worker elegía una clase simplificada y el render volvía a decidir árbol, roca o vacío con otro hash. Ahora cada chunk nace de `COMPILED_GRAMMAR`, conserva dominios separados de terreno y feature y publica al main thread el tile, la rotación y las familias todavía legales. La superposición puede alternar agua, vegetación, roca, estructura, peligro y vacío porque observa el dominio real.
+
+El mismo cambio cierra los huecos aislados. Después de una observación, una celda visible rodeada por cuatro resultados fijados recibe una consecuencia forzada; esa consecuencia no busca nuevos huecos, por lo que la onda repara el defecto sin rellenar automáticamente recintos enteros.
+
+La bomba de consciencia convierte el riesgo en una decisión espacial. Es roja, negra y espinosa, aparece desde el vocabulario base con una curva del uno al diez por ciento y solo explota por contacto. Cada detonación revoca treinta metros de celdas ya observadas: la cobertura baja, los objetos desaparecen y queda una cicatriz oscura caminable que no puede colapsarse otra vez. Dos cuerpos de campo regresan al origen; el tercero cierra el expediente y ofrece el mismo retrato final que el agotamiento del reloj.
+
+Entre el briefing y el portal, Dr Alice Boole enuncia por fin la operación completa: observar la mayor superficie en diez minutos, recuperar Agua, Bosque, Ruina y Tormenta en orden y conservar tres vidas. El retrato es original, local y sin texto horneado; el nombre y los subtítulos siguen siendo HTML accesible. Harper y Kore reproducen directiva y derrota desde cuatro MP3 locales con hashes, loudness, transcripción, coste y procedencia registrados.
+
+![Directiva operativa de Dr Alice Boole](./wfc2-integral/01-objectives.png)
+
+![Final anticipado tras agotar las tres vidas](./wfc2-integral/02-lives-final.png)
+
+[Ver el flujo de fractura y final por vidas](./wfc2-integral/wfc2-lives-final.webm)

@@ -1,7 +1,13 @@
 export type Locale = 'en' | 'es';
 
 export type GamePhase =
-  'LANGUAGE_SELECT' | 'ROOM' | 'BRIEFING' | 'PORTAL' | 'RUN' | 'ENDING';
+  | 'LANGUAGE_SELECT'
+  | 'ROOM'
+  | 'BRIEFING'
+  | 'OBJECTIVES'
+  | 'PORTAL'
+  | 'RUN'
+  | 'ENDING';
 
 export interface LocalizedCatalog<T> {
   readonly en: T;

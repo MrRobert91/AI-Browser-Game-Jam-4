@@ -8,8 +8,6 @@ import {
 function visuals(): Wp5VisualAdapter {
   return {
     collectSeed: vi.fn(),
-    addHazard: vi.fn(),
-    updateUncertainty: vi.fn(),
     setRespawnPhase: vi.fn(),
     update: vi.fn(),
   };
@@ -19,7 +17,7 @@ describe('Wp5PreviewRuntime', () => {
   it('runs the complete gated WP5 sequence without enabling it by default', () => {
     const visualAdapter = visuals();
     const teleportPlayer = vi.fn();
-    const clockReward = vi.fn();
+    const fractureRegion = vi.fn();
     const narrativeCues: string[] = [];
     const runtime = new Wp5PreviewRuntime({
       worldSeed: 0xa91f42c0,
@@ -30,7 +28,7 @@ describe('Wp5PreviewRuntime', () => {
       teleportPlayer,
       ensureRespawnGround: () => undefined,
       isRespawnWalkable: () => true,
-      onClockReward: clockReward,
+      fractureRegion,
       onNarrativeCue: (cueId) => narrativeCues.push(cueId),
     });
     const frame = {
@@ -42,6 +40,8 @@ describe('Wp5PreviewRuntime', () => {
     };
 
     for (let tick = 0; tick < 18; tick += 1) runtime.update(frame);
+    runtime.registerConsciousnessBomb(frame.playerCellId);
+    runtime.update(frame);
     const snapshot = runtime.snapshot();
     expect(snapshot.progression.collectedPacks).toEqual([
       'water',
@@ -49,22 +49,52 @@ describe('Wp5PreviewRuntime', () => {
       'ruin',
       'storm',
     ]);
-    expect(snapshot.hazardCount).toBe(4);
-    expect(snapshot.uncertainty?.state).toBe('FIXED_STATUE');
+    expect(snapshot.bombCount).toBe(0);
     expect(snapshot.respawn.deaths).toBe(1);
     expect(teleportPlayer).toHaveBeenCalledTimes(1);
-    expect(clockReward).toHaveBeenCalledWith(3);
+    expect(fractureRegion).toHaveBeenCalledTimes(1);
     expect(visualAdapter.collectSeed).toHaveBeenCalledTimes(4);
-    expect(visualAdapter.addHazard).toHaveBeenCalledTimes(4);
     expect(narrativeCues).toEqual([
       'unlockWater',
       'unlockForest',
       'unlockRuin',
       'unlockStorm',
-      'uncertaintyDetected',
       'firstDeath',
       'respawn',
-      'uncertaintyFixed',
     ]);
+  });
+
+  it('replays three bombs deterministically even when respawning on one cell', () => {
+    const onTerminalContact = vi.fn();
+    const onLivesExhausted = vi.fn();
+    const runtime = new Wp5PreviewRuntime({
+      worldSeed: 0xa91f42c0,
+      unlockPack: () => 1,
+      visuals: visuals(),
+      canonicalBombAutomation: true,
+      teleportPlayer: () => undefined,
+      ensureRespawnGround: () => undefined,
+      isRespawnWalkable: () => true,
+      fractureRegion: () => undefined,
+      onTerminalContact,
+      onLivesExhausted,
+    });
+    const frame = {
+      deltaSeconds: 0.25,
+      playerPosition: [64, 1.7, 64] as const,
+      cameraForward: [0, 0, -1] as const,
+      playerCellId: 2_080,
+      fixedCells: 60,
+    };
+
+    for (let tick = 0; tick < 80; tick += 1) runtime.update(frame);
+
+    expect(runtime.snapshot().respawn).toMatchObject({
+      deaths: 3,
+      livesRemaining: 0,
+      phase: 'TERMINAL',
+    });
+    expect(onTerminalContact).toHaveBeenCalledOnce();
+    expect(onLivesExhausted).toHaveBeenCalledOnce();
   });
 });

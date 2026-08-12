@@ -18,12 +18,20 @@ import {
 } from '../../src/player/controller';
 import { movementIntentFromKeys } from '../../src/player/input';
 import {
+  ADJACENT_ROCK_GAP_METERS,
+  SMALL_ROCK_COLLIDER_HEIGHT_METERS,
+} from '../../src/player/physics';
+import {
   WORLD_BOUNDARY_RADIUS_METERS,
   WORLD_CENTER_METERS,
   createWorldBoundaryColliders,
 } from '../../src/world/world-boundary';
 
 describe('player movement contract', () => {
+  it('makes adjacent rocks too narrow to pass but low enough to jump', () => {
+    expect(ADJACENT_ROCK_GAP_METERS).toBeLessThan(0.7);
+    expect(SMALL_ROCK_COLLIDER_HEIGHT_METERS).toBeLessThan(JUMP_HEIGHT_METERS);
+  });
   it('normalizes diagonal WASD and arrow input', () => {
     const wasd = movementIntentFromKeys(new Set(['KeyW', 'KeyD', 'ShiftLeft']));
     const arrows = movementIntentFromKeys(

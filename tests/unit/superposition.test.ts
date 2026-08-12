@@ -5,6 +5,7 @@ import {
   SUPERPOSITION_MAX_INTERVAL_MS,
   SUPERPOSITION_MIN_INTERVAL_MS,
   SuperpositionRenderer,
+  domainSuperpositionCandidates,
   normalizeCandidatePercentages,
   selectSuperpositionProxy,
   type SuperpositionCell,
@@ -23,20 +24,37 @@ const cell: SuperpositionCell = {
 };
 
 describe('superposition proxy selection', () => {
-  it('alternates only the three highest weighted possibilities in 160-260 ms', () => {
+  it('derives every legal family from real terrain and feature domains', () => {
+    const candidates = domainSuperpositionCandidates(
+      { lo: 0xffff_ffff, hi: 0x7ff },
+      { lo: 0x1f_ffff, hi: 0 },
+    );
+    expect(new Set(candidates.map((candidate) => candidate.family))).toEqual(
+      new Set([
+        'empty',
+        'ground',
+        'water',
+        'organic',
+        'mineral',
+        'structure',
+        'hazard',
+      ]),
+    );
+  });
+  it('alternates every legal family representative in 160-260 ms', () => {
     const first = selectSuperpositionProxy(cell, 0, 'high');
     const next = selectSuperpositionProxy(cell, first.intervalMs, 'high');
 
-    expect(first.alternativesRemaining).toBe(3);
+    expect(first.alternativesRemaining).toBe(4);
     expect(first.intervalMs).toBeGreaterThanOrEqual(
       SUPERPOSITION_MIN_INTERVAL_MS,
     );
     expect(first.intervalMs).toBeLessThanOrEqual(SUPERPOSITION_MAX_INTERVAL_MS);
-    expect([1, 2, 3]).toContain(first.candidate?.tileId);
+    expect([1, 2, 3, 4]).toContain(first.candidate?.tileId);
     expect(next.candidate?.tileId).not.toBe(first.candidate?.tileId);
   });
 
-  it('removes alternatives as observation charge rises and uses two in low quality', () => {
+  it('removes alternatives as observation charge rises without hiding families by preset', () => {
     const low = selectSuperpositionProxy(cell, 0, 'low');
     const charged = selectSuperpositionProxy(
       { ...cell, observationCharge: 0.8 },
@@ -44,7 +62,7 @@ describe('superposition proxy selection', () => {
       'high',
     );
 
-    expect(low.alternativesRemaining).toBe(2);
+    expect(low.alternativesRemaining).toBe(4);
     expect(charged.alternativesRemaining).toBe(1);
     expect(charged.opacity).toBeLessThan(low.opacity);
   });
@@ -65,15 +83,16 @@ describe('superposition proxy selection', () => {
     expect(
       percentages.map(({ tileId, percentage }) => [tileId, percentage]),
     ).toEqual([
-      [1, 53],
-      [2, 35],
-      [3, 12],
+      [1, 50],
+      [2, 33],
+      [3, 11],
+      [4, 6],
     ]);
     expect(
       percentages.reduce((total, candidate) => total + candidate.percentage, 0),
     ).toBe(100);
     expect(normalizeCandidatePercentages(cell.candidates, 'low')).toHaveLength(
-      2,
+      4,
     );
   });
 });

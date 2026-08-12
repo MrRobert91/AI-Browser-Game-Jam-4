@@ -1,8 +1,8 @@
 {
   "version": 1,
   "model": "openai/gpt-4o-mini-transcribe",
-  "generatedAt": "2026-08-10T23:41:41.885Z",
-  "totalCostUsd": 0.018283749999999994,
+  "generatedAt": "2026-08-12T18:27:51.268Z",
+  "totalCostUsd": 0.018012499999999994,
   "minimumSimilarity": 0.7272727272727273,
   "entries": [
     {
@@ -76,22 +76,6 @@
       "transcription": "Field body replaced. Your record and seeds remain regrettably binding.",
       "similarity": 1,
       "costUsd": 0.00013625
-    },
-    {
-      "id": "uncertaintyDetected",
-      "locale": "en",
-      "expected": "Pending update incident. This result appears to belong to someone more decisive.",
-      "transcription": "Pending update incident. This result appears to belong to someone more decisive.",
-      "similarity": 1,
-      "costUsd": 0.00014875
-    },
-    {
-      "id": "uncertaintyFixed",
-      "locale": "en",
-      "expected": "Stable description admitted to the common record. The discrepancy is now officially user variability.",
-      "transcription": "Stable description admitted to the common record, the discrepancy is now officially user variability.",
-      "similarity": 1,
-      "costUsd": 0.0001775
     },
     {
       "id": "lastSixtySeconds",
@@ -430,22 +414,6 @@
       "costUsd": 0.00024875
     },
     {
-      "id": "uncertaintyDetected",
-      "locale": "es",
-      "expected": "Incidencia de actualización pendiente. Este resultado parece pertenecer a alguien más decidido.",
-      "transcription": "Incidencia de actualización pendiente. Este resultado parece pertenecer a alguien más decidido.",
-      "similarity": 1,
-      "costUsd": 0.00018875
-    },
-    {
-      "id": "uncertaintyFixed",
-      "locale": "es",
-      "expected": "Descripción estable admitida en el registro común. La discrepancia es ya, oficialmente, variabilidad de usuario.",
-      "transcription": "descripción estable admitida en el registro común. La discrepancia es ya, oficialmente, variabilidad de usuario.",
-      "similarity": 1,
-      "costUsd": 0.000245
-    },
-    {
       "id": "lastSixtySeconds",
       "locale": "es",
       "expected": "La ventana de observación está fallando. Ya puedes experimentar urgencia sin presentar solicitud.",
@@ -710,20 +678,36 @@
       "costUsd": 0.00019125
     },
     {
-      "id": "briefing",
+      "id": "objectivesDirective",
       "locale": "en",
-      "expected": "Specialist: this Silence Chamber contains your assigned Possibility Condensate. Isolated from the exterior, these volumes preserved collective coherence. Matter, geometry and potential life coexist without a classical history. Machines detect possibilities. Agency doctrine says they cannot conclude measurement. Convenient. Your consciousness occupies a field body. The Measure is your instrument. Your attention defines the measurement basis, never the exact result. Footprints and memories make results irreversible. Your window: ten minutes.",
-      "transcription": "Specialist, this silence chamber contains your assigned possibility condensate. Isolated from the exterior, these volumes preserved collective coherence. Matter, geometry, and potential life coexist without a classical history. Machines detect possibilities. Agency doctrine says they cannot conclude measurement. Convenient. Your consciousness occupies a field body. The measure is your instrument. Your attention defines the measurement basis, never the exact result. Footprints and memories make results irreversible. Your window, ten minutes.",
-      "similarity": 1,
-      "costUsd": 0.00109
+      "expected": "Agency operational directive. During the next ten minutes, collapse as much of the Condensate as possible. Recover the Possibility Seeds in the authorized order: Water, Forest, Ruin, and Storm. Avoid consciousness bombs; detonation revokes thirty metres of approved reality. You have been allocated three lives. The loss of the third will close the record, regardless of your objections.",
+      "transcription": "Agency operational directive. During the next ten minutes, collapse as much of the condensate as possible. Recover the possibility seeds in the authorized order: water, forest, ruin, and storm. Avoid consciousness bombs. Detonation revokes 30 meters of approved reality. You have been allocated three lives. The loss of the third will close the record, regardless of your objections.",
+      "similarity": 0.9655172413793104,
+      "costUsd": 0.00074125
     },
     {
-      "id": "briefing",
+      "id": "livesExhausted",
+      "locale": "en",
+      "expected": "Third life exhausted. You are dead. The Agency regrets to inform you that no further field body has been authorized. It was not in vain: part of the Condensate was collapsed by your attention and will remain in the record. Your absence has been classified as a conclusive contribution.",
+      "transcription": "Third life exhausted. You are dead. The agency regrets to inform you that no further field body has been authorized. It was not in vain. Part of the condensate was collapsed by your attention and will remain in the record. Your absence has been classified as a conclusive contribution.",
+      "similarity": 1,
+      "costUsd": 0.0005625
+    },
+    {
+      "id": "objectivesDirective",
       "locale": "es",
-      "expected": "Especialista: esta Cámara contiene tu Condensado de Posibilidad asignado. Aislados del exterior, estos volúmenes preservaron coherencia colectiva. Materia, geometría y vida potencial coexisten sin historia clásica. Las máquinas detectan posibilidades. Según la Agencia, no concluyen la medición. Conveniente. Tu consciencia ocupa un cuerpo de campo. La Medida es tu instrumento. Tu atención define la base de medición, nunca el resultado exacto. Huellas y recuerdos vuelven irreversible el resultado. Tienes diez minutos.",
-      "transcription": "Especialista, esta cámara contiene tu condensado de posibilidad asignado. Aislados del exterior, estos volúmenes preservaron coherencia colectiva. Materia, geometría y vida potencial, coexisten sin historia clásica. Las máquinas detectan posibilidades, según la agencia, no concluyen la medición. Conveniente. Tu conciencia ocupa un cuerpo de campo. La medida es tu instrumento. Tu atención define la base de medición, nunca el resultado exacto. Huellas y recuerdos vuelven irreversible el resultado. Tienes diez minutos.",
-      "similarity": 0.9859154929577465,
-      "costUsd": 0.001185
+      "expected": "Directiva operativa de la Agencia. Durante los próximos diez minutos, colapsa la mayor superficie posible del Condensado. Recupera las Semillas de Posibilidad en el orden autorizado: Agua, Bosque, Ruina y Tormenta. Evita las bombas de consciencia; su detonación revoca treinta metros de realidad aprobada. Se te han asignado tres vidas. La pérdida de la tercera cerrará el expediente, con independencia de tus objeciones.",
+      "transcription": "Directiva operativa de la agencia. Durante los próximos diez minutos, colapsa la mayor superficie posible del condensado. Recupera las semillas de posibilidad en el orden autorizado: agua, bosque, ruina y tormenta. Evita las bombas de conciencia. Su detonación revoca treinta metros de realidad aprobada. Se te han asignado tres vidas. La pérdida de la tercera cerrará el expediente, con independencia de tus objeciones.",
+      "similarity": 0.9841269841269841,
+      "costUsd": 0.0008775
+    },
+    {
+      "id": "livesExhausted",
+      "locale": "es",
+      "expected": "Tercera vida agotada. Has muerto. La Agencia lamenta informarte de que no procede otro cuerpo de campo. No ha sido en vano: una parte del Condensado quedó colapsada por tu atención y permanecerá en el expediente. Tu ausencia ha sido clasificada como aportación concluyente.",
+      "transcription": "Tercera vida agotada. Has muerto. La agencia lamenta informarte de que no procede otro cuerpo de campo. No ha sido en vano. Una parte del condensado quedó colapsada por tu atención y permanecerá en el expediente. Tu ausencia ha sido clasificada como aportación concluyente.",
+      "similarity": 1,
+      "costUsd": 0.0005825
     }
   ]
 }

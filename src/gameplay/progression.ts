@@ -63,7 +63,7 @@ const PACK_PRESENTATION: Readonly<
     ambience: 'ambience-ruin',
   },
   storm: {
-    preview: ['crystal', 'spikes', 'uncertainty-nest'],
+    preview: ['crystal', 'mirror-reed', 'memory-stone'],
     narrativeCueId: 'unlockStorm',
     ambience: 'ambience-storm',
   },

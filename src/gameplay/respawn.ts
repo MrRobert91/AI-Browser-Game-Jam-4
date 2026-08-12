@@ -5,17 +5,21 @@ export const DEATH_FREEZE_SECONDS = 0.12;
 export const DEATH_DISSOLVE_SECONDS = 0.7;
 export const DEATH_FADE_SECONDS = 0.18;
 export const RESPAWN_INVULNERABILITY_SECONDS = 1.5;
+export const MAXIMUM_LIVES = 3;
 export const RESPAWN_POSITION: WorldVector3 = [64, 1.7, 64];
 export type RespawnPhase =
-  'ALIVE' | 'FROZEN' | 'DISSOLVING' | 'FADING' | 'INVULNERABLE';
+  'ALIVE' | 'FROZEN' | 'DISSOLVING' | 'FADING' | 'INVULNERABLE' | 'TERMINAL';
 
 export interface DeathRequest {
-  readonly cause: 'HAZARD' | 'UNCERTAINTY' | 'VOID';
+  readonly cause: 'CONSCIOUSNESS_BOMB';
 }
 
 export interface RespawnSnapshot {
   readonly phase: RespawnPhase;
   readonly deaths: number;
+  readonly maximumLives: 3;
+  readonly livesRemaining: number;
+  readonly terminal: boolean;
   readonly phaseElapsedSeconds: number;
   readonly invulnerabilityRemainingSeconds: number;
   readonly inputLocked: boolean;
@@ -26,12 +30,14 @@ export type RespawnEvent =
       readonly type: 'DEATH_STARTED';
       readonly cause: DeathRequest['cause'];
       readonly firstDeath: boolean;
+      readonly terminal: boolean;
       readonly narrativeCueId: NarrativeCueId | null;
     }
   | { readonly type: 'DISSOLVE_STARTED' }
   | { readonly type: 'FADE_STARTED' }
   | { readonly type: 'RESPAWNED'; readonly position: WorldVector3 }
-  | { readonly type: 'INVULNERABILITY_ENDED' };
+  | { readonly type: 'INVULNERABILITY_ENDED' }
+  | { readonly type: 'LIVES_EXHAUSTED' };
 
 export interface RespawnOptions {
   readonly isRespawnWalkable: (position: WorldVector3) => boolean;
@@ -40,10 +46,7 @@ export interface RespawnOptions {
   readonly onEvent?: (event: RespawnEvent) => void;
 }
 
-/**
- * Owns only the player's death timeline. World, progression and run clock are
- * intentionally external and therefore cannot be reset by this system.
- */
+/** Three-life timeline. Only consciousness-bomb contact can enter it. */
 export class RespawnSystem {
   private phase: RespawnPhase = 'ALIVE';
   private phaseElapsedSeconds = 0;
@@ -57,7 +60,7 @@ export class RespawnSystem {
   }
 
   requestDeath(request: DeathRequest): boolean {
-    if (this.phase !== 'ALIVE') return false;
+    if (this.phase !== 'ALIVE' || this.deaths >= MAXIMUM_LIVES) return false;
     this.phase = 'FROZEN';
     this.phaseElapsedSeconds = 0;
     this.deaths += 1;
@@ -65,6 +68,7 @@ export class RespawnSystem {
       type: 'DEATH_STARTED',
       cause: request.cause,
       firstDeath: this.deaths === 1,
+      terminal: this.deaths === MAXIMUM_LIVES,
       narrativeCueId: this.deaths === 1 ? 'firstDeath' : null,
     });
     return true;
@@ -73,14 +77,19 @@ export class RespawnSystem {
   update(deltaSeconds: number): readonly RespawnEvent[] {
     const events: RespawnEvent[] = [];
     let remainingDelta = Math.max(0, deltaSeconds);
-    while (remainingDelta > 0 && this.phase !== 'ALIVE') {
+    while (
+      remainingDelta > 0 &&
+      this.phase !== 'ALIVE' &&
+      this.phase !== 'TERMINAL'
+    ) {
       const duration = this.currentPhaseDuration();
-      const untilTransition = duration - this.phaseElapsedSeconds;
-      const consumed = Math.min(remainingDelta, untilTransition);
+      const consumed = Math.min(
+        remainingDelta,
+        duration - this.phaseElapsedSeconds,
+      );
       this.phaseElapsedSeconds += consumed;
       remainingDelta -= consumed;
       if (this.phaseElapsedSeconds + 1e-9 < duration) break;
-
       this.phaseElapsedSeconds = 0;
       const event = this.advancePhase();
       if (event) {
@@ -96,13 +105,16 @@ export class RespawnSystem {
   }
 
   canTakeDamage(): boolean {
-    return this.phase === 'ALIVE';
+    return this.phase === 'ALIVE' && this.deaths < MAXIMUM_LIVES;
   }
 
   snapshot(): RespawnSnapshot {
     return {
       phase: this.phase,
       deaths: this.deaths,
+      maximumLives: MAXIMUM_LIVES,
+      livesRemaining: Math.max(0, MAXIMUM_LIVES - this.deaths),
+      terminal: this.phase === 'TERMINAL',
       phaseElapsedSeconds: this.phaseElapsedSeconds,
       invulnerabilityRemainingSeconds:
         this.phase === 'INVULNERABLE'
@@ -114,7 +126,8 @@ export class RespawnSystem {
       inputLocked:
         this.phase === 'FROZEN' ||
         this.phase === 'DISSOLVING' ||
-        this.phase === 'FADING',
+        this.phase === 'FADING' ||
+        this.phase === 'TERMINAL',
     };
   }
 
@@ -129,6 +142,7 @@ export class RespawnSystem {
       case 'INVULNERABLE':
         return RESPAWN_INVULNERABILITY_SECONDS;
       case 'ALIVE':
+      case 'TERMINAL':
         return 0;
     }
   }
@@ -142,6 +156,10 @@ export class RespawnSystem {
         this.phase = 'FADING';
         return { type: 'FADE_STARTED' };
       case 'FADING':
+        if (this.deaths >= MAXIMUM_LIVES) {
+          this.phase = 'TERMINAL';
+          return { type: 'LIVES_EXHAUSTED' };
+        }
         this.options.ensureRespawnGround(RESPAWN_POSITION);
         this.options.teleportPlayer(RESPAWN_POSITION);
         this.phase = 'INVULNERABLE';
@@ -150,6 +168,7 @@ export class RespawnSystem {
         this.phase = 'ALIVE';
         return { type: 'INVULNERABILITY_ENDED' };
       case 'ALIVE':
+      case 'TERMINAL':
         return null;
     }
   }

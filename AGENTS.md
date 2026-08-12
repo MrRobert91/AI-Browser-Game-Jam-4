@@ -25,7 +25,7 @@ Reglas de coordinación:
 1. Ningún agente debe reinterpretar una constante, contrato o regla normativa sin actualizar primero este archivo y explicar el cambio en la issue/PR correspondiente.
 2. Algoritmo, render y contenido se comunican mediante los tipos públicos de `src/contracts/`; no importan internals entre sí.
 3. Toda nueva tile debe pasar el validador de gramática antes de aparecer en el juego.
-4. Una celda observada y fijada es inmutable. Nunca se reescribe, ni siquiera para reparar una contradicción.
+4. Una celda observada y fijada nunca se reescribe con otro resultado, ni siquiera para reparar una contradicción. La única transición destructiva permitida es `FIXED -> FRACTURED` por una explosión de probabilidad autorizada; `FRACTURED` es terminal y no vuelve a colapsarse.
 5. Una mejora visual no puede bloquear el bucle en navegadores sin WebGPU. WebGL2 es el objetivo base.
 6. Tras cargar sus archivos, el juego completo funciona sin llamadas de red.
 7. Los detalles de implementación no normativos pueden adaptarse cuando haya una solución más simple o robusta, siempre que se conserven el comportamiento observable, los contratos y los presupuestos descritos aquí.
@@ -39,7 +39,7 @@ Reglas de coordinación:
 
 El instrumento que mantiene observable el mundo se apaga en diez minutos. El jugador explora, encuentra Semillas de Posibilidad y amplía el vocabulario del generador. Cada semilla desbloquea tiles compatibles con las anteriores. La distancia al origen aumenta belleza, rareza y peligro.
 
-La muerte devuelve al jugador al origen sin borrar el mundo observado ni las Semillas; el reloj continúa. Al agotarse el tiempo, la cámara asciende, muestra el mundo irrepetible y compone localmente un haiku a partir de cómo se miró, qué se arriesgó, qué materiales se encontraron y qué quedó sin observar.
+Las dos primeras muertes devuelven al jugador al origen sin borrar las Semillas; el reloj continúa. La tercera termina la observación antes de tiempo. Las bombas de consciencia fracturan parte del mundo observado, que permanece como cicatriz no colapsable. Al agotarse el tiempo o las tres vidas, la cámara asciende, muestra el mundo irrepetible y compone localmente un haiku a partir de cómo se miró, qué se arriesgó, qué materiales se encontraron y qué quedó sin observar.
 
 > Un walking game de diez minutos donde mirar es construir, explorar amplía las posibilidades y toda elección visual elimina mundos que nunca llegarán a existir.
 
@@ -90,7 +90,6 @@ Vocabulario normativo:
 - **Colapsador:** agente humano conectado a un cuerpo de campo. Formula intervenciones mediante recorrido y atención.
 - **Cuerpo de campo:** soporte reemplazable dentro de la Cámara; morir no borra el expediente del agente.
 - **La Medida:** sistema institucional que expresa expectativas, registra experiencias y reconcilia expedientes. No es narrador omnisciente ni conciencia certificada.
-- **Resultado no reconciliado:** experiencia atribuida a otro Colapsador que no encaja todavía en el expediente actual; lectura narrativa de La Incertidumbre.
 
 Guía de tono: La Medida es serena, exacta y ligeramente pasivo-agresiva; la Agencia produce la sátira mediante formularios, clasificaciones y eufemismos. El paisaje conserva belleza y melancolía. Las posibilidades no elegidas no se describen como seres o universos asesinados, y las máquinas no se presentan como agentes conscientes por conclusión científica.
 
@@ -104,7 +103,7 @@ Ritmo objetivo:
 | 0:40–2:00 | Primer terreno | Colapso de suelo y elementos | Comprensión |
 | 2:00–3:30 | Semilla de Agua | Primer vocabulario nuevo | Curiosidad |
 | 3:30–5:00 | Semilla de Bosque | Combinaciones verticales | Abundancia |
-| 5:00–6:30 | Primer peligro | Pinchos e Incertidumbre | Tensión |
+| 5:00–6:30 | Primer peligro | Bomba de consciencia | Tensión |
 | 6:30–8:00 | Semilla de Ruina | Formas monumentales | Descubrimiento |
 | 8:00–9:20 | Zona exterior | Mayor rareza y peligro | Urgencia |
 | 9:20–10:00 | Última mirada | Cuenta atrás audible | Decisión |
@@ -134,7 +133,7 @@ El bucle es: caminar a lo desconocido → sostener una zona bajo la mirada → a
 
 Acciones únicas: caminar, mirar, correr, saltar peligros bajos y recoger Semillas atravesándolas. No existe ataque; mirar también es la defensa frente a enemigos.
 
-Objetivo explícito: antes de cero, fijar el mundo que se considere valioso, encontrar hasta cuatro Semillas, sobrevivir a la incertidumbre exterior y dejar un paisaje legible y personal. Generar poco terreno nunca provoca derrota.
+Objetivo explícito: antes de cero, fijar la mayor superficie posible, encontrar las cuatro Semillas en orden, evitar las bombas de consciencia y dejar un paisaje legible y personal. Generar poco terreno nunca provoca derrota, pero agotar las tres vidas sí cierra el expediente.
 
 Controles:
 
@@ -190,7 +189,8 @@ export type CellPhase =
   | 'SUPERPOSED'
   | 'DETERMINED'
   | 'COLLAPSING'
-  | 'FIXED';
+  | 'FIXED'
+  | 'FRACTURED';
 ```
 
 `DETERMINED` significa dominio de una posibilidad, aún sin revelar. No muestra el resultado final hasta ser observada o entrar en radio corporal.
@@ -441,7 +441,7 @@ Packs:
 | 1 | Agua | Deep, Shallow, Shore, Marsh | Reeds, Lilies, Spring | Shore/Marsh → `OPEN_FLAT` |
 | 2 | Bosque | Moss, Root Ground | Young/Old Tree, Fallen Trunk, Mushrooms | Clearing/Root Meadow |
 | 3 | Ruina | Ruin Floor, Broken Path | Arch, Column, Wall Fragment, Statue | Broken Threshold → `OPEN_FLAT` |
-| 4 | Tormenta | Charged Soil, Glass Ground | Crystal, Spikes, Uncertainty Nest | Scorched Meadow → `OPEN_FLAT` |
+| 4 | Tormenta | Charged Soil, Glass Ground | Crystal | Scorched Meadow → `OPEN_FLAT` |
 
 Ejemplo canónico:
 
@@ -520,49 +520,29 @@ function rarityMultiplier(distanceFromOrigin: number): number {
 
 Distancia modifica pesos, nunca compatibilidades. La recompensa es ampliar el lenguaje visual, no estadísticas.
 
-## 8. Peligros, Incertidumbre y muerte
+## 8. Bombas de consciencia, fractura y muerte
 
-| Peligro | Regla | Contrajuego |
-|---|---|---|
-| Pinchos | Feature seca; nunca se fija a <4 m | Rodear/saltar |
-| Agua profunda | No caminable; con costa o poca profundidad cercana | Buscar transición |
-| Cristal cargado | Pulso cada 2,5 s | Cruzar entre pulsos |
-| Suelo frágil | Rompe 0,8 s tras pisarlo | No detenerse |
+La bomba de consciencia es el único enemigo y la única causa de pérdida de vidas. Agua profunda, cristal cargado y suelo frágil pueden conservar interacción física o visual, pero nunca matan.
 
-**La Incertidumbre** es un resultado atribuido a otro Colapsador que La Medida no consigue reconciliar todavía con el expediente actual. Sus tres siluetas representan informes incompatibles, no una criatura cuántica literal. Solo se mueve fuera de observación directa:
-
-```text
-DORMANT -> STALKING -> SEEN -> PETRIFYING -> FIXED_STATUE
-                     \-> CONTACT -> PLAYER_DEATH
-```
-
-- Aparece desde 18 m; nunca a <8 m del jugador; máximo cuatro activas.
-- Se inmoviliza al entrar en cono central.
-- Tras 1,2 s de observación continua se vuelve estatua y otorga +3 s una sola vez.
-- Si sale antes, conserva progreso 0,4 s y después lo pierde.
-- Se mueve centro a centro por terreno caminable no visible; no necesita navegación completa.
-- Al observarla no se la mata: una descripción estable se incorpora al registro común y la estatua representa el resultado reconciliado. La interfaz puede denominarla “Incidencia de actualización pendiente”. Esta lectura no cambia ninguna distancia, transición, recompensa, spawn ni límite.
-
-Distribución máxima después de filtros de seguridad:
-
-| Distancia | Feature peligrosa | Enemigos |
-|---:|---:|---:|
-| 0–14 m | 0 % | 0 |
-| 14–24 m | 3 % | 1 |
-| 24–38 m | 7 % | 2 |
-| 38–52 m | 11 % | 3 |
-| >52 m | 14 % | 4 |
+- Es una feature base roja y negra, espinosa, sólida y visible en superposición.
+- Nunca es elegible a menos de 14 m del origen, a menos de 4 m del jugador, ni sobre Semillas, reservas 3×3 o corredores garantizados.
+- Su probabilidad marginal entre features legales es 1 % durante el minuto 0, 2 % durante el minuto 1 y así sucesivamente hasta 10 % desde el minuto 9. El reloj de peligro empieza con el primer colapso y la distancia no modifica esta curva.
+- Su sensor físico se activa al 70 % del colapso. Solo detona por contacto.
+- Una detonación consume exactamente una vida y no provoca reacciones en cadena.
+- La explosión convierte en `FRACTURED` toda celda `FIXED` cuyo centro esté a 30 m o menos, salvo origen, Semillas, reservas y corredores.
+- `FRACTURED` conserva una superficie agrietada caminable, no participa en WFC, no cuenta como cobertura y nunca vuelve a colapsarse.
+- Bombas alcanzadas por la explosión quedan fracturadas y desactivadas.
 
 Muerte:
 
 1. congelar 120 ms;
 2. disolver cuerpo 700 ms;
 3. fundido breve;
-4. respawn en monolito;
-5. conservar mundo, Semillas y reloj;
-6. invulnerabilidad 1,5 s.
+4. en primera y segunda muerte, respawn en monolito con 1,5 s de invulnerabilidad;
+5. conservar Semillas, reloj y toda celda no fracturada;
+6. en la tercera muerte, detener el reloj y comenzar el final anticipado sin respawn.
 
-No hay vidas; el coste es tiempo y distancia.
+Hay tres vidas totales. El final anticipado conserva panorama, perfil, haiku y seed del mundo superviviente.
 
 ## 9. Final, retrato y haiku
 
@@ -639,7 +619,9 @@ Identidad: naturaleza sublime con simulación visible. Fijado = material, cálid
 
 Superposición:
 
-- Máximo tres candidatos de mayor peso por celda.
+- Máximo un representante por familia legal y celda (vacío, terreno, agua,
+  vegetación, mineral, estructura y bomba); solo una representación permanece
+  activa a la vez.
 - La celda bajo la retícula comunica su superposición mediante los proxies y la
   carga de la retícula; no muestra un panel central de candidatos o porcentajes
   que obstruya la vista.
@@ -677,7 +659,7 @@ Audio Web Audio API:
 | Colapso | Impacto suave y timbre de familia |
 | Semillas | Instrumento permanente adicional |
 | Cuenta atrás | Pulso grave desde 60 s, claro desde 30 s |
-| Incertidumbre | Suena fuera del foco; silencio al mirarla |
+| Bomba de consciencia | Pulso seco localizado; explosión grave sin flash de pantalla completa |
 
 - Un bus por familia y límite de voces.
 - Ambientes mezclados por proporción local, no una fuente por celda.
@@ -744,6 +726,7 @@ export interface ObservationInput {
   tick: number;
   playerPosition: readonly [number, number, number];
   cameraForward: readonly [number, number, number];
+  elapsedRunSeconds: number;
   visibleCells: readonly {
     cellId: number;
     distance: number;
@@ -763,9 +746,24 @@ export interface CollapseEvent {
   cellId: number;
   terrainTileId: number;
   featureTileId: number | null;
+  terrainRotationQuarterTurns: 0 | 1 | 2 | 3;
   entropyBefore: number;
   durationMs: number;
   worldSeed: number;
+}
+
+export interface DomainPatchEvent {
+  type: 'DOMAIN_PATCH';
+  tick: number;
+  cells: readonly { cellId: number; terrain: DomainMask; feature: DomainMask; paletteEpoch: number }[];
+}
+
+export interface FractureRegionInput {
+  type: 'FRACTURE_REGION';
+  tick: number;
+  centerCellId: number;
+  radiusMeters: 30;
+  protectedCellIds: readonly number[];
 }
 
 export interface ChunkBoundaryEvent {
@@ -777,8 +775,8 @@ export interface ChunkBoundaryEvent {
   west: Uint16Array;
 }
 
-export type WorkerInput = ObservationInput | UnlockPackInput | ResetInput;
-export type WorkerOutput = CollapseEvent | ChunkBoundaryEvent | SolverWarning;
+export type WorkerInput = ObservationInput | UnlockPackInput | ResetInput | FractureRegionInput;
+export type WorkerOutput = CollapseEvent | ChunkBoundaryEvent | DomainPatchEvent | FractureEvent | SolverWarning;
 ```
 
 Estructura objetivo:
@@ -795,8 +793,8 @@ src/
   world/         world-state.ts, chunk-view.ts, observation-system.ts,
                  collapse-director.ts, instancing.ts
   player/        controller.ts, camera.ts, respawn.ts
-  gameplay/      run-clock.ts, progression.ts, anchors.ts, hazards.ts,
-                 uncertainty-enemy.ts, ending.ts, portrait.ts, haiku.ts
+  gameplay/      run-clock.ts, progression.ts, anchors.ts, respawn.ts,
+                 ending.ts, portrait.ts, haiku.ts
   render/        renderer.ts, quality.ts, materials.ts, superposition.ts,
                  postprocessing.ts, atmosphere.ts
   audio/         audio-director.ts, spatial-pool.ts
@@ -930,7 +928,7 @@ Cinco testers deben poder explicar sin ayuda: qué hace aparecer el mundo; por q
 
 ### WP5 — Progresión y peligros
 
-Anclas/corredores, Semillas/epochs, curvas, peligros, Incertidumbre, muerte/respawn. Cuatro Semillas alcanzables en 100 seeds, mundo persistente tras muerte, enemigos obedecen mirada, sin peligro bajo jugador. Propiedad: `src/gameplay/` salvo final.
+Anclas/corredores, Semillas/epochs, bomba de consciencia, fractura y tres vidas. Cuatro Semillas alcanzables en 100 seeds, cicatrices persistentes, dos respawns y final en la tercera muerte, sin peligro bajo jugador. Propiedad: `src/gameplay/` salvo final.
 
 ### WP6 — Presentación
 
@@ -950,9 +948,9 @@ Toda tile nueva incluye definición, proxy/asset, compatibilidad, test de valida
 
 ## 17. MVP, recortes y expansiones
 
-MVP no negociable: diez minutos y final; movimiento/cámara sólidos; WFC observable ≤20 m; `FIXED` inmutable; gramática sin encierros; base+agua+bosque; un peligro; muerte/respawn persistente; vista final/haiku; runtime sin red.
+MVP no negociable: diez minutos y final; movimiento/cámara sólidos; WFC observable ≤20 m; `FIXED` no se reescribe y solo se destruye mediante `FRACTURED`; gramática sin encierros; base+agua+bosque; bombas de consciencia; tres vidas; vista final/haiku; runtime sin red.
 
-Orden de recorte: Tormenta → Ruina → Incertidumbre por peligro estático → suelo frágil → 3 proxies a 2 → haiku condicionado a cinco fijos → modos 5/15 min.
+Orden de recorte: Tormenta → Ruina → suelo frágil → representantes de superposición menos frecuentes → haiku condicionado a cinco fijos → modos 5/15 min. No se recortan bombas, fractura ni tres vidas.
 
 Nunca recortar: radio, visualización de dominio, permanencia, unlocks, tiempo ni final panorámico.
 
@@ -967,9 +965,9 @@ Post-jam: seed diario, PNG, galería, biomas, contemplativo sin peligros, haiku 
 | Mirar no parece decidir | Colapso automático | Cono, retícula y candidatos bajo foco |
 | Stutter | Giro bloquea render | Worker, 4 ms, commits limitados |
 | Packs rompen gramática | No solution tras unlock | Epochs, validador por pack, adaptadores |
-| Peligro injusto | Pinchos bajo pies | Radio seguro y física tardía |
+| Peligro injusto | Bomba bajo pies | Radio seguro y sensor al 70 % |
 | Demasiados modelos | Peso/draw calls | Instancing, proxies, materiales, LOD |
-| Muerte tediosa | Regreso largo tarde | Columna, carrera, +3 s por enemigo |
+| Muerte tediosa | Regreso largo tarde | Dos respawns breves; tercera muerte cierra el expediente |
 | Final parece score | Optimización de celdas | Perfil/haiku sin ranking |
 | Arte consume jam | Assets sin loop | Vertical slice con proxies primero |
 
@@ -979,12 +977,12 @@ Post-jam: seed diario, PNG, galería, biomas, contemplativo sin peligros, haiku 
 - [ ] Partida completa ≈10 min.
 - [ ] Solo fija a ≤20 m; fuera de contacto requiere mirada.
 - [ ] Se ven ≥2 posibilidades antes de colapso.
-- [ ] `FIXED` idéntica tras distancia, muerte y regreso.
+- [ ] `FIXED` idéntica tras distancia y regreso salvo transición explícita e irreversible a `FRACTURED` por una bomba.
 - [ ] Agua, Bosque y, si calendario permite, tercer pack.
 - [ ] Packs futuros sin recalcular pasado.
 - [ ] Ninguna generación probada sin salida.
-- [ ] Muerte vuelve al origen y conserva mundo, Semillas y tiempo.
-- [ ] Peligro crece con distancia.
+- [ ] Las dos primeras muertes vuelven al origen; la tercera inicia el final anticipado.
+- [ ] La bomba escala de 1 % a 10 % por minuto y es el único enemigo letal.
 - [ ] Reloj siempre conduce al final.
 - [ ] Final muestra mundo, perfil y haiku.
 - [ ] Accesibilidad de controles, audio y destellos.

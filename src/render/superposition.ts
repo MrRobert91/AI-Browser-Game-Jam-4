@@ -12,13 +12,16 @@ import {
 } from 'three';
 
 import type { CellId, WorldVector3 } from '../contracts/world';
+import type { DomainMask } from '../contracts/world';
+import { COMPILED_GRAMMAR } from '../contracts/grammar-runtime';
 
 export const MAX_VISIBLE_SUPERPOSITION_PROXIES = 120;
 export const SUPERPOSITION_MIN_INTERVAL_MS = 160;
 export const SUPERPOSITION_MAX_INTERVAL_MS = 260;
 
 export type SuperpositionQuality = 'low' | 'medium' | 'high';
-export type ProxyFamily = 'ground' | 'organic' | 'mineral' | 'structure';
+export type ProxyFamily =
+  'empty' | 'ground' | 'water' | 'organic' | 'mineral' | 'structure' | 'hazard';
 
 export interface SuperpositionCandidate {
   readonly tileId: number;
@@ -45,8 +48,85 @@ export interface CandidatePercentage extends SuperpositionCandidate {
   readonly percentage: number;
 }
 
+/** Reduces real WFC domains to one alternating proxy per legal visual family. */
+export function domainSuperpositionCandidates(
+  terrainDomain: DomainMask,
+  featureDomain: DomainMask,
+): readonly SuperpositionCandidate[] {
+  const byFamily = new Map<ProxyFamily, SuperpositionCandidate>();
+  const add = (
+    family: ProxyFamily,
+    tileId: number,
+    weight: number,
+    label: string,
+  ): void => {
+    const current = byFamily.get(family);
+    byFamily.set(
+      family,
+      current
+        ? { ...current, weight: current.weight + weight }
+        : { family, tileId, weight, label },
+    );
+  };
+  for (
+    let id = nextDomainBit(terrainDomain);
+    id !== -1;
+    id = nextDomainBit(terrainDomain, id + 1)
+  ) {
+    const variant = COMPILED_GRAMMAR.terrain[id];
+    if (!variant) continue;
+    add(
+      variant.tags.includes('water') || variant.tags.includes('wet')
+        ? 'water'
+        : 'ground',
+      variant.definitionNumericId,
+      variant.weight,
+      variant.id,
+    );
+  }
+  for (
+    let id = nextDomainBit(featureDomain);
+    id !== -1;
+    id = nextDomainBit(featureDomain, id + 1)
+  ) {
+    const variant = COMPILED_GRAMMAR.features[id];
+    if (!variant) continue;
+    const tags = variant.tags;
+    const family: ProxyFamily = tags.includes('empty')
+      ? 'empty'
+      : tags.includes('consciousness_bomb')
+        ? 'hazard'
+        : tags.some((tag) =>
+              ['arch', 'column', 'wall', 'statue', 'monolith'].includes(tag),
+            )
+          ? 'structure'
+          : tags.some((tag) =>
+                ['rock', 'crystal', 'memory_stone'].includes(tag),
+              )
+            ? 'mineral'
+            : 'organic';
+    add(
+      family,
+      1_000 + variant.definitionNumericId,
+      variant.weight,
+      variant.id,
+    );
+  }
+  return [...byFamily.values()].sort((left, right) =>
+    left.family.localeCompare(right.family),
+  );
+}
+
 function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
+}
+
+function nextDomainBit(mask: DomainMask, fromIndex = 0): number {
+  for (let bit = fromIndex; bit < 64; bit += 1) {
+    const word = bit < 32 ? mask.lo : mask.hi;
+    if (((word >>> (bit % 32)) & 1) === 1) return bit;
+  }
+  return -1;
 }
 
 function hashCell(cellId: CellId): number {
@@ -62,9 +142,9 @@ function hashCell(cellId: CellId): number {
  */
 export function normalizeCandidatePercentages(
   candidates: readonly SuperpositionCandidate[],
-  quality: SuperpositionQuality,
+  _quality: SuperpositionQuality,
 ): readonly CandidatePercentage[] {
-  const maximumCandidates = quality === 'low' ? 2 : 3;
+  const maximumCandidates = candidates.length;
   const ranked = [...candidates]
     .filter((candidate) => candidate.weight > 0)
     .sort(
@@ -106,9 +186,9 @@ export function normalizeCandidatePercentages(
 export function selectSuperpositionProxy(
   cell: SuperpositionCell,
   elapsedMs: number,
-  quality: SuperpositionQuality,
+  _quality: SuperpositionQuality,
 ): ProxySelection {
-  const maximumCandidates = quality === 'low' ? 2 : 3;
+  const maximumCandidates = cell.candidates.length;
   const ranked = [...cell.candidates]
     .filter((candidate) => candidate.weight > 0)
     .sort(
@@ -188,6 +268,12 @@ interface ProxyPool {
 
 function geometryFor(family: ProxyFamily): BufferGeometry {
   switch (family) {
+    case 'empty':
+      return new BoxGeometry(1.65, 0.035, 1.65);
+    case 'water':
+      return new BoxGeometry(1.85, 0.08, 1.85);
+    case 'hazard':
+      return new IcosahedronGeometry(0.72, 1);
     case 'organic':
       return new ConeGeometry(0.65, 1.8, 5);
     case 'mineral':
@@ -200,10 +286,13 @@ function geometryFor(family: ProxyFamily): BufferGeometry {
 }
 
 const FAMILY_COLORS: Readonly<Record<ProxyFamily, number>> = {
+  empty: 0xb8c7d2,
   ground: 0x70e6ff,
+  water: 0x55d9ff,
   organic: 0x9fffb6,
   mineral: 0xce9dff,
   structure: 0xffdf91,
+  hazard: 0xff2438,
 };
 
 /** One shared low-poly geometry/material pool per proxy family. */

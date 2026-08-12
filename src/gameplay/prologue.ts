@@ -15,6 +15,7 @@ export class PrologueDirector {
   private phase: GamePhase = 'LANGUAGE_SELECT';
   private briefingElapsedSeconds = 0;
   private hasCompletedBriefing = false;
+  private hasCompletedObjectives = false;
 
   enterRoom(): PrologueSnapshot {
     if (this.phase === 'LANGUAGE_SELECT') this.phase = 'ROOM';
@@ -60,8 +61,16 @@ export class PrologueDirector {
   completeBriefing(): PrologueSnapshot {
     if (this.phase === 'BRIEFING') {
       this.hasCompletedBriefing = true;
-      this.phase = 'PORTAL';
+      this.phase = 'OBJECTIVES';
       this.briefingElapsedSeconds = BRIEFING_DURATION_SECONDS;
+    }
+    return this.snapshot();
+  }
+
+  completeObjectives(): PrologueSnapshot {
+    if (this.phase === 'OBJECTIVES') {
+      this.hasCompletedObjectives = true;
+      this.phase = 'PORTAL';
     }
     return this.snapshot();
   }
@@ -83,7 +92,10 @@ export class PrologueDirector {
       canSkip:
         this.phase === 'BRIEFING' &&
         this.briefingElapsedSeconds >= BRIEFING_SKIP_DELAY_SECONDS,
-      canReplay: this.phase === 'PORTAL' && this.hasCompletedBriefing,
+      canReplay:
+        this.phase === 'PORTAL' &&
+        this.hasCompletedBriefing &&
+        this.hasCompletedObjectives,
       portalOpen: this.phase === 'PORTAL' || this.phase === 'RUN',
     };
   }

@@ -4,6 +4,8 @@ import type {
   CellPhase,
   WorldVector3,
 } from '../contracts/world';
+import type { DomainPatchCell } from '../contracts/messages';
+import type { DomainMask } from '../contracts/world';
 
 export const WORLD_CELLS_PER_SIDE = 64;
 export const WORLD_CELL_SIZE_METERS = 2;
@@ -29,6 +31,8 @@ export interface WorldCellSnapshot {
   readonly featureTileId: number | null;
   readonly terrainRotationQuarterTurns: 0 | 1 | 2 | 3;
   readonly featureRotationQuarterTurns: 0 | 1 | 2 | 3 | null;
+  readonly terrainDomain: DomainMask;
+  readonly featureDomain: DomainMask;
 }
 
 interface MutableWorldCell {
@@ -39,6 +43,8 @@ interface MutableWorldCell {
   featureTileId: number | null;
   terrainRotationQuarterTurns: 0 | 1 | 2 | 3;
   featureRotationQuarterTurns: 0 | 1 | 2 | 3 | null;
+  terrainDomain: DomainMask;
+  featureDomain: DomainMask;
 }
 
 export type WorldCellView = Readonly<MutableWorldCell>;
@@ -156,6 +162,8 @@ export class WorldState {
         featureTileId: null,
         terrainRotationQuarterTurns: 0 as const,
         featureRotationQuarterTurns: null,
+        terrainDomain: { lo: 0, hi: 0 },
+        featureDomain: { lo: 0, hi: 0 },
       }),
     );
   }
@@ -173,6 +181,8 @@ export class WorldState {
       featureTileId: cell.featureTileId,
       terrainRotationQuarterTurns: cell.terrainRotationQuarterTurns,
       featureRotationQuarterTurns: cell.featureRotationQuarterTurns,
+      terrainDomain: cell.terrainDomain,
+      featureDomain: cell.featureDomain,
     });
   }
 
@@ -183,7 +193,7 @@ export class WorldState {
 
   initializeCell(cellId: CellId, paletteEpoch = 0): WorldCellSnapshot {
     const cell = this.getMutableCell(cellId);
-    if (cell.phase === 'FIXED') {
+    if (cell.phase === 'FIXED' || cell.phase === 'FRACTURED') {
       throw new FixedCellMutationError(cellId);
     }
     if (cell.phase === 'UNINITIALIZED') {
@@ -195,7 +205,7 @@ export class WorldState {
 
   setPhase(
     cellId: CellId,
-    phase: Exclude<CellPhase, 'FIXED'>,
+    phase: Exclude<CellPhase, 'FIXED' | 'FRACTURED'>,
   ): WorldCellSnapshot {
     const cell = this.getMutableCell(cellId);
     this.assertMutable(cellId, cell);
@@ -223,6 +233,9 @@ export class WorldState {
       }
       throw new FixedCellMutationError(commit.cellId);
     }
+    if (cell.phase === 'FRACTURED') {
+      throw new FixedCellMutationError(commit.cellId);
+    }
 
     cell.phase = 'FIXED';
     cell.observationCharge = 1;
@@ -232,6 +245,8 @@ export class WorldState {
     cell.featureRotationQuarterTurns =
       commit.featureRotationQuarterTurns ?? null;
     cell.paletteEpoch = commit.paletteEpoch ?? cell.paletteEpoch;
+    cell.terrainDomain = singletonMask(commit.terrainTileId);
+    cell.featureDomain = singletonMask(commit.featureTileId ?? 0);
     this.fixedCellCount += 1;
     return this.getCell(commit.cellId);
   }
@@ -265,6 +280,37 @@ export class WorldState {
     return this.fixedCellCount;
   }
 
+  applyDomainPatch(cells: readonly DomainPatchCell[]): void {
+    for (const patch of cells) {
+      const cell = this.getMutableCell(patch.cellId);
+      if (cell.phase === 'FIXED' || cell.phase === 'FRACTURED') continue;
+      if (cell.phase === 'UNINITIALIZED') cell.phase = 'SUPERPOSED';
+      cell.terrainDomain = {
+        lo: patch.terrain.lo >>> 0,
+        hi: patch.terrain.hi >>> 0,
+      };
+      cell.featureDomain = {
+        lo: patch.feature.lo >>> 0,
+        hi: patch.feature.hi >>> 0,
+      };
+      cell.paletteEpoch = patch.paletteEpoch;
+    }
+  }
+
+  fractureFixedCells(cellIds: readonly CellId[]): readonly CellId[] {
+    const fractured: CellId[] = [];
+    for (const cellId of cellIds) {
+      const cell = this.getMutableCell(cellId);
+      if (cell.phase === 'FRACTURED') continue;
+      if (cell.phase !== 'FIXED') continue;
+      cell.phase = 'FRACTURED';
+      cell.observationCharge = 0;
+      this.fixedCellCount -= 1;
+      fractured.push(cellId);
+    }
+    return fractured;
+  }
+
   fixedCellIds(): readonly CellId[] {
     const ids: CellId[] = [];
     for (let cellId = 0; cellId < this.cells.length; cellId += 1) {
@@ -279,8 +325,13 @@ export class WorldState {
   }
 
   private assertMutable(cellId: CellId, cell: MutableWorldCell): void {
-    if (cell.phase === 'FIXED') {
+    if (cell.phase === 'FIXED' || cell.phase === 'FRACTURED') {
       throw new FixedCellMutationError(cellId);
     }
   }
+}
+
+function singletonMask(variantId: number): DomainMask {
+  if (variantId < 32) return { lo: (1 << variantId) >>> 0, hi: 0 };
+  return { lo: 0, hi: (1 << (variantId - 32)) >>> 0 };
 }

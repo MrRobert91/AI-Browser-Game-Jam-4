@@ -11,8 +11,6 @@ export type NarrativeCueId =
   | 'firstDanger'
   | 'firstDeath'
   | 'respawn'
-  | 'uncertaintyDetected'
-  | 'uncertaintyFixed'
   | 'lastSixtySeconds'
   | 'lastThirtySeconds'
   | 'final'
@@ -45,7 +43,9 @@ export type NarrativeCueId =
   | 'ambientA'
   | 'ambientB'
   | 'ambientC'
-  | 'ambientD';
+  | 'ambientD'
+  | 'objectivesDirective'
+  | 'livesExhausted';
 export type NarrativeCategory =
   | 'critical'
   | 'distance'

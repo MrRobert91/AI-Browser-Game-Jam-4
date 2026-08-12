@@ -8,6 +8,7 @@ export interface GameHudElements {
 export class GameHud {
   readonly onboarding: HTMLElement;
   readonly subtitle: HTMLElement;
+  readonly runStatus: HTMLElement;
   private subtitlesEnabled = true;
   private displayedTime = '';
   private countdownState = '';
@@ -26,7 +27,15 @@ export class GameHud {
     this.subtitle.setAttribute('role', 'status');
     this.subtitle.setAttribute('aria-live', 'polite');
     this.subtitle.hidden = true;
-    parent.append(this.onboarding, this.subtitle);
+    this.runStatus = document.createElement('aside');
+    this.runStatus.className = 'run-status';
+    this.runStatus.setAttribute('aria-live', 'polite');
+    this.runStatus.innerHTML = `
+      <p><span>${locale === 'en' ? 'COVERAGE' : 'COBERTURA'}</span><strong data-coverage>0 / 4096</strong></p>
+      <p class="run-status__lives" aria-label="${locale === 'en' ? 'Three lives remaining' : 'Tres vidas restantes'}">
+        <span>${locale === 'en' ? 'LIVES' : 'VIDAS'}</span><strong data-lives aria-hidden="true">● ● ●</strong>
+      </p>`;
+    parent.append(this.onboarding, this.subtitle, this.runStatus);
   }
 
   setTime(remainingSeconds: number): void {
@@ -66,8 +75,26 @@ export class GameHud {
     this.onboarding.dataset.complete = 'true';
   }
 
+  setCoverage(fixedCells: number): void {
+    const coverage =
+      this.runStatus.querySelector<HTMLElement>('[data-coverage]');
+    if (coverage) coverage.textContent = `${Math.max(0, fixedCells)} / 4096`;
+  }
+
+  setLives(livesRemaining: number): void {
+    const lives = Math.max(0, Math.min(3, Math.floor(livesRemaining)));
+    const element = this.runStatus.querySelector<HTMLElement>('[data-lives]');
+    if (element)
+      element.textContent =
+        `${'● '.repeat(lives)}${'○ '.repeat(3 - lives)}`.trim();
+    this.runStatus
+      .querySelector('.run-status__lives')
+      ?.setAttribute('aria-label', `${lives} / 3`);
+  }
+
   destroy(): void {
     this.onboarding.remove();
     this.subtitle.remove();
+    this.runStatus.remove();
   }
 }

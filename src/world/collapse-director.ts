@@ -17,6 +17,7 @@ export interface CollapseVisualAdapter {
   update(cellId: CellId, progress: number): void;
   emitBoundaryWave(cellId: CellId): void;
   complete(cellId: CellId): void;
+  fracture(cellIds: readonly CellId[]): void;
 }
 
 export interface CollapsePhysicsAdapter {
@@ -35,11 +36,6 @@ function horizontalDistance(left: WorldVector3, right: WorldVector3): number {
   return Math.hypot(left[0] - right[0], left[2] - right[2]);
 }
 
-function deterministicRotation(event: CollapseEvent): 0 | 1 | 2 | 3 {
-  const mixed = Math.imul(event.cellId ^ event.worldSeed, 0x45d9f3b) >>> 0;
-  return (mixed % 4) as 0 | 1 | 2 | 3;
-}
-
 function clampDuration(durationMs: number): number {
   return Math.min(
     MAX_COLLAPSE_DURATION_MS,
@@ -52,6 +48,7 @@ const NOOP_VISUALS: CollapseVisualAdapter = {
   update: () => undefined,
   emitBoundaryWave: () => undefined,
   complete: () => undefined,
+  fracture: () => undefined,
 };
 
 const NOOP_PHYSICS: CollapsePhysicsAdapter = {
@@ -92,6 +89,7 @@ export class CollapseDirector {
         existing.featureTileId === event.featureTileId
       );
     }
+    if (existing.phase === 'FRACTURED') return false;
     if (this.active.has(event.cellId)) {
       return false;
     }
@@ -106,7 +104,7 @@ export class CollapseDirector {
       cellId: event.cellId,
       terrainTileId: event.terrainTileId,
       featureTileId: event.featureTileId,
-      terrainRotationQuarterTurns: deterministicRotation(event),
+      terrainRotationQuarterTurns: event.terrainRotationQuarterTurns,
     };
     this.active.set(event.cellId, {
       event,
@@ -126,7 +124,11 @@ export class CollapseDirector {
     const fixed: CellId[] = [];
     for (const cellId of contactCellIds) {
       const cell = this.worldState.getCell(cellId);
-      if (cell.phase === 'FIXED' || this.active.has(cellId)) {
+      if (
+        cell.phase === 'FIXED' ||
+        cell.phase === 'FRACTURED' ||
+        this.active.has(cellId)
+      ) {
         continue;
       }
       const commit: FixedCellCommit = {
@@ -142,6 +144,7 @@ export class CollapseDirector {
           cellId,
           terrainTileId: safeTerrainTileId,
           featureTileId: null,
+          terrainRotationQuarterTurns: 0,
           entropyBefore: 0,
           durationMs: MIN_COLLAPSE_DURATION_MS,
           worldSeed: 0,
@@ -156,6 +159,11 @@ export class CollapseDirector {
       fixed.push(cellId);
     }
     return fixed;
+  }
+
+  fracture(cellIds: readonly CellId[]): void {
+    for (const cellId of cellIds) this.active.delete(cellId);
+    this.visuals.fracture(cellIds);
   }
 
   update(nowMs: number): readonly CellId[] {

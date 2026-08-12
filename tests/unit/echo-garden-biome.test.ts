@@ -33,7 +33,7 @@ describe('Echo Garden post-jam biome', () => {
       ),
     ).toBe(true);
     expect(COMPILED_GRAMMAR.terrain.length).toBe(43);
-    expect(COMPILED_GRAMMAR.features.length).toBe(22);
+    expect(COMPILED_GRAMMAR.features.length).toBe(21);
 
     const bytes = await Promise.all(
       [...terrain, ...features].map(async (tile) =>

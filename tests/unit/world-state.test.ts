@@ -74,4 +74,16 @@ describe('WorldState', () => {
       FixedCellMutationError,
     );
   });
+
+  it('allows only the explicit FIXED to FRACTURED terminal transition', () => {
+    const state = new WorldState();
+    const cellId = cellCoordinatesToId({ x: 12, z: 12 });
+    const commit = { cellId, terrainTileId: 4, featureTileId: 2 } as const;
+    state.commitFixed(commit);
+    expect(state.fractureFixedCells([cellId])).toEqual([cellId]);
+    expect(state.getCell(cellId).phase).toBe('FRACTURED');
+    expect(state.countFixedCells()).toBe(0);
+    expect(() => state.commitFixed(commit)).toThrow(FixedCellMutationError);
+    expect(state.fractureFixedCells([cellId])).toEqual([]);
+  });
 });

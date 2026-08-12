@@ -1,5 +1,5 @@
 import type { UnlockablePackId } from './tiles';
-import type { CellId, WorldVector3 } from './world';
+import type { CellId, DomainMask, WorldVector3 } from './world';
 
 export interface VisibleCellObservation {
   readonly cellId: CellId;
@@ -13,7 +13,16 @@ export interface ObservationInput {
   readonly tick: number;
   readonly playerPosition: WorldVector3;
   readonly cameraForward: WorldVector3;
+  readonly elapsedRunSeconds: number;
   readonly visibleCells: readonly VisibleCellObservation[];
+}
+
+export interface FractureRegionInput {
+  readonly type: 'FRACTURE_REGION';
+  readonly tick: number;
+  readonly centerCellId: CellId;
+  readonly radiusMeters: 30;
+  readonly protectedCellIds: readonly CellId[];
 }
 
 export interface UnlockPackInput {
@@ -33,9 +42,30 @@ export interface CollapseEvent {
   readonly cellId: CellId;
   readonly terrainTileId: number;
   readonly featureTileId: number | null;
+  readonly terrainRotationQuarterTurns: 0 | 1 | 2 | 3;
   readonly entropyBefore: number;
   readonly durationMs: number;
   readonly worldSeed: number;
+}
+
+export interface DomainPatchCell {
+  readonly cellId: CellId;
+  readonly terrain: DomainMask;
+  readonly feature: DomainMask;
+  readonly paletteEpoch: number;
+}
+
+export interface DomainPatchEvent {
+  readonly type: 'DOMAIN_PATCH';
+  readonly tick: number;
+  readonly cells: readonly DomainPatchCell[];
+}
+
+export interface FractureEvent {
+  readonly type: 'FRACTURE';
+  readonly tick: number;
+  readonly centerCellId: CellId;
+  readonly cellIds: readonly CellId[];
 }
 
 export interface ChunkBoundaryEvent {
@@ -61,5 +91,11 @@ export interface SolverWarning {
   readonly message: string;
 }
 
-export type WorkerInput = ObservationInput | UnlockPackInput | ResetInput;
-export type WorkerOutput = CollapseEvent | ChunkBoundaryEvent | SolverWarning;
+export type WorkerInput =
+  ObservationInput | UnlockPackInput | ResetInput | FractureRegionInput;
+export type WorkerOutput =
+  | CollapseEvent
+  | ChunkBoundaryEvent
+  | DomainPatchEvent
+  | FractureEvent
+  | SolverWarning;

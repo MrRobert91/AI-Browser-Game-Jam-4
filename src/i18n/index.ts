@@ -72,9 +72,6 @@ export interface UiCopy {
     Record<'water' | 'forest' | 'ruin' | 'storm', string>
   >;
   readonly packStates: Readonly<Record<string, string>>;
-  readonly uncertaintyPrefix: string;
-  readonly reconciledPrefix: string;
-  readonly uncertaintyStates: Readonly<Record<string, string>>;
   readonly resultEyebrow: string;
   readonly resultTitle: string;
   readonly profile: string;
@@ -183,16 +180,6 @@ export const UI_COPY: LocalizedCatalog<UiCopy> = {
       LOCKED: 'locked',
       AVAILABLE: 'available',
       COLLECTED: 'collected',
-    },
-    uncertaintyPrefix: 'PENDING UPDATE INCIDENT',
-    reconciledPrefix: 'COMMON RECORD',
-    uncertaintyStates: {
-      DORMANT: 'LATENT REPORT',
-      STALKING: 'UNOBSERVED DESCRIPTION',
-      SEEN: 'REVIEW IN PROGRESS',
-      PETRIFYING: 'RECONCILING',
-      CONTACT: 'RECORD CONFLICT',
-      FIXED_STATUE: 'RECONCILED RESULT',
     },
     resultEyebrow: 'AGENT UPDATE RECORD',
     resultTitle:
@@ -325,16 +312,6 @@ export const UI_COPY: LocalizedCatalog<UiCopy> = {
       LOCKED: 'bloqueada',
       AVAILABLE: 'disponible',
       COLLECTED: 'recogida',
-    },
-    uncertaintyPrefix: 'INCIDENCIA DE ACTUALIZACIÓN PENDIENTE',
-    reconciledPrefix: 'REGISTRO COMÚN',
-    uncertaintyStates: {
-      DORMANT: 'INFORME LATENTE',
-      STALKING: 'DESCRIPCIÓN NO OBSERVADA',
-      SEEN: 'REVISIÓN EN CURSO',
-      PETRIFYING: 'RECONCILIANDO',
-      CONTACT: 'CONFLICTO DE EXPEDIENTE',
-      FIXED_STATUE: 'RESULTADO RECONCILIADO',
     },
     resultEyebrow: 'EXPEDIENTE DE ACTUALIZACIÓN DEL AGENTE',
     resultTitle:

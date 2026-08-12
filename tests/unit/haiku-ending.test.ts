@@ -66,6 +66,7 @@ describe('local haiku and ending', () => {
     const closure = closureForSeedCount(3);
     expect(closure.closure).toBe('Mundo habitable');
     const text = formatRunResult({
+      endReason: 'TIME_EXPIRED',
       worldSeed: 0xa91f42c0,
       seedLabel: formatSeed(0xa91f42c0),
       profile: 'Cartógrafo',
@@ -82,6 +83,7 @@ describe('local haiku and ending', () => {
     expect(text).toContain('sin reconocimiento de causalidad cosmológica');
     expect(
       describeAgentUpdate({
+        endReason: 'TIME_EXPIRED',
         worldSeed: 0xa91f42c0,
         seedLabel: formatSeed(0xa91f42c0),
         profile: 'Cartógrafo',

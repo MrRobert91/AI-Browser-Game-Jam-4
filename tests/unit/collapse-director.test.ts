@@ -22,6 +22,7 @@ function event(cellId: number): CollapseEvent {
     cellId,
     terrainTileId: 7,
     featureTileId: 2,
+    terrainRotationQuarterTurns: 0,
     entropyBefore: 1.2,
     durationMs: 600,
     worldSeed: 123,
@@ -50,6 +51,7 @@ describe('CollapseDirector', () => {
       update: vi.fn(),
       emitBoundaryWave: vi.fn(),
       complete: vi.fn(),
+      fracture: vi.fn(),
     };
     const physics: CollapsePhysicsAdapter = {
       enableFixedCollider: vi.fn(),

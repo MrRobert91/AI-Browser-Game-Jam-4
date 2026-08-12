@@ -10,6 +10,7 @@ function fakeSolver(): ObservableSolverClient {
     sendObservation: vi.fn(() => 1),
     sendUnlockPack: vi.fn(() => 2),
     reset: vi.fn(() => 3),
+    fractureRegion: vi.fn(() => 4),
   };
 }
 
@@ -42,6 +43,7 @@ describe('ObservableWorldBridge', () => {
       cellId: farCellId,
       terrainTileId: 1,
       featureTileId: null,
+      terrainRotationQuarterTurns: 0,
       entropyBefore: 1,
       durationMs: 500,
       worldSeed: 9,
@@ -61,6 +63,7 @@ describe('ObservableWorldBridge', () => {
       cellId,
       terrainTileId: 1,
       featureTileId: null,
+      terrainRotationQuarterTurns: 0,
       entropyBefore: 1,
       durationMs: 500,
       worldSeed: 9,
