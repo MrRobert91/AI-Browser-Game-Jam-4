@@ -24,6 +24,7 @@ Actualizado: 2026-08-12 (Europe/Madrid)
 | POST — Prólogo bilingüe | #91–#94 | Implementada en rama acumulativa | Localización, voz/ambientes y sala/briefing listos para PR a `dev` |
 | POST — Media y mundo material | #96 | Implementada en rama | Audio autorizado, briefing 1080p, panorama completo, observación 20 m y texturas compartidas |
 | POST — WFC2 integral | #98–#103 | Implementada en `codex/epic-98-wfc2-gameplay` | Solver real, fractura, vidas, arte, objetivos y QA hacia `dev` |
+| POST — Biomas, detonación y portal | #105 | Implementada en rama | `codex/issue-105-visual-biomes-prologue` desde `origin/dev` `1f318b1` |
 | POST — Expansiones | #52–#56 | En rama acumulativa salvo #54 | #54 ya estaba cerrada; #52, #53, #55 y #56 listas para revisión |
 
 ### Estado operativo actual
@@ -40,6 +41,15 @@ Actualizado: 2026-08-12 (Europe/Madrid)
 - Evidencia actual: galerías/capturas locales, simulación de 10.000 seeds, WebM narrativo y QA automatizada bajo [`docs/progress/`](./progress/).
 - Gate humano: #83 y el epic #75 permanecen abiertos y **NO-GO 0/5**; la rama no afirma sesiones que no se han realizado.
 - Estado remoto verificado: PR #84 abierta y no draft; sus palabras de cierre excluyen deliberadamente #75 y #83.
+
+### 2026-08-12 — Issue #105 — Biomas legibles, detonación y portal esférico
+
+- La gramática compilada conserva `distanceCurve` y `neighborBias`. El contexto de pesos lee tags cardinales fijados; Agua recibe un multiplicador base de 1,5 y una búsqueda conectada acotada que favorece expansión hasta 16 celdas, cierre desde 17 y salida abierta desde 24. Bosque duplica como mínimo la afinidad entre árboles y frena al superar el 60 % local.
+- Árboles, rocas y ruinas ofrecen cinco siluetas deterministas por definición. Las geometrías compuestas entran en lotes instanciados por familia/variante; árboles jóvenes y viejos, masas de roca, ruinas y detalles ocupan la mayor parte de sus celdas. Los colliders crecen con el volumen visual sin alterar reservas, corredores u origen.
+- La bomba combina núcleo rojo y pinchos negros. `DETONATING` bloquea control durante 0,7 s y dibuja semiesferas/anillos amarillos, verdes y naranjas antes de fracturar y consumir una única vida. Movimiento reducido usa una cúpula y un anillo suaves.
+- `livesExhausted` pasa por reproducción exclusiva de `AudioDirector`; la voz previa se cancela y el final por tercera muerte conserva texto sin lanzar una segunda voz.
+- Alice Boole ocupa la pantalla 3D del briefing, comparte su filtro y deja de usar retrato superpuesto. El botón coral solo responde en `ROOM`, se apaga después, desaparece la repetición y una esfera blanca de radio 1,1 m inicia `RUN` sin abrir la pared.
+- Evidencia real PNG/WebP y dos WebM reproducibles: [`docs/progress/issue-105-visual-biomes-prologue/`](./progress/issue-105-visual-biomes-prologue/).
 
 ### 2026-08-12 — Epic #98 / Issues #99–#103 — WFC2, fractura y objetivos operativos
 
