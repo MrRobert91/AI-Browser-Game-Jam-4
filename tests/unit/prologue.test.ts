@@ -14,13 +14,19 @@ import {
 } from '../../src/render/agency-room';
 
 describe('bilingual room prologue', () => {
-  it('follows LANGUAGE_SELECT → ROOM → BRIEFING → PORTAL → RUN exactly once', () => {
+  it('follows LANGUAGE_SELECT → ROOM → BRIEFING → OBJECTIVES → PORTAL → RUN exactly once', () => {
     const prologue = new PrologueDirector();
     expect(prologue.snapshot().phase).toBe('LANGUAGE_SELECT');
     expect(prologue.enterRoom().phase).toBe('ROOM');
     expect(prologue.pressButton(false).phase).toBe('ROOM');
     expect(prologue.pressButton(true).phase).toBe('BRIEFING');
     prologue.update(BRIEFING_DURATION_SECONDS);
+    expect(prologue.snapshot()).toMatchObject({
+      phase: 'OBJECTIVES',
+      portalOpen: false,
+      canReplay: false,
+    });
+    prologue.completeObjectives();
     expect(prologue.snapshot()).toMatchObject({
       phase: 'PORTAL',
       portalOpen: true,
@@ -37,7 +43,8 @@ describe('bilingual room prologue', () => {
     prologue.update(BRIEFING_SKIP_DELAY_SECONDS - 0.01);
     expect(prologue.skip().phase).toBe('BRIEFING');
     prologue.update(0.01);
-    expect(prologue.skip().phase).toBe('PORTAL');
+    expect(prologue.skip().phase).toBe('OBJECTIVES');
+    expect(prologue.completeObjectives().phase).toBe('PORTAL');
     expect(prologue.pressButton(true).phase).toBe('BRIEFING');
   });
 

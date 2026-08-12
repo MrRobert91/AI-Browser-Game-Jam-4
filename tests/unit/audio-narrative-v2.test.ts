@@ -73,7 +73,7 @@ describe('audio settings v2', () => {
 });
 
 describe('bounded bilingual Measure narration', () => {
-  it('has exact EN/ES parity with 44 cues per language', () => {
+  it('has exact EN/ES parity with 44 active cues per language', () => {
     expect(NARRATIVE_CUE_ORDER).toHaveLength(44);
     expect(Object.keys(NARRATIVE_CATALOGS.en.cues)).toEqual(
       Object.keys(NARRATIVE_CATALOGS.es.cues),

@@ -1,5 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
 import type { AudioAssetManifest } from '../src/contracts/localization';
 
@@ -21,6 +23,8 @@ const locale = process.argv
 const id = process.argv
   .find((value) => value.startsWith('--id='))
   ?.split('=')[1];
+const ids = id?.split(',').filter(Boolean);
+const execFileAsync = promisify(execFile);
 
 function words(value: string): string[] {
   return value
@@ -61,7 +65,7 @@ for (const asset of manifest.assets
     (entry) =>
       entry.kind === 'voice' &&
       (!locale || entry.locale === locale) &&
-      (!id || entry.id === id),
+      (!ids || ids.includes(entry.id)),
   )
   .slice(0, limit)) {
   const file = await readFile(
@@ -109,6 +113,33 @@ for (const asset of manifest.assets
   );
 }
 const failures = report.filter((entry) => entry.similarity < 0.72);
+const priorReport =
+  ids || locale || Number.isFinite(limit)
+    ? (JSON.parse(
+        (
+          await execFileAsync('git', [
+            'show',
+            'HEAD:public/assets/audio/transcription-report.json',
+          ])
+        ).stdout,
+      ) as { entries: typeof report })
+    : { entries: [] };
+const activeVoiceKeys = new Set(
+  manifest.assets
+    .filter((asset) => asset.kind === 'voice')
+    .map((asset) => `${asset.locale}:${asset.id}`),
+);
+const refreshedKeys = new Set(
+  report.map((entry) => `${entry.locale}:${entry.id}`),
+);
+const mergedReport = [
+  ...priorReport.entries.filter(
+    (entry) =>
+      activeVoiceKeys.has(`${entry.locale}:${entry.id}`) &&
+      !refreshedKeys.has(`${entry.locale}:${entry.id}`),
+  ),
+  ...report,
+];
 await writeFile(
   REPORT_PATH,
   `${JSON.stringify(
@@ -116,9 +147,14 @@ await writeFile(
       version: 1,
       model: 'openai/gpt-4o-mini-transcribe',
       generatedAt: new Date().toISOString(),
-      totalCostUsd,
-      minimumSimilarity: Math.min(...report.map((entry) => entry.similarity)),
-      entries: report,
+      totalCostUsd: mergedReport.reduce(
+        (total, entry) => total + entry.costUsd,
+        0,
+      ),
+      minimumSimilarity: Math.min(
+        ...mergedReport.map((entry) => entry.similarity),
+      ),
+      entries: mergedReport,
     },
     null,
     2,

@@ -81,24 +81,6 @@
     "es": "Cuerpo de campo reemplazado. Tu expediente y las Semillas siguen siendo, lamentablemente, vinculantes."
   },
   {
-    "id": "uncertaintyDetected",
-    "category": "critical",
-    "priority": 115,
-    "durationMs": 6000,
-    "once": true,
-    "en": "Pending update incident. This result appears to belong to someone more decisive.",
-    "es": "Incidencia de actualización pendiente. Este resultado parece pertenecer a alguien más decidido."
-  },
-  {
-    "id": "uncertaintyFixed",
-    "category": "critical",
-    "priority": 116,
-    "durationMs": 6700,
-    "once": true,
-    "en": "Stable description admitted to the common record. The discrepancy is now officially user variability.",
-    "es": "Descripción estable admitida en el registro común. La discrepancia es ya, oficialmente, variabilidad de usuario."
-  },
-  {
     "id": "lastSixtySeconds",
     "category": "critical",
     "priority": 125,
@@ -401,5 +383,23 @@
     "once": true,
     "en": "The Measure records experience, not truth. Truth has a separate department.",
     "es": "La Medida registra experiencia, no verdad. La verdad pertenece a otro departamento."
+  },
+  {
+    "id": "objectivesDirective",
+    "category": "critical",
+    "priority": 100,
+    "durationMs": 30000,
+    "once": true,
+    "en": "Agency operational directive. During the next ten minutes, collapse as much of the Condensate as possible. Recover the Possibility Seeds in the authorized order: Water, Forest, Ruin, and Storm. Avoid consciousness bombs; detonation revokes thirty metres of approved reality. You have been allocated three lives. The loss of the third will close the record, regardless of your objections.",
+    "es": "Directiva operativa de la Agencia. Durante los próximos diez minutos, colapsa la mayor superficie posible del Condensado. Recupera las Semillas de Posibilidad en el orden autorizado: Agua, Bosque, Ruina y Tormenta. Evita las bombas de consciencia; su detonación revoca treinta metros de realidad aprobada. Se te han asignado tres vidas. La pérdida de la tercera cerrará el expediente, con independencia de tus objeciones."
+  },
+  {
+    "id": "livesExhausted",
+    "category": "critical",
+    "priority": 110,
+    "durationMs": 30000,
+    "once": true,
+    "en": "Third life exhausted. You are dead. The Agency regrets to inform you that no further field body has been authorized. It was not in vain: part of the Condensate was collapsed by your attention and will remain in the record. Your absence has been classified as a conclusive contribution.",
+    "es": "Tercera vida agotada. Has muerto. La Agencia lamenta informarte de que no procede otro cuerpo de campo. No ha sido en vano: una parte del Condensado quedó colapsada por tu atención y permanecerá en el expediente. Tu ausencia ha sido clasificada como aportación concluyente."
   }
 ]

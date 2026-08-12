@@ -162,6 +162,12 @@ async function main(): Promise<void> {
   if (!['all', 'en', 'es'].includes(requested))
     throw new Error('--locale must be all, en, or es');
   const limit = Number(argument('--limit') ?? Number.POSITIVE_INFINITY);
+  const requestedIds = new Set(
+    (argument('--id') ?? '')
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean),
+  );
   const force = process.argv.includes('--force');
   const catalog = JSON.parse(
     await readFile(resolve(ROOT, 'src/content/narrative.catalog.json'), 'utf8'),
@@ -171,13 +177,37 @@ async function main(): Promise<void> {
   const locales = (requested === 'all' ? ['en', 'es'] : [requested]) as (
     'en' | 'es'
   )[];
-  const assets: AudioAssetEntry[] = [];
+  const previousManifest = JSON.parse(
+    await readFile(MANIFEST_PATH, 'utf8').catch(() =>
+      run('git', ['show', 'HEAD:public/assets/audio/audio-manifest.json']),
+    ),
+  ) as AudioAssetManifest;
+  const previousByKey = new Map(
+    previousManifest.assets.map((asset) => [
+      `${asset.locale}:${asset.id}`,
+      asset,
+    ]),
+  );
+  const selectedCatalog = catalog
+    .filter((entry) => requestedIds.size === 0 || requestedIds.has(entry.id))
+    .slice(0, limit);
+  if (requestedIds.size > 0 && selectedCatalog.length !== requestedIds.size) {
+    throw new Error('At least one --id value is absent from the catalog.');
+  }
+  const assets: AudioAssetEntry[] = previousManifest.assets.filter(
+    (asset) =>
+      asset.kind === 'voice' &&
+      asset.locale !== 'none' &&
+      (requestedIds.size > 0
+        ? !requestedIds.has(asset.id) || !locales.includes(asset.locale)
+        : !locales.includes(asset.locale)),
+  );
   let totalCostUsd = 0;
   for (const locale of locales) {
     const config = CONFIG[locale];
     const directory = resolve(OUTPUT_ROOT, locale);
     await mkdir(directory, { recursive: true });
-    for (const entry of catalog.slice(0, limit)) {
+    for (const entry of selectedCatalog) {
       const destination = resolve(directory, `${entry.id}.mp3`);
       const raw = resolve(
         directory,
@@ -227,13 +257,22 @@ async function main(): Promise<void> {
           destination,
         ]),
       );
-      if (!Number.isFinite(duration) || duration < 1 || duration > 18) {
+      const maximumDuration =
+        entry.id === 'objectivesDirective' || entry.id === 'livesExhausted'
+          ? 40
+          : 18;
+      if (
+        !Number.isFinite(duration) ||
+        duration < 1 ||
+        duration > maximumDuration
+      ) {
         throw new Error(
           `${locale}/${entry.id} duration ${duration} is outside 1-18 s.`,
         );
       }
       const costUsd = await generationCost(apiKey, generationId);
       totalCostUsd += costUsd;
+      const previous = previousByKey.get(`${locale}:${entry.id}`);
       assets.push({
         id: entry.id,
         kind: 'voice',
@@ -245,20 +284,26 @@ async function main(): Promise<void> {
         model: config.model,
         voice: config.voice,
         style: config.style,
-        generationId,
-        generatedAt: new Date().toISOString(),
+        generationId: generationId ?? previous?.generationId ?? null,
+        generatedAt: generationId
+          ? new Date().toISOString()
+          : (previous?.generatedAt ?? new Date().toISOString()),
         durationSeconds: duration,
         bytes: bytes.byteLength,
         sha256: createHash('sha256').update(bytes).digest('hex'),
-        loudnessLufs: -16,
-        truePeakDbtp: -1.5,
-        costUsd,
+        loudnessLufs: generationId ? -16 : (previous?.loudnessLufs ?? -16),
+        truePeakDbtp: generationId ? -1.5 : (previous?.truePeakDbtp ?? -1.5),
+        costUsd: generationId ? costUsd : (previous?.costUsd ?? 0),
       });
       process.stdout.write(
         `${locale}/${entry.id} ${duration.toFixed(2)}s ${bytes.byteLength}B\n`,
       );
     }
   }
+  assets.push(
+    ...previousManifest.assets.filter((asset) => asset.kind === 'ambience'),
+  );
+  totalCostUsd = assets.reduce((total, asset) => total + asset.costUsd, 0);
   await mkdir(resolve(ROOT, 'public/assets/audio'), { recursive: true });
   const manifest: AudioAssetManifest = {
     version: 1,
