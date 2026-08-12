@@ -63,7 +63,10 @@ import { GameHud } from '../ui/hud';
 import { loadGameSettings, PauseMenu, type GameSettings } from '../ui/pause';
 import { ProgressionHud } from '../ui/progression-hud';
 import { ResultsPanel } from '../ui/results';
-import { SliceCollapseVisuals } from '../world/collapse-visuals';
+import {
+  SliceCollapseVisuals,
+  visualVariantIndex,
+} from '../world/collapse-visuals';
 import { createOriginDetailField } from '../world/origin-details';
 import { createWorldBoundaryVisual } from '../world/world-boundary';
 import {
@@ -150,7 +153,6 @@ function shellMarkup(locale: Locale): string {
       </p>
       <p data-objectives-subtitle role="status" aria-live="polite"></p>
       <div>
-        <button type="button" data-objectives-replay>${locale === 'en' ? 'REPEAT DIRECTIVE' : 'REPETIR DIRECTIVA'}</button>
         <button type="button" data-objectives-skip disabled>${locale === 'en' ? 'SKIP' : 'OMITIR'}</button>
       </div>
       <audio data-objectives-audio preload="auto"></audio>
@@ -333,9 +335,6 @@ function bootstrapGame(
   const objectivesSubtitle = root.querySelector<HTMLElement>(
     '[data-objectives-subtitle]',
   );
-  const objectivesReplay = root.querySelector<HTMLButtonElement>(
-    '[data-objectives-replay]',
-  );
   const objectivesSkip = root.querySelector<HTMLButtonElement>(
     '[data-objectives-skip]',
   );
@@ -367,7 +366,6 @@ function bootstrapGame(
     !briefingSkip ||
     !objectivesTransmission ||
     !objectivesSubtitle ||
-    !objectivesReplay ||
     !objectivesSkip ||
     !objectivesAudio
   ) {
@@ -670,15 +668,6 @@ function bootstrapGame(
     },
     { signal: abortController.signal },
   );
-  objectivesReplay.addEventListener(
-    'click',
-    () => {
-      startObjectivesAudio(
-        defeatTransmission ? 'livesExhausted' : 'objectivesDirective',
-      );
-    },
-    { signal: abortController.signal },
-  );
   objectivesSkip.addEventListener(
     'click',
     () => {
@@ -889,7 +878,6 @@ function bootstrapGame(
         objectivesTransmission.hidden = false;
         objectivesSubtitle.textContent = defeatText;
         objectivesSkip.hidden = true;
-        objectivesReplay.hidden = true;
         objectivesAudio.pause();
         narrative.play('livesExhausted');
         runClock!.endNow();
@@ -916,6 +904,43 @@ function bootstrapGame(
     originDetails.family.mesh.visible = true;
     worldBoundary.root.visible = true;
     superposition.root.visible = true;
+    if (evidenceMode && search.get('showcase') === 'variants') {
+      const usedCellIds = new Set<number>();
+      const families = [
+        { featureTileId: 8, terrainTileIds: [13, 14, 13, 14, 13], z: 62 },
+        { featureTileId: 12, terrainTileIds: [17, 18, 17, 18, 17], z: 65 },
+        { featureTileId: 2, terrainTileIds: [9, 10, 9, 10, 9], z: 68 },
+      ] as const;
+      for (const family of families) {
+        for (let variant = 0; variant < 5; variant += 1) {
+          let cellId = 0;
+          while (
+            usedCellIds.has(cellId) ||
+            visualVariantIndex(worldSeed, cellId, family.featureTileId) !==
+              variant
+          )
+            cellId += 1;
+          usedCellIds.add(cellId);
+          fixedVisuals.begin(
+            {
+              type: 'COLLAPSE',
+              cellId,
+              terrainTileId: family.terrainTileIds[variant],
+              featureTileId: family.featureTileId,
+              terrainRotationQuarterTurns: 0,
+              entropyBefore: 1,
+              durationMs: 225,
+              worldSeed,
+            },
+            [60 + variant * 2, 0, family.z],
+          );
+          fixedVisuals.complete(cellId);
+        }
+      }
+      playerPhysics?.controller.respawn({ x: 64, y: 1.7, z: 75 });
+      camera.lookAt(64, 2.5, 64);
+      shell.dataset.visualShowcase = 'ready';
+    }
     fixedVisuals.root.visible = true;
     if (wp5Visuals) wp5Visuals.root.visible = true;
     if (progressionHud) progressionHud.element.hidden = false;
@@ -1084,6 +1109,10 @@ function bootstrapGame(
         0,
         64 + Math.sin(angle + 0.4) * (radius + 4),
       );
+    }
+    if (shell.dataset.visualShowcase === 'ready') {
+      camera.position.set(64, 11, 78);
+      camera.lookAt(64, 2, 64);
     }
 
     const playerPosition = [

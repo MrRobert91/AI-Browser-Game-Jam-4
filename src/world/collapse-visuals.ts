@@ -42,6 +42,7 @@ export interface SliceTileStyle {
   readonly color: number;
   readonly deepWater: boolean;
   readonly feature: SliceFeatureKind;
+  readonly featureTileId: number | null;
   readonly visualVariant: 0 | 1 | 2 | 3 | 4;
 }
 
@@ -99,6 +100,7 @@ export function classifySliceTile(event: CollapseEvent): SliceTileStyle {
     color,
     deepWater,
     feature: featureKind(feature?.tags ?? []),
+    featureTileId: event.featureTileId,
     visualVariant: visualVariantIndex(
       event.worldSeed,
       event.cellId,
@@ -241,8 +243,8 @@ function mergeGeometries(parts: readonly BufferGeometry[]): BufferGeometry {
 }
 
 function treeGeometry(variant: number): BufferGeometry {
-  const height = 4.5 + variant * 0.675;
-  const trunkHeight = height * (0.55 + (variant % 2) * 0.05);
+  const height = 4.64 + variant * 0.28;
+  const trunkHeight = height * (0.58 + (variant % 2) * 0.03);
   const crownRadius = 0.9 + variant * 0.0625;
   const trunk = new CylinderGeometry(
     0.16 + variant * 0.018,
@@ -264,7 +266,7 @@ function treeGeometry(variant: number): BufferGeometry {
     const angle = (index / (3 + (variant % 3))) * Math.PI * 2 + variant * 0.31;
     crown.translate(
       Math.cos(angle) * 0.28,
-      trunkHeight + index * 0.42,
+      height - crownRadius - index * 0.48,
       Math.sin(angle) * 0.28,
     );
     return crown;
@@ -420,6 +422,8 @@ export class SliceCollapseVisuals implements CollapseVisualAdapter {
         material,
       );
       feature.position.y = featureHeight(style.feature, style.visualVariant);
+      if (style.feature === 'tree' && style.featureTileId === 9)
+        feature.scale.set(1.1, 1.25, 1.1);
       feature.castShadow = true;
       group.add(feature);
       transientMaterials.push(material);
@@ -631,7 +635,9 @@ export class SliceCollapseVisuals implements CollapseVisualAdapter {
         .clone()
         .setY(featureHeight(kind, record.style.visualVariant)),
       record.group.quaternion,
-      record.group.scale.clone().set(1, 1, 1),
+      record.style.feature === 'tree' && record.style.featureTileId === 9
+        ? record.group.scale.clone().set(1.1, 1.25, 1.1)
+        : record.group.scale.clone().set(1, 1, 1),
     );
     const index = batch.mesh.count;
     batch.mesh.setMatrixAt(index, this.matrix);

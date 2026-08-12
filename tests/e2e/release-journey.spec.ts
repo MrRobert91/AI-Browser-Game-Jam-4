@@ -85,6 +85,7 @@ async function skipBriefingAndCrossPortal(
   );
   await expect(shell).toHaveAttribute('data-alice-screen', 'visible');
   await expect(shell).toHaveAttribute('data-briefing-button', 'disabled');
+  await expect(page.locator('[data-objectives-replay]')).toHaveCount(0);
   const objectivesSkip = page.locator('[data-objectives-skip]');
   await expect(objectivesSkip).toBeEnabled({ timeout: 10_000 });
   await objectivesSkip.press('Enter');
@@ -181,6 +182,9 @@ test('canonical offline English journey reaches the qualitative ending', async (
   const objectivesSkip = page.locator('[data-objectives-skip]');
   await expect(objectivesSkip).toBeEnabled({ timeout: 10_000 });
   await objectivesSkip.press('Enter');
+  await page.screenshot({
+    path: testInfo.outputPath('04b-white-sphere-portal.png'),
+  });
   await page.keyboard.down('KeyW');
   const portalShell = page.locator('.observation-shell');
   for (let attempt = 0; attempt < 100; attempt += 1) {
@@ -266,7 +270,13 @@ test('three consciousness bombs fracture the world and end the run', async ({
   page,
 }, testInfo) => {
   test.slow();
-  await page.goto('/?wp5=preview&replay=wfc2-lives&speed=8&evidence=1');
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'ultima-observacion.settings.v2',
+      JSON.stringify({ reducedFlashes: false }),
+    );
+  });
+  await page.goto('/?wp5=preview&replay=wfc2-lives&speed=1&evidence=1');
   await enterRoom(page, 'en');
   await pressRoomButton(page);
   await skipBriefingAndCrossPortal(
@@ -274,8 +284,13 @@ test('three consciousness bombs fracture the world and end the run', async ({
     'collapse as much of the Condensate as possible',
   );
   const shell = page.locator('.observation-shell');
+  await expect(shell).toHaveAttribute('data-respawn-phase', 'DETONATING', {
+    timeout: 15_000,
+  });
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: testInfo.outputPath('bomb-detonating.png') });
   await expect(shell).toHaveAttribute('data-end-reason', 'LIVES_EXHAUSTED', {
-    timeout: 25_000,
+    timeout: 35_000,
   });
   await expect(page.locator('[data-lives]')).toHaveText('○ ○ ○');
   await expect
@@ -289,6 +304,22 @@ test('three consciousness bombs fracture the world and end the run', async ({
   await expect(page.locator('[data-slice-result]')).toBeVisible({
     timeout: 20_000,
   });
+});
+
+test('evidence showcase renders five deterministic tree, rock and ruin silhouettes', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-16x10');
+  await page.goto(
+    '/?wp5=preview&replay=wp5&speed=1&evidence=1&showcase=variants',
+  );
+  await enterRoom(page, 'en');
+  await pressRoomButton(page);
+  await skipBriefingAndCrossPortal(page);
+  const shell = page.locator('.observation-shell');
+  await expect(shell).toHaveAttribute('data-visual-showcase', 'ready');
+  await page.waitForTimeout(750);
+  await page.screenshot({ path: testInfo.outputPath('visual-variants.png') });
 });
 
 test('pointer lock and pause recover after language selection', async ({
