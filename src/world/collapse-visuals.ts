@@ -1,17 +1,20 @@
 import {
   BoxGeometry,
+  BufferGeometry,
   Color,
   ConeGeometry,
   CylinderGeometry,
+  Float32BufferAttribute,
   Group,
   IcosahedronGeometry,
   InstancedMesh,
   Matrix4,
   Mesh,
   MeshStandardMaterial,
+  Quaternion,
   RingGeometry,
   SphereGeometry,
-  type BufferGeometry,
+  Vector3,
   type Scene,
 } from 'three';
 
@@ -150,12 +153,12 @@ function featureKind(tags: readonly string[]): SliceFeatureKind {
   return 'empty';
 }
 
-function featureHeight(kind: VisibleFeatureKind, variant: number): number {
-  if (kind === 'tree') return 1.35 + variant * 0.08;
-  if (kind === 'structure') return 0.95;
+function featureHeight(kind: VisibleFeatureKind, _variant: number): number {
+  if (kind === 'tree') return 0;
+  if (kind === 'structure') return 0;
   if (kind === 'bomb') return 0.72;
-  if (kind === 'rock') return 0.55 + variant * 0.035;
-  return 0.25 + variant * 0.025;
+  if (kind === 'rock') return 0;
+  return 0;
 }
 
 function featureColor(kind: VisibleFeatureKind): number {
@@ -174,45 +177,150 @@ function featureGeometry(
   const scale = 1 + (variant - 2) * 0.08;
   switch (kind) {
     case 'tree':
-      return new ConeGeometry(0.58 * scale, 2.5 + variant * 0.12, 5 + variant);
+      return treeGeometry(variant);
     case 'rock': {
-      const geometry = new IcosahedronGeometry(0.65, variant > 2 ? 1 : 0);
-      geometry.scale(
-        1 + variant * 0.0625,
-        0.72 + variant * 0.055,
-        1 + (4 - variant) * 0.04,
-      );
-      return geometry;
+      const pieces = Array.from({ length: 2 + (variant % 3) }, (_, index) => {
+        const geometry = new IcosahedronGeometry(0.58 + index * 0.08, 0);
+        geometry.scale(
+          1.18 + variant * 0.035,
+          0.72 + variant * 0.09,
+          1.08 + (4 - variant) * 0.03,
+        );
+        geometry.translate((index - 1) * 0.34, 0.52 + index * 0.12, (index % 2) * 0.28 - 0.14);
+        return geometry;
+      });
+      return mergeGeometries(pieces);
     }
     case 'shrub': {
-      const geometry = new SphereGeometry(0.65 * scale, 5 + variant, 4);
+      const geometry = new SphereGeometry(0.82 * scale, 5 + variant, 4);
       geometry.scale(1.15, 0.62 + variant * 0.04, 0.95);
+      geometry.translate(0, 0.56, 0);
       return geometry;
     }
     case 'flower':
-      return new ConeGeometry(
-        0.2 + variant * 0.025,
-        0.48 + variant * 0.035,
-        5 + variant,
-      );
+      return clusteredDetailGeometry('flower', variant);
     case 'mushroom':
-      return new SphereGeometry(0.28 + variant * 0.035, 6 + variant, 4);
+      return clusteredDetailGeometry('mushroom', variant);
     case 'reeds':
-      return new CylinderGeometry(
-        0.08,
-        0.11,
-        1.05 + variant * 0.12,
-        4 + (variant % 2),
-      );
+      return clusteredDetailGeometry('reeds', variant);
     case 'structure':
-      return new BoxGeometry(
-        0.75 + variant * 0.08,
-        1.9 + variant * 0.16,
-        0.48 + (4 - variant) * 0.04,
-      );
+      return ruinGeometry(variant);
     case 'bomb':
-      return new IcosahedronGeometry(0.72, 1);
+      return bombGeometry(variant);
   }
+}
+
+function mergeGeometries(parts: readonly BufferGeometry[]): BufferGeometry {
+  const positions: number[] = [];
+  const normals: number[] = [];
+  for (const part of parts) {
+    const geometry = part.index ? part.toNonIndexed() : part;
+    const position = geometry.getAttribute('position');
+    const normal = geometry.getAttribute('normal');
+    for (let index = 0; index < position.count; index += 1) {
+      positions.push(position.getX(index), position.getY(index), position.getZ(index));
+      normals.push(normal.getX(index), normal.getY(index), normal.getZ(index));
+    }
+    if (geometry !== part) geometry.dispose();
+    part.dispose();
+  }
+  const merged = new BufferGeometry();
+  merged.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  merged.setAttribute('normal', new Float32BufferAttribute(normals, 3));
+  merged.computeBoundingBox();
+  merged.computeBoundingSphere();
+  return merged;
+}
+
+function treeGeometry(variant: number): BufferGeometry {
+  const height = 4.5 + variant * 0.675;
+  const trunkHeight = height * (0.55 + (variant % 2) * 0.05);
+  const crownRadius = 0.9 + variant * 0.0625;
+  const trunk = new CylinderGeometry(0.16 + variant * 0.018, 0.25 + variant * 0.025, trunkHeight, 6 + variant);
+  trunk.translate(0, trunkHeight / 2, 0);
+  const crowns = Array.from({ length: 3 + (variant % 3) }, (_, index) => {
+    const crown = index % 2 === 0
+      ? new SphereGeometry(crownRadius * (0.92 - index * 0.05), 7 + variant, 5)
+      : new ConeGeometry(crownRadius, 1.9 + variant * 0.12, 7 + variant);
+    crown.scale(1, 0.8 + (index % 2) * 0.25, 1);
+    const angle = (index / (3 + (variant % 3))) * Math.PI * 2 + variant * 0.31;
+    crown.translate(Math.cos(angle) * 0.28, trunkHeight + index * 0.42, Math.sin(angle) * 0.28);
+    return crown;
+  });
+  return mergeGeometries([trunk, ...crowns]);
+}
+
+function ruinGeometry(variant: number): BufferGeometry {
+  const height = 3.5 + variant * 0.625;
+  const width = 1.7 + variant * 0.0625;
+  const parts: BufferGeometry[] = [];
+  if (variant === 0) {
+    for (const x of [-0.65, 0.65]) {
+      const pillar = new BoxGeometry(0.42, height, 0.58);
+      pillar.translate(x, height / 2, 0);
+      parts.push(pillar);
+    }
+    const lintel = new BoxGeometry(width, 0.48, 0.65);
+    lintel.translate(0, height - 0.24, 0);
+    parts.push(lintel);
+  } else if (variant === 1) {
+    const column = new CylinderGeometry(0.56, 0.7, height, 7);
+    column.translate(0, height / 2, 0);
+    parts.push(column);
+  } else if (variant === 2) {
+    const wall = new BoxGeometry(width, height, 0.65);
+    wall.rotateY(0.12);
+    wall.translate(0, height / 2, 0);
+    parts.push(wall);
+  } else if (variant === 3) {
+    for (const z of [-0.55, 0.55]) {
+      const slab = new BoxGeometry(width, height * 0.82, 0.45);
+      slab.rotateY(z > 0 ? 0.16 : -0.16);
+      slab.translate(0, height * 0.41, z);
+      parts.push(slab);
+    }
+  } else {
+    const statue = new CylinderGeometry(0.48, 0.7, height * 0.82, 6);
+    statue.translate(0, height * 0.41, 0);
+    const head = new IcosahedronGeometry(0.58, 0);
+    head.translate(0, height - 0.36, 0);
+    parts.push(statue, head);
+  }
+  return mergeGeometries(parts);
+}
+
+function clusteredDetailGeometry(kind: 'flower' | 'mushroom' | 'reeds', variant: number): BufferGeometry {
+  const count = 7 + variant;
+  const parts = Array.from({ length: count }, (_, index) => {
+    const height = kind === 'reeds' ? 1.1 + (index % 4) * 0.13 : 0.55 + (index % 3) * 0.08;
+    const part = kind === 'mushroom'
+      ? new SphereGeometry(0.2 + (index % 2) * 0.04, 5, 4)
+      : kind === 'reeds'
+        ? new CylinderGeometry(0.05, 0.07, height, 4)
+        : new ConeGeometry(0.16, height, 5 + (variant % 3));
+    const angle = index * 2.399 + variant;
+    const radius = 0.25 + (index / count) * 0.65;
+    part.translate(Math.cos(angle) * radius, kind === 'mushroom' ? height * 0.55 : height / 2, Math.sin(angle) * radius);
+    return part;
+  });
+  return mergeGeometries(parts);
+}
+
+function bombGeometry(variant: number): BufferGeometry {
+  const core = new IcosahedronGeometry(0.68 + variant * 0.015, 1);
+  core.translate(0, 0.72, 0);
+  const spikes: BufferGeometry[] = [];
+  const count = 10 + variant;
+  for (let index = 0; index < count; index += 1) {
+    const phi = Math.acos(1 - (2 * (index + 0.5)) / count);
+    const theta = Math.PI * (1 + Math.sqrt(5)) * index;
+    const direction = new Vector3(Math.sin(phi) * Math.cos(theta), Math.cos(phi), Math.sin(phi) * Math.sin(theta));
+    const spike = new ConeGeometry(0.13, 0.65 + (index % 3) * 0.08, 5);
+    spike.applyQuaternion(new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), direction));
+    spike.translate(direction.x * 0.95, 0.72 + direction.y * 0.95, direction.z * 0.95);
+    spikes.push(spike);
+  }
+  return mergeGeometries([core, ...spikes]);
 }
 
 /** Fixed commits are batched by terrain family and visual-only feature variation. */

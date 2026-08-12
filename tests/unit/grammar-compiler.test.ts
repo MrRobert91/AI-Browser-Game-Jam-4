@@ -82,6 +82,29 @@ describe('grammar compiler', () => {
     expect(grammar.terrainCompatibility.N[0]).toEqual({ lo: 1, hi: 0 });
   });
 
+  it('preserves soft distance and neighbour weights in compiled variants', () => {
+    const grammar = compileGrammar({
+      terrain: [
+        {
+          ...meadow,
+          distanceCurve: [
+            [0, 0.5],
+            [20, 1.5],
+          ],
+          neighborBias: { meadow: 1.8 },
+        },
+      ],
+      features: [{ ...empty, neighborBias: { tree: 2 } }],
+      socketCompatibility: sockets,
+    });
+    expect(grammar.terrain[0]?.distanceCurve).toEqual([
+      [0, 0.5],
+      [20, 1.5],
+    ]);
+    expect(grammar.terrain[0]?.neighborBias).toEqual({ meadow: 1.8 });
+    expect(grammar.features[0]?.neighborBias).toEqual({ tree: 2 });
+  });
+
   it('rejects duplicate symmetric rotations and more than 64 variants', () => {
     expect(() =>
       compileTerrainVariants([{ ...meadow, rotationQuarterTurns: [0, 1] }]),

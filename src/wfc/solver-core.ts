@@ -63,8 +63,9 @@ export const SAFE_BODY_RADIUS_METERS = 2.5;
 export const CONSCIOUSNESS_BOMB_NUMERIC_ID = 17;
 
 const CELL_COUNT = WORLD_CELLS_PER_SIDE ** 2;
-const TERRAIN_WEIGHTS: readonly WeightDefinition[] =
-  COMPILED_GRAMMAR.terrain.map((variant) => ({ weight: variant.weight }));
+export const WATER_PACK_WEIGHT_MULTIPLIER = 1.5;
+export const TREE_PACK_WEIGHT_MULTIPLIER = 1.5;
+export const WATER_COMPONENT_TARGET_MAX = 24;
 const MAX_TERRAIN_ENTROPY = Math.log(COMPILED_GRAMMAR.terrain.length);
 const QUANTUM_MEADOW_VARIANT =
   COMPILED_GRAMMAR.terrain.find((variant) =>
@@ -76,6 +77,22 @@ const EMPTY_FEATURE_VARIANT =
 const BOMB_FEATURE_VARIANT = COMPILED_GRAMMAR.features.find(
   (variant) => variant.id === 'feature.consciousness-bomb',
 )?.variantId;
+
+export function waterCoreContinuationMultiplier(
+  connectedCoreCells: number,
+): number {
+  if (connectedCoreCells < 8) return 2;
+  if (connectedCoreCells <= 16) return 1.4;
+  if (connectedCoreCells < WATER_COMPONENT_TARGET_MAX) return 0.6;
+  return 0.15;
+}
+
+export function waterClosureMultiplier(connectedCoreCells: number): number {
+  if (connectedCoreCells < 8) return 1;
+  if (connectedCoreCells <= 16) return 1.25;
+  if (connectedCoreCells < WATER_COMPONENT_TARGET_MAX) return 2.2;
+  return 4;
+}
 
 class CoreCell implements TransactionCell {
   readonly cellId: number;
@@ -577,11 +594,8 @@ export class SolverCore {
       width: WORLD_CELLS_PER_SIDE,
       height: WORLD_CELLS_PER_SIDE,
       cells: this.#cells,
-      definitions: TERRAIN_WEIGHTS,
-      weightContext: {
-        distanceFromOrigin: distanceFromOrigin(work.cellId),
-        deterministicNoise01: 0.5,
-      },
+      definitions: this.#terrainWeightsForCell(work.cellId),
+      weightContext: this.#weightContextForCell(work.cellId),
       rng: createRng(
         deriveSeed(this.worldSeed, `collapse:${input.tick}:${work.cellId}`),
       ),
@@ -657,8 +671,29 @@ export class SolverCore {
         setBit(legal, id);
     }
     if (isEmpty(legal)) setBit(legal, EMPTY_FEATURE_VARIANT);
+    const neighborTagCounts = this.#neighborTagCounts(target.cellId);
+    const treeDensity = this.#localTreeDensity(target.cellId);
     const weights = COMPILED_GRAMMAR.features.map<WeightDefinition>(
-      (feature) => ({ weight: feature.weight }),
+      (feature) => {
+        let weight = feature.weight;
+        if (feature.tags.includes('tree')) {
+          weight *= TREE_PACK_WEIGHT_MULTIPLIER;
+          if ((neighborTagCounts.tree ?? 0) > 0) weight *= 2;
+          if (treeDensity > 0.6) weight *= 0.35;
+        } else if (
+          treeDensity > 0.6 &&
+          (feature.tags.includes('empty') ||
+            feature.tags.includes('mushrooms'))
+        ) {
+          weight *= 1.5;
+        }
+        return {
+          weight,
+          ...(feature.neighborBias === undefined
+            ? {}
+            : { neighborBias: feature.neighborBias }),
+        };
+      },
     );
     if (
       BOMB_FEATURE_VARIANT !== undefined &&
@@ -671,7 +706,7 @@ export class SolverCore {
         id = nextSetBit(legal, id + 1)
       ) {
         if (id !== BOMB_FEATURE_VARIANT)
-          otherWeight += COMPILED_GRAMMAR.features[id]?.weight ?? 0;
+          otherWeight += weights[id]?.weight ?? 0;
       }
       const probability = consciousnessBombProbability(input.elapsedRunSeconds);
       weights[BOMB_FEATURE_VARIANT] = {
@@ -687,6 +722,7 @@ export class SolverCore {
         weights,
         {
           distanceFromOrigin: distanceFromOrigin(target.cellId),
+          neighborTagCounts,
           deterministicNoise01: 0.5,
         },
         createRng(
@@ -761,10 +797,175 @@ export class SolverCore {
   }
 
   #terrainEntropy(cellId: number, domain: DomainMask): number {
-    return weightedEntropy(domain, TERRAIN_WEIGHTS, {
+    return weightedEntropy(
+      domain,
+      this.#terrainWeightsForCell(cellId),
+      this.#weightContextForCell(cellId),
+    );
+  }
+
+  #weightContextForCell(cellId: number): {
+    readonly distanceFromOrigin: number;
+    readonly neighborTagCounts: Readonly<Record<string, number>>;
+    readonly deterministicNoise01: number;
+  } {
+    return {
       distanceFromOrigin: distanceFromOrigin(cellId),
+      neighborTagCounts: this.#neighborTagCounts(cellId),
       deterministicNoise01: 0.5,
+    };
+  }
+
+  #terrainWeightsForCell(cellId: number): readonly WeightDefinition[] {
+    const connectedCoreCells = this.#prospectiveLiquidComponentSize(cellId);
+    const liquidNeighbors = this.#liquidNeighborPattern(cellId);
+    return COMPILED_GRAMMAR.terrain.map((variant) => {
+      let weight = variant.weight;
+      const liquidCore =
+        variant.tags.includes('deep_water') ||
+        variant.tags.includes('shallow_water');
+      const closure =
+        variant.tags.includes('shore') || variant.tags.includes('marsh');
+      if (variant.packId === 'water') weight *= WATER_PACK_WEIGHT_MULTIPLIER;
+      if (liquidCore) {
+        weight *= waterCoreContinuationMultiplier(connectedCoreCells);
+        if (liquidNeighbors.count === 1) weight *= 1.25;
+        if (liquidNeighbors.oppositePair) weight *= 1.35;
+        if (liquidNeighbors.adjacentPair || liquidNeighbors.count >= 3)
+          weight *= 0.65;
+      } else if (closure) {
+        weight *= waterClosureMultiplier(connectedCoreCells);
+        if (liquidNeighbors.count > 0) weight *= 1.25;
+      } else if (
+        connectedCoreCells >= WATER_COMPONENT_TARGET_MAX &&
+        liquidNeighbors.count > 0 &&
+        variant.packId !== 'water' &&
+        (variant.tags.includes('open') || variant.tags.includes('walkable'))
+      ) {
+        weight *= 3;
+      }
+      return {
+        weight,
+        ...(variant.distanceCurve === undefined
+          ? {}
+          : { distanceCurve: variant.distanceCurve }),
+        ...(variant.neighborBias === undefined
+          ? {}
+          : { neighborBias: variant.neighborBias }),
+      };
     });
+  }
+
+  #neighborTagCounts(cellId: number): Readonly<Record<string, number>> {
+    const counts: Record<string, number> = {};
+    for (const neighborId of cardinalNeighborIds(cellId)) {
+      const neighbor = this.#cells[neighborId];
+      if (neighbor?.phase !== 'FIXED') continue;
+      const tags = new Set<string>();
+      const terrain =
+        neighbor.fixedTerrainVariantId === null
+          ? undefined
+          : COMPILED_GRAMMAR.terrain[neighbor.fixedTerrainVariantId];
+      for (const tag of terrain?.tags ?? []) tags.add(tag);
+      const featureVariantId = singletonIndex(neighbor.featureDomain);
+      const feature =
+        featureVariantId === null
+          ? undefined
+          : COMPILED_GRAMMAR.features[featureVariantId];
+      for (const tag of feature?.tags ?? []) tags.add(tag);
+      for (const tag of tags) counts[tag] = (counts[tag] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  #prospectiveLiquidComponentSize(cellId: number): number {
+    const queue = cardinalNeighborIds(cellId).filter((neighborId) =>
+      this.#isFixedLiquidCore(neighborId),
+    );
+    const visited = new Set<number>();
+    while (queue.length > 0 && visited.size < WATER_COMPONENT_TARGET_MAX) {
+      const current = queue.shift();
+      if (current === undefined || visited.has(current)) continue;
+      if (!this.#isFixedLiquidCore(current)) continue;
+      visited.add(current);
+      for (const neighborId of cardinalNeighborIds(current)) {
+        if (!visited.has(neighborId) && this.#isFixedLiquidCore(neighborId))
+          queue.push(neighborId);
+      }
+    }
+    return Math.min(WATER_COMPONENT_TARGET_MAX, visited.size + 1);
+  }
+
+  #isFixedLiquidCore(cellId: number): boolean {
+    const cell = this.#cells[cellId];
+    if (cell?.phase !== 'FIXED' || cell.fixedTerrainVariantId === null)
+      return false;
+    const terrain = COMPILED_GRAMMAR.terrain[cell.fixedTerrainVariantId];
+    return (
+      terrain?.tags.includes('deep_water') === true ||
+      terrain?.tags.includes('shallow_water') === true
+    );
+  }
+
+  #liquidNeighborPattern(cellId: number): {
+    readonly count: number;
+    readonly oppositePair: boolean;
+    readonly adjacentPair: boolean;
+  } {
+    const x = cellId % WORLD_CELLS_PER_SIDE;
+    const z = Math.floor(cellId / WORLD_CELLS_PER_SIDE);
+    const north = z > 0 && this.#isFixedLiquidCore(cellId - WORLD_CELLS_PER_SIDE);
+    const east =
+      x + 1 < WORLD_CELLS_PER_SIDE && this.#isFixedLiquidCore(cellId + 1);
+    const south =
+      z + 1 < WORLD_CELLS_PER_SIDE &&
+      this.#isFixedLiquidCore(cellId + WORLD_CELLS_PER_SIDE);
+    const west = x > 0 && this.#isFixedLiquidCore(cellId - 1);
+    const count = [north, east, south, west].filter(Boolean).length;
+    return {
+      count,
+      oppositePair: count === 2 && ((north && south) || (east && west)),
+      adjacentPair:
+        count === 2 &&
+        ((north && east) ||
+          (east && south) ||
+          (south && west) ||
+          (west && north)),
+    };
+  }
+
+  #localTreeDensity(cellId: number): number {
+    const centerX = cellId % WORLD_CELLS_PER_SIDE;
+    const centerZ = Math.floor(cellId / WORLD_CELLS_PER_SIDE);
+    let fixedForestCells = 0;
+    let trees = 0;
+    for (let dz = -2; dz <= 2; dz += 1) {
+      for (let dx = -2; dx <= 2; dx += 1) {
+        if (dx === 0 && dz === 0) continue;
+        const x = centerX + dx;
+        const z = centerZ + dz;
+        if (
+          x < 0 ||
+          z < 0 ||
+          x >= WORLD_CELLS_PER_SIDE ||
+          z >= WORLD_CELLS_PER_SIDE
+        )
+          continue;
+        const cell = this.#cells[z * WORLD_CELLS_PER_SIDE + x];
+        if (cell?.phase !== 'FIXED' || cell.fixedTerrainVariantId === null)
+          continue;
+        const terrain = COMPILED_GRAMMAR.terrain[cell.fixedTerrainVariantId];
+        if (!terrain?.tags.includes('forest')) continue;
+        fixedForestCells += 1;
+        const featureVariantId = singletonIndex(cell.featureDomain);
+        if (
+          featureVariantId !== null &&
+          COMPILED_GRAMMAR.features[featureVariantId]?.tags.includes('tree')
+        )
+          trees += 1;
+      }
+    }
+    return fixedForestCells === 0 ? 0 : trees / fixedForestCells;
   }
 
   #publishBoundaryFor(cellId: number): void {

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { CollapseEvent } from '../../src/contracts/messages';
 import {
+  classifySliceTile,
   MAX_FIXED_WORLD_DRAW_BATCHES,
   SliceCollapseVisuals,
   visualVariantIndex,
@@ -31,6 +32,16 @@ describe('fixed world render batching', () => {
     );
     expect(variants).toEqual(new Set([0, 1, 2, 3, 4]));
     expect(visualVariantIndex(7, 42, 2)).toBe(visualVariantIndex(7, 42, 2));
+  });
+  it('keeps five visual variants for tree, rock and ruin definitions', () => {
+    for (const featureTileId of [2, 8, 9, 12, 13, 14, 15]) {
+      const variants = new Set(
+        Array.from({ length: 256 }, (_, cellId) =>
+          classifySliceTile({ ...event(cellId), featureTileId }).visualVariant,
+        ),
+      );
+      expect(variants).toEqual(new Set([0, 1, 2, 3, 4]));
+    }
   });
   it('keeps completed terrain and features in a bounded number of draw batches', () => {
     const scene = new Scene();

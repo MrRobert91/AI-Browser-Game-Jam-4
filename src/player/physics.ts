@@ -116,17 +116,33 @@ export async function createPlayerPhysicsRuntime(
     const center = cellCenterToWorld(commit.cellId);
     const isBomb = feature.id === 'feature.consciousness-bomb';
     const isRock = feature.id === 'feature.small-rock';
+    const isTree = feature.tags.includes('tree');
+    const isRuin = feature.tags.some((tag) =>
+      ['arch', 'column', 'wall', 'statue'].includes(tag),
+    );
     const descriptor = (
       isRock
         ? rapier.ColliderDesc.cuboid(
-            SMALL_ROCK_COLLIDER_WIDTH_METERS / 2,
-            SMALL_ROCK_COLLIDER_HEIGHT_METERS / 2,
-            SMALL_ROCK_COLLIDER_WIDTH_METERS / 2,
+            Math.max(0.75, SMALL_ROCK_COLLIDER_WIDTH_METERS / 2),
+            Math.max(0.7, SMALL_ROCK_COLLIDER_HEIGHT_METERS / 2),
+            Math.max(0.75, SMALL_ROCK_COLLIDER_WIDTH_METERS / 2),
           ).setTranslation(
             center[0],
-            SMALL_ROCK_COLLIDER_HEIGHT_METERS / 2,
+            Math.max(0.7, SMALL_ROCK_COLLIDER_HEIGHT_METERS / 2),
             center[2],
           )
+        : isTree
+          ? rapier.ColliderDesc.cylinder(3, 0.45).setTranslation(
+              center[0],
+              3,
+              center[2],
+            )
+          : isRuin
+            ? rapier.ColliderDesc.cuboid(0.9, 2.5, 0.45).setTranslation(
+                center[0],
+                2.5,
+                center[2],
+              )
         : rapier.ColliderDesc.cuboid(0.62, 0.85, 0.62).setTranslation(
             center[0],
             0.85,
