@@ -66,6 +66,14 @@
       "process": "authored from the observation reticle motif and project palette",
       "editing": "human-directed implementation and browser QA",
       "license": "Original project content under repository license"
+    },
+    {
+      "path": "public/assets/portraits/dr-alice-boole.webp",
+      "kind": "fictional retrofuturist institutional portrait",
+      "tool": "OpenAI image generation; local WebP optimization",
+      "process": "generated from a text-only prompt for an original middle-aged fictional woman in a military-corporate uniform; no real person, embedded text, logo or watermark",
+      "editing": "visually inspected at original resolution, resized to 1280x720 and encoded once as local WebP",
+      "license": "Original generated project content distributed with the game"
     }
   ]
 }

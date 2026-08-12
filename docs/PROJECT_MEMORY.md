@@ -23,16 +23,33 @@ Actualizado: 2026-08-12 (Europe/Madrid)
 | POST — Rendimiento | #89 | Implementada en rama | `codex/issue-89-stable-fps` desde `origin/dev` `423fc90` |
 | POST — Prólogo bilingüe | #91–#94 | Implementada en rama acumulativa | Localización, voz/ambientes y sala/briefing listos para PR a `dev` |
 | POST — Media y mundo material | #96 | Implementada en rama | Audio autorizado, briefing 1080p, panorama completo, observación 20 m y texturas compartidas |
+| POST — WFC2 integral | #98–#103 | Implementada en `codex/epic-98-wfc2-gameplay` | Solver real, fractura, vidas, arte, objetivos y QA hacia `dev` |
 | POST — Expansiones | #52–#56 | En rama acumulativa salvo #54 | #54 ya estaba cerrada; #52, #53, #55 y #56 listas para revisión |
 
 ### Estado operativo actual
 
-- Fase actual: issue #96 sobre `origin/dev` `d59c7b2`; el prólogo bilingüe #91–#94 y #89 ya están integrados en `dev`.
+- Fase actual: épica #98 con issues #99–#103 desde `origin/dev` `cafe6b4`; la rama acumulativa es `codex/epic-98-wfc2-gameplay` y no se fusiona automáticamente.
+- Contrato WFC2: terreno y feature salen de `COMPILED_GRAMMAR`, el worker publica dominios visibles, rotación y fracturas; los replays anteriores son intencionadamente incompatibles.
+- Juego: una consecuencia forzada resuelve huecos visibles rodeados sin recursión; las bombas escalan del 1 % al 10 %, fracturan 30 m y consumen una de tres vidas. La tercera activa `LIVES_EXHAUSTED`.
+- Presentación: Dr Alice Boole entrega la directiva bilingüe entre briefing y portal; HUD muestra cobertura, vidas y las cuatro Semillas en orden. Todas las voces y el retrato son assets locales.
+- Arte/física: cinco variantes deterministas por familia frecuente, superposición alimentada por dominios reales y colliders próximos para rocas/features bloqueantes.
+
+- Base integrada: #96 llegó a `dev` mediante PR #97; WFC2 parte del SHA `cafe6b4`.
 - Trabajo en revisión: PR #84 reúne #22, #52, #53, #55, #56 y la revisión narrativa #76–#82, con un commit funcional por issue y destino `dev`.
 - Arquitectura vigente: la build de jam sigue siendo offline. #56 solo muestra una variante remota si la publicación configura un proxy HTTPS y el jugador consiente en esa partida; ninguna clave de proveedor entra en el navegador.
 - Evidencia actual: galerías/capturas locales, simulación de 10.000 seeds, WebM narrativo y QA automatizada bajo [`docs/progress/`](./progress/).
 - Gate humano: #83 y el epic #75 permanecen abiertos y **NO-GO 0/5**; la rama no afirma sesiones que no se han realizado.
 - Estado remoto verificado: PR #84 abierta y no draft; sus palabras de cierre excluyen deliberadamente #75 y #83.
+
+### 2026-08-12 — Epic #98 / Issues #99–#103 — WFC2, fractura y objetivos operativos
+
+- El solver simplificado se sustituye por dominios de terreno y feature derivados de la gramática compilada. La propagación cardinal, rollback de radio tres, rotación elegida y fallback compatible pertenecen al worker; el render ya no inventa resultados con un hash paralelo.
+- Una celda visible dentro de 20 m rodeada por cuatro `FIXED` entra como una única consecuencia forzada. No genera una segunda búsqueda y `FRACTURED` nunca cuenta como borde fijado.
+- `feature.consciousness-bomb` es el único enemigo. Su probabilidad marginal determinista sube por minutos completos de 1 % a 10 %, respeta origen/corredores/reservas y solo detona por contacto tras el 70 % del colapso.
+- La explosión convierte los `FIXED` no protegidos a ≤30 m horizontales en `FRACTURED`, retira objetos/colliders, conserva Semillas y reduce cobertura. Las dos primeras muertes respawnean; la tercera congela el reloj y conserva panorama, perfil, haiku y seed.
+- Dr Alice Boole es un retrato original local con nombre HTML accesible. La directiva EN/ES, repetible y omitible tras tres segundos, precede al portal; la derrota reutiliza la transmisión. Cuatro clips nuevos se generaron con Harper/Kore, se normalizaron, transcribieron y registraron en el manifiesto.
+- La presentación usa cinco variaciones visuales deterministas para árboles, rocas, arbustos, flores, setas y juncos; la superposición alterna todas las familias legales del `DOMAIN_PATCH`. Las rocas bloquean el paso a ras de suelo, admiten salto y no aparecen en corredores.
+- Validación acumulada: 205 tests unitarios/integración, gramática/assets, 100 seeds con 20.011 colapsos sin vacíos/fallbacks/divergencias y E2E Chromium de inglés, español/fallback y final por tres vidas. La evidencia reproducible vive en [`docs/progress/wfc2-integral/`](./progress/wfc2-integral/).
 
 ### 2026-08-12 — Issue #96 — Audio, panorama completo y texturas ligeras
 

@@ -62,19 +62,39 @@ async function pressRoomButton(page: Page): Promise<void> {
   await expect(page.locator('.briefing-captions')).toBeVisible();
 }
 
-async function skipBriefingAndCrossPortal(page: Page): Promise<void> {
+async function skipBriefingAndCrossPortal(
+  page: Page,
+  expectedObjectiveText?: string,
+): Promise<void> {
   const skip = page.locator('[data-briefing-skip]');
   await expect(skip).toBeEnabled({ timeout: 15_000 });
   await page.keyboard.press('Escape');
   await expect(skip).toBeVisible();
   await expect(skip).toBeEnabled();
   await skip.click({ force: true });
+  const shell = page.locator('.observation-shell');
+  await expect(shell).toHaveAttribute('data-game-phase', 'OBJECTIVES');
+  await expect(page.locator('[data-objectives-transmission]')).toBeVisible();
+  if (expectedObjectiveText) {
+    await expect(page.locator('[data-objectives-subtitle]')).toContainText(
+      expectedObjectiveText,
+    );
+  }
+  await expect(page.locator('[data-objectives-name]')).toHaveText(
+    'Dr Alice Boole',
+  );
+  await expect(page.locator('[data-objectives-portrait]')).toHaveAttribute(
+    'src',
+    '/assets/portraits/dr-alice-boole.webp',
+  );
+  const objectivesSkip = page.locator('[data-objectives-skip]');
+  await expect(objectivesSkip).toBeEnabled({ timeout: 10_000 });
+  await objectivesSkip.press('Enter');
   await expect(page.locator('.observation-shell')).toHaveAttribute(
     'data-game-phase',
     'PORTAL',
   );
   await page.keyboard.down('KeyW');
-  const shell = page.locator('.observation-shell');
   for (let attempt = 0; attempt < 100; attempt += 1) {
     if ((await shell.getAttribute('data-game-phase')) === 'RUN') break;
     await page.waitForTimeout(100);
@@ -118,6 +138,7 @@ test('canonical offline English journey reaches the qualitative ending', async (
   });
 
   await page.goto('/?wp5=preview&replay=wp5&speed=8&evidence=1&start=590');
+  await page.waitForTimeout(300);
   await page.screenshot({ path: testInfo.outputPath('01-language.png') });
   await enterRoom(page, 'en');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
@@ -150,7 +171,24 @@ test('canonical offline English journey reaches the qualitative ending', async (
     'error',
   );
   await page.screenshot({ path: testInfo.outputPath('03-briefing.png') });
-  await skipBriefingAndCrossPortal(page);
+  const briefingSkip = page.locator('[data-briefing-skip]');
+  await expect(briefingSkip).toBeEnabled({ timeout: 15_000 });
+  await page.keyboard.press('Escape');
+  await briefingSkip.click({ force: true });
+  await expect(page.locator('[data-objectives-subtitle]')).toContainText(
+    'collapse as much of the Condensate as possible',
+  );
+  await page.screenshot({ path: testInfo.outputPath('04-objectives.png') });
+  const objectivesSkip = page.locator('[data-objectives-skip]');
+  await expect(objectivesSkip).toBeEnabled({ timeout: 10_000 });
+  await objectivesSkip.press('Enter');
+  await page.keyboard.down('KeyW');
+  const portalShell = page.locator('.observation-shell');
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    if ((await portalShell.getAttribute('data-game-phase')) === 'RUN') break;
+    await page.waitForTimeout(100);
+  }
+  await page.keyboard.up('KeyW');
   const shell = page.locator('.observation-shell');
   await expect(page.locator('.possibility-probabilities')).toHaveCount(0);
   await expect(page.locator('[data-slice-message]')).toHaveCount(0);
@@ -164,7 +202,7 @@ test('canonical offline English journey reaches the qualitative ending', async (
     'data-complete',
     'true',
   );
-  await page.screenshot({ path: testInfo.outputPath('04-collapse.png') });
+  await page.screenshot({ path: testInfo.outputPath('05-collapse.png') });
   await expect(
     page.locator('.progression-hud [data-pack="water"]'),
   ).toHaveAttribute('data-state', 'COLLECTED');
@@ -180,7 +218,7 @@ test('canonical offline English journey reaches the qualitative ending', async (
     'without recognition of cosmological causality',
   );
   await expect(page.locator('[data-remote-haiku-request]')).toHaveCount(0);
-  await page.screenshot({ path: testInfo.outputPath('05-final.png') });
+  await page.screenshot({ path: testInfo.outputPath('06-final.png') });
   const panorama = page.locator('[data-panorama-download]');
   await expect(panorama).toBeEnabled();
   await expect(panorama).toHaveAttribute('data-gallery-saved', 'true');
@@ -221,8 +259,37 @@ test('Spanish fallback briefing keeps captions and reaches RUN', async ({
     'data-briefing-media',
     'fallback',
   );
-  await skipBriefingAndCrossPortal(page);
+  await skipBriefingAndCrossPortal(page, 'colapsa la mayor superficie posible');
   await expect(page.locator('[data-seed-mode-label]')).toHaveText('SEED');
+});
+
+test('three consciousness bombs fracture the world and end the run', async ({
+  page,
+}, testInfo) => {
+  test.slow();
+  await page.goto('/?wp5=preview&replay=wfc2-lives&speed=8&evidence=1');
+  await enterRoom(page, 'en');
+  await pressRoomButton(page);
+  await skipBriefingAndCrossPortal(
+    page,
+    'collapse as much of the Condensate as possible',
+  );
+  const shell = page.locator('.observation-shell');
+  await expect(shell).toHaveAttribute('data-end-reason', 'LIVES_EXHAUSTED', {
+    timeout: 25_000,
+  });
+  await expect(page.locator('[data-lives]')).toHaveText('○ ○ ○');
+  await expect
+    .poll(async () => Number(await shell.getAttribute('data-fractured-cells')))
+    .toBeGreaterThan(0);
+  await expect(page.locator('[data-objectives-transmission]')).toBeVisible();
+  await expect(page.locator('[data-objectives-subtitle]')).toContainText(
+    'Third life exhausted. You are dead.',
+  );
+  await page.screenshot({ path: testInfo.outputPath('wfc2-lives-final.png') });
+  await expect(page.locator('[data-slice-result]')).toBeVisible({
+    timeout: 20_000,
+  });
 });
 
 test('pointer lock and pause recover after language selection', async ({
@@ -273,11 +340,11 @@ test('grammar gallery exposes the bounded Echo Garden extension', async ({
   await expect(app).toHaveAttribute('data-gallery-ready', 'true');
   await page.locator('[data-pack-filter]').selectOption('storm');
   const cards = page.locator('.grammar-card[data-pack="storm"]');
-  await expect(cards).toHaveCount(12);
+  await expect(cards).toHaveCount(10);
   await expect(viewer).toContainText('terrain.storm.echo-clearing');
   await expect(viewer).toContainText('feature.storm.memory-stone');
   await expect(page.locator('[data-gallery-summary]')).toContainText(
-    '12 tiles',
+    '10 tiles',
   );
   await page.screenshot({
     path: testInfo.outputPath('echo-garden-gallery.png'),
