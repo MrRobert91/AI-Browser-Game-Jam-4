@@ -40,4 +40,4 @@ El catálogo visual solo se activa con `?evidence=1&showcase=variants`; no modif
 - E2E: 15 pasadas y 1 showcase visual omitida intencionadamente en Firefox; los recorridos funcionales EN/ES y de tres bombas pasan en ambos motores.
 - Perfil: 148 draw calls, 882.000 triángulos, worker p95 2,88 ms, main p95 9,32 ms, 60 FPS estimados y límites duros satisfechos.
 - `npm.cmd audit --omit=dev`: cero vulnerabilidades.
-- Docker CLI 26.1.4 está presente, pero Docker Desktop no expuso el motor Linux (`//./pipe/dockerDesktopLinuxEngine`); no se declara un build de contenedor local que no pudo ejecutarse. La CI remota debe cubrir el Dockerfile.
+- Docker CLI 26.1.4 está presente, pero Docker Desktop no expuso el motor Linux (`//./pipe/dockerDesktopLinuxEngine`); no se declara un build de contenedor local que no pudo ejecutarse. La CI de la PR #106 sí completó `docker build` dentro de `Check and build`, además de `Deterministic simulation` y `Chromium offline journey`.

@@ -49,7 +49,7 @@ Actualizado: 2026-08-12 (Europe/Madrid)
 - La bomba combina núcleo rojo y pinchos negros. `DETONATING` bloquea control durante 0,7 s y dibuja semiesferas/anillos amarillos, verdes y naranjas antes de fracturar y consumir una única vida. Movimiento reducido usa una cúpula y un anillo suaves.
 - `livesExhausted` pasa por reproducción exclusiva de `AudioDirector`; la voz previa se cancela y el final por tercera muerte conserva texto sin lanzar una segunda voz.
 - Alice Boole ocupa la pantalla 3D del briefing, comparte su filtro y deja de usar retrato superpuesto. El botón coral solo responde en `ROOM`, se apaga después, desaparece la repetición y una esfera blanca de radio 1,1 m inicia `RUN` sin abrir la pared.
-- `release:check` pasa 209 tests, validadores, 10.000 seeds/20.008 colapsos, build, 15 E2E en Chromium/Firefox y perfil de 148 draw calls dentro de límites. La auditoría no encuentra vulnerabilidades. Docker Desktop no ofreció daemon local; el Dockerfile queda sujeto al check remoto sin fingir una build local.
+- `release:check` pasa 209 tests, validadores, 10.000 seeds/20.008 colapsos, build, 15 E2E en Chromium/Firefox y perfil de 148 draw calls dentro de límites. La auditoría no encuentra vulnerabilidades. Docker Desktop no ofreció daemon local, pero la CI de la PR #106 construyó la imagen y terminó verde junto a simulación y recorrido Chromium.
 - Evidencia real PNG/WebP y dos WebM reproducibles: [`docs/progress/issue-105-visual-biomes-prologue/`](./progress/issue-105-visual-biomes-prologue/).
 
 ### 2026-08-12 — Epic #98 / Issues #99–#103 — WFC2, fractura y objetivos operativos
