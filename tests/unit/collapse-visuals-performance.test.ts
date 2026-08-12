@@ -5,6 +5,7 @@ import type { CollapseEvent } from '../../src/contracts/messages';
 import {
   MAX_FIXED_WORLD_DRAW_BATCHES,
   SliceCollapseVisuals,
+  visualVariantIndex,
 } from '../../src/world/collapse-visuals';
 import { WorldState, cellCenterToWorld } from '../../src/world/world-state';
 
@@ -14,6 +15,7 @@ function event(cellId: number): CollapseEvent {
     cellId,
     terrainTileId: 0,
     featureTileId: null,
+    terrainRotationQuarterTurns: 0,
     entropyBefore: 1,
     durationMs: 450,
     worldSeed: 1,
@@ -21,6 +23,15 @@ function event(cellId: number): CollapseEvent {
 }
 
 describe('fixed world render batching', () => {
+  it('keeps five stable visual variants outside the WFC domain', () => {
+    const variants = new Set(
+      Array.from({ length: 200 }, (_, cellId) =>
+        visualVariantIndex(7, cellId, 2),
+      ),
+    );
+    expect(variants).toEqual(new Set([0, 1, 2, 3, 4]));
+    expect(visualVariantIndex(7, 42, 2)).toBe(visualVariantIndex(7, 42, 2));
+  });
   it('keeps completed terrain and features in a bounded number of draw batches', () => {
     const scene = new Scene();
     const world = new WorldState();

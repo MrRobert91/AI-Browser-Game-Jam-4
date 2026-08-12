@@ -41,24 +41,22 @@ describe('VerticalSliceDirector', () => {
     expect(onRespawn).toHaveBeenCalledTimes(1);
   });
 
-  it('offers base features and water only after a future palette epoch', () => {
-    const features = new Set(
-      Array.from(
-        { length: 64 },
-        (_, cellId) => classifySliceTile(cellId, 0).feature,
-      ),
-    );
-    expect(features).toEqual(new Set(['empty', 'tree', 'flower', 'rock']));
-    expect(
-      Array.from({ length: 64 }, (_, cellId) =>
-        classifySliceTile(cellId, 0),
-      ).some((tile) => tile.deepWater),
-    ).toBe(false);
-    expect(
-      Array.from({ length: 64 }, (_, cellId) =>
-        classifySliceTile(cellId, 1),
-      ).some((tile) => tile.deepWater),
-    ).toBe(true);
+  it('renders the exact terrain and feature ids selected by WFC', () => {
+    const event = (terrainTileId: number, featureTileId: number | null) => ({
+      type: 'COLLAPSE' as const,
+      cellId: 12,
+      terrainTileId,
+      featureTileId,
+      terrainRotationQuarterTurns: 0 as const,
+      entropyBefore: 1,
+      durationMs: 250,
+      worldSeed: 7,
+    });
+    expect(classifySliceTile(event(0, null)).feature).toBe('empty');
+    expect(classifySliceTile(event(0, 1)).feature).toBe('flower');
+    expect(classifySliceTile(event(13, 8)).feature).toBe('tree');
+    expect(classifySliceTile(event(9, null)).deepWater).toBe(true);
+    expect(classifySliceTile(event(0, null)).deepWater).toBe(false);
   });
 
   it('can begin a canonical evidence replay from a bounded timeline offset', () => {
