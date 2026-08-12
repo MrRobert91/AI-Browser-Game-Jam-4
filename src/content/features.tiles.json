@@ -39,7 +39,7 @@
     "forbiddenWithinMetersOf": { "origin": 1.5 },
     "minDistanceFromOrigin": 2.5,
     "maxSlopeDegrees": 38,
-    "blocksMovement": false,
+    "blocksMovement": true,
     "lethal": false
   },
   {
@@ -281,52 +281,34 @@
     "minDistanceFromOrigin": 38,
     "maxSlopeDegrees": 20,
     "blocksMovement": true,
-    "lethal": true,
+    "lethal": false,
     "neighborBias": { "storm": 1.4, "crystal": 1.35 }
   },
   {
-    "id": "feature.storm.spikes",
+    "id": "feature.consciousness-bomb",
     "numericId": 17,
-    "packId": "storm",
-    "weight": 3,
-    "mesh": "/assets/proxies/storm/spikes.proxy.json",
-    "tags": ["storm", "spikes", "hazard", "outer"],
-    "allowedTerrainTags": ["storm", "charged_soil", "glass_ground"],
+    "packId": "base",
+    "weight": 1,
+    "mesh": "/assets/proxies/base/consciousness-bomb.proxy.json",
+    "tags": ["consciousness_bomb", "hazard", "enemy", "spikes"],
+    "allowedTerrainTags": [
+      "walkable",
+      "open",
+      "meadow",
+      "forest",
+      "ruin_floor",
+      "storm"
+    ],
     "forbiddenWithinMetersOf": {
-      "origin": 38,
+      "origin": 14,
       "corridor": 2.5,
       "seed_anchor": 2
     },
-    "minDistanceFromOrigin": 38,
+    "minDistanceFromOrigin": 14,
     "maxSlopeDegrees": 25,
-    "blocksMovement": false,
-    "lethal": true,
-    "neighborBias": { "storm": 1.3, "spikes": 1.2 }
-  },
-  {
-    "id": "feature.storm.uncertainty-nest",
-    "numericId": 18,
-    "packId": "storm",
-    "weight": 1.5,
-    "mesh": "/assets/proxies/storm/uncertainty-nest.proxy.json",
-    "tags": ["storm", "uncertainty", "nest", "outer"],
-    "allowedTerrainTags": [
-      "storm",
-      "charged_soil",
-      "glass_ground",
-      "scorched_meadow"
-    ],
-    "forbiddenWithinMetersOf": {
-      "origin": 40,
-      "corridor": 3,
-      "seed_anchor": 3
-    },
-    "minDistanceFromOrigin": 40,
-    "maxSlopeDegrees": 18,
     "blocksMovement": true,
-    "lethal": false,
-    "uniquePerChunk": true,
-    "neighborBias": { "storm": 1.5, "uncertainty": 1.25 }
+    "lethal": true,
+    "neighborBias": { "consciousness_bomb": 0.65 }
   },
   {
     "id": "feature.storm.bell-flower",

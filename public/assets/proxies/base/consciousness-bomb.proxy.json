@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "shape": "spiked-consciousness-bomb",
+  "color": "#120b0d",
+  "accent": "#e32828",
+  "bounds": { "width": 1.45, "height": 1.55, "depth": 1.45 },
+  "pivot": "center-bottom",
+  "lod": [
+    { "maxDistance": 18, "shape": "spiked-consciousness-bomb-lod0" },
+    { "maxDistance": 42, "shape": "spiked-consciousness-bomb-lod1" }
+  ]
+}

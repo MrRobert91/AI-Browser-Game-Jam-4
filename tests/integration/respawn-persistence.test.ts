@@ -33,7 +33,7 @@ describe('RespawnSystem integration', () => {
       teleportPlayer,
     });
 
-    expect(respawn.requestDeath({ cause: 'HAZARD' })).toBe(true);
+    expect(respawn.requestDeath({ cause: 'CONSCIOUSNESS_BOMB' })).toBe(true);
     const deathDuration =
       DEATH_FREEZE_SECONDS + DEATH_DISSOLVE_SECONDS + DEATH_FADE_SECONDS;
     runClockSeconds -= deathDuration;
@@ -65,7 +65,7 @@ describe('RespawnSystem integration', () => {
     const deathDuration =
       DEATH_FREEZE_SECONDS + DEATH_DISSOLVE_SECONDS + DEATH_FADE_SECONDS;
 
-    respawn.requestDeath({ cause: 'UNCERTAINTY' });
+    respawn.requestDeath({ cause: 'CONSCIOUSNESS_BOMB' });
     expect(events[0]).toMatchObject({
       type: 'DEATH_STARTED',
       firstDeath: true,
@@ -73,13 +73,13 @@ describe('RespawnSystem integration', () => {
     });
     respawn.update(deathDuration);
     expect(respawn.isInvulnerable()).toBe(true);
-    expect(respawn.requestDeath({ cause: 'HAZARD' })).toBe(false);
+    expect(respawn.requestDeath({ cause: 'CONSCIOUSNESS_BOMB' })).toBe(false);
     respawn.update(RESPAWN_INVULNERABILITY_SECONDS - 0.01);
-    expect(respawn.requestDeath({ cause: 'HAZARD' })).toBe(false);
+    expect(respawn.requestDeath({ cause: 'CONSCIOUSNESS_BOMB' })).toBe(false);
     respawn.update(0.01);
     expect(respawn.canTakeDamage()).toBe(true);
 
-    respawn.requestDeath({ cause: 'HAZARD' });
+    respawn.requestDeath({ cause: 'CONSCIOUSNESS_BOMB' });
     expect(events).toContainEqual(
       expect.objectContaining({
         type: 'DEATH_STARTED',
@@ -87,6 +87,31 @@ describe('RespawnSystem integration', () => {
         narrativeCueId: null,
       }),
     );
+  });
+
+  it('respawns twice and makes the third life terminal', () => {
+    const events: string[] = [];
+    const respawn = new RespawnSystem({
+      ensureRespawnGround: () => undefined,
+      isRespawnWalkable: () => true,
+      teleportPlayer: () => undefined,
+      onEvent: (event) => events.push(event.type),
+    });
+    const deathDuration =
+      DEATH_FREEZE_SECONDS + DEATH_DISSOLVE_SECONDS + DEATH_FADE_SECONDS;
+    for (let death = 0; death < 3; death += 1) {
+      expect(respawn.requestDeath({ cause: 'CONSCIOUSNESS_BOMB' })).toBe(true);
+      respawn.update(deathDuration);
+      if (death < 2) respawn.update(RESPAWN_INVULNERABILITY_SECONDS);
+    }
+    expect(respawn.snapshot()).toMatchObject({
+      phase: 'TERMINAL',
+      maximumLives: 3,
+      livesRemaining: 0,
+      terminal: true,
+    });
+    expect(events.filter((event) => event === 'RESPAWNED')).toHaveLength(2);
+    expect(events).toContain('LIVES_EXHAUSTED');
   });
 
   it('fails closed if the monolith respawn is not walkable', () => {

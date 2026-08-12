@@ -59,9 +59,6 @@ describe('bilingual localization', () => {
     expect(Object.keys(UI_COPY.en.packLabels).sort()).toEqual(
       Object.keys(UI_COPY.es.packLabels).sort(),
     );
-    expect(Object.keys(UI_COPY.en.uncertaintyStates).sort()).toEqual(
-      Object.keys(UI_COPY.es.uncertaintyStates).sort(),
-    );
     expect(uiCopy('en').title).toBe('The Last Observation');
     expect(uiCopy('es').title).toBe('La Última Observación');
   });

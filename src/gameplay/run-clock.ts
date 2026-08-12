@@ -109,6 +109,15 @@ export class RunClock {
     return this.snapshot();
   }
 
+  endNow(): RunClockSnapshot {
+    if (this.phase === 'READY' || this.phase === 'RUNNING') {
+      this.phase = 'ENDING';
+      this.pauseReasons.clear();
+      this.events.onEnding?.();
+    }
+    return this.snapshot();
+  }
+
   markComplete(): RunClockSnapshot {
     if (this.phase === 'ENDING') this.phase = 'COMPLETE';
     return this.snapshot();

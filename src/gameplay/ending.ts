@@ -5,10 +5,12 @@ import type { Locale } from '../contracts/localization';
 import { uiCopy } from '../i18n';
 
 export const ENDING_ASCENT_SECONDS = 8;
+export type RunEndReason = 'TIME_EXPIRED' | 'LIVES_EXHAUSTED';
 
 export type EndingPhase = 'IDLE' | 'ASCENDING' | 'COMPLETE';
 
 export interface RunResult {
+  readonly endReason: RunEndReason;
   readonly worldSeed: number;
   readonly seedLabel: string;
   readonly seedMode?: WorldSeedMode;
