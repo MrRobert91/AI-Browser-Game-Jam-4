@@ -63,4 +63,38 @@ describe('Wp5PreviewRuntime', () => {
       'respawn',
     ]);
   });
+
+  it('replays three bombs deterministically even when respawning on one cell', () => {
+    const onTerminalContact = vi.fn();
+    const onLivesExhausted = vi.fn();
+    const runtime = new Wp5PreviewRuntime({
+      worldSeed: 0xa91f42c0,
+      unlockPack: () => 1,
+      visuals: visuals(),
+      canonicalBombAutomation: true,
+      teleportPlayer: () => undefined,
+      ensureRespawnGround: () => undefined,
+      isRespawnWalkable: () => true,
+      fractureRegion: () => undefined,
+      onTerminalContact,
+      onLivesExhausted,
+    });
+    const frame = {
+      deltaSeconds: 0.25,
+      playerPosition: [64, 1.7, 64] as const,
+      cameraForward: [0, 0, -1] as const,
+      playerCellId: 2_080,
+      fixedCells: 60,
+    };
+
+    for (let tick = 0; tick < 80; tick += 1) runtime.update(frame);
+
+    expect(runtime.snapshot().respawn).toMatchObject({
+      deaths: 3,
+      livesRemaining: 0,
+      phase: 'TERMINAL',
+    });
+    expect(onTerminalContact).toHaveBeenCalledOnce();
+    expect(onLivesExhausted).toHaveBeenCalledOnce();
+  });
 });

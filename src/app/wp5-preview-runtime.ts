@@ -112,6 +112,9 @@ export class Wp5PreviewRuntime {
       this.automatedBombCount < 3 &&
       this.elapsedSeconds >= 1 + this.automatedBombCount * 3
     ) {
+      // The opt-in QA replay reuses the respawn cell; production bombs remain
+      // one-shot and can never clear this guard.
+      this.detonatedBombs.delete(frame.playerCellId);
       this.registerConsciousnessBomb(frame.playerCellId);
       this.automatedBombCount += 1;
     }
