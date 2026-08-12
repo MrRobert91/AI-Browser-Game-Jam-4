@@ -186,7 +186,11 @@ function featureGeometry(
           0.72 + variant * 0.09,
           1.08 + (4 - variant) * 0.03,
         );
-        geometry.translate((index - 1) * 0.34, 0.52 + index * 0.12, (index % 2) * 0.28 - 0.14);
+        geometry.translate(
+          (index - 1) * 0.34,
+          0.52 + index * 0.12,
+          (index % 2) * 0.28 - 0.14,
+        );
         return geometry;
       });
       return mergeGeometries(pieces);
@@ -218,7 +222,11 @@ function mergeGeometries(parts: readonly BufferGeometry[]): BufferGeometry {
     const position = geometry.getAttribute('position');
     const normal = geometry.getAttribute('normal');
     for (let index = 0; index < position.count; index += 1) {
-      positions.push(position.getX(index), position.getY(index), position.getZ(index));
+      positions.push(
+        position.getX(index),
+        position.getY(index),
+        position.getZ(index),
+      );
       normals.push(normal.getX(index), normal.getY(index), normal.getZ(index));
     }
     if (geometry !== part) geometry.dispose();
@@ -236,15 +244,29 @@ function treeGeometry(variant: number): BufferGeometry {
   const height = 4.5 + variant * 0.675;
   const trunkHeight = height * (0.55 + (variant % 2) * 0.05);
   const crownRadius = 0.9 + variant * 0.0625;
-  const trunk = new CylinderGeometry(0.16 + variant * 0.018, 0.25 + variant * 0.025, trunkHeight, 6 + variant);
+  const trunk = new CylinderGeometry(
+    0.16 + variant * 0.018,
+    0.25 + variant * 0.025,
+    trunkHeight,
+    6 + variant,
+  );
   trunk.translate(0, trunkHeight / 2, 0);
   const crowns = Array.from({ length: 3 + (variant % 3) }, (_, index) => {
-    const crown = index % 2 === 0
-      ? new SphereGeometry(crownRadius * (0.92 - index * 0.05), 7 + variant, 5)
-      : new ConeGeometry(crownRadius, 1.9 + variant * 0.12, 7 + variant);
+    const crown =
+      index % 2 === 0
+        ? new SphereGeometry(
+            crownRadius * (0.92 - index * 0.05),
+            7 + variant,
+            5,
+          )
+        : new ConeGeometry(crownRadius, 1.9 + variant * 0.12, 7 + variant);
     crown.scale(1, 0.8 + (index % 2) * 0.25, 1);
     const angle = (index / (3 + (variant % 3))) * Math.PI * 2 + variant * 0.31;
-    crown.translate(Math.cos(angle) * 0.28, trunkHeight + index * 0.42, Math.sin(angle) * 0.28);
+    crown.translate(
+      Math.cos(angle) * 0.28,
+      trunkHeight + index * 0.42,
+      Math.sin(angle) * 0.28,
+    );
     return crown;
   });
   return mergeGeometries([trunk, ...crowns]);
@@ -289,18 +311,27 @@ function ruinGeometry(variant: number): BufferGeometry {
   return mergeGeometries(parts);
 }
 
-function clusteredDetailGeometry(kind: 'flower' | 'mushroom' | 'reeds', variant: number): BufferGeometry {
+function clusteredDetailGeometry(
+  kind: 'flower' | 'mushroom' | 'reeds',
+  variant: number,
+): BufferGeometry {
   const count = 7 + variant;
   const parts = Array.from({ length: count }, (_, index) => {
-    const height = kind === 'reeds' ? 1.1 + (index % 4) * 0.13 : 0.55 + (index % 3) * 0.08;
-    const part = kind === 'mushroom'
-      ? new SphereGeometry(0.2 + (index % 2) * 0.04, 5, 4)
-      : kind === 'reeds'
-        ? new CylinderGeometry(0.05, 0.07, height, 4)
-        : new ConeGeometry(0.16, height, 5 + (variant % 3));
+    const height =
+      kind === 'reeds' ? 1.1 + (index % 4) * 0.13 : 0.55 + (index % 3) * 0.08;
+    const part =
+      kind === 'mushroom'
+        ? new SphereGeometry(0.2 + (index % 2) * 0.04, 5, 4)
+        : kind === 'reeds'
+          ? new CylinderGeometry(0.05, 0.07, height, 4)
+          : new ConeGeometry(0.16, height, 5 + (variant % 3));
     const angle = index * 2.399 + variant;
     const radius = 0.25 + (index / count) * 0.65;
-    part.translate(Math.cos(angle) * radius, kind === 'mushroom' ? height * 0.55 : height / 2, Math.sin(angle) * radius);
+    part.translate(
+      Math.cos(angle) * radius,
+      kind === 'mushroom' ? height * 0.55 : height / 2,
+      Math.sin(angle) * radius,
+    );
     return part;
   });
   return mergeGeometries(parts);
@@ -314,10 +345,20 @@ function bombGeometry(variant: number): BufferGeometry {
   for (let index = 0; index < count; index += 1) {
     const phi = Math.acos(1 - (2 * (index + 0.5)) / count);
     const theta = Math.PI * (1 + Math.sqrt(5)) * index;
-    const direction = new Vector3(Math.sin(phi) * Math.cos(theta), Math.cos(phi), Math.sin(phi) * Math.sin(theta));
+    const direction = new Vector3(
+      Math.sin(phi) * Math.cos(theta),
+      Math.cos(phi),
+      Math.sin(phi) * Math.sin(theta),
+    );
     const spike = new ConeGeometry(0.13, 0.65 + (index % 3) * 0.08, 5);
-    spike.applyQuaternion(new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), direction));
-    spike.translate(direction.x * 0.95, 0.72 + direction.y * 0.95, direction.z * 0.95);
+    spike.applyQuaternion(
+      new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), direction),
+    );
+    spike.translate(
+      direction.x * 0.95,
+      0.72 + direction.y * 0.95,
+      direction.z * 0.95,
+    );
     spikes.push(spike);
   }
   return mergeGeometries([core, ...spikes]);

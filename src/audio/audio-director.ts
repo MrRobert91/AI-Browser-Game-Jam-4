@@ -220,6 +220,22 @@ export class AudioDirector {
     });
   }
 
+  playExclusiveNarrativeCue(
+    cue?: ResolvedNarrativeCue,
+    isContextValid: () => boolean = () => true,
+  ): void {
+    if (!cue || !this.voiceEnabled || !this.voiceElement) return;
+    this.voiceQueue.length = 0;
+    this.voiceElement.pause();
+    this.activeVoice = null;
+    this.startVoice({
+      id: cue.id,
+      path: narrativeVoicePath(cue.locale, cue.id),
+      priority: cue.priority,
+      isContextValid,
+    });
+  }
+
   retryActiveVoice(): void {
     if (!this.activeVoice || !this.voiceElement) return;
     void this.playActiveVoice();

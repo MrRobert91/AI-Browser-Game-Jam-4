@@ -7,7 +7,8 @@ import {
   PrologueDirector,
 } from '../../src/gameplay/prologue';
 import {
-  PROLOGUE_PORTAL_Z,
+  PROLOGUE_PORTAL_CENTER,
+  PROLOGUE_PORTAL_RADIUS,
   PROLOGUE_ROOM_DEPTH,
   PROLOGUE_ROOM_HEIGHT,
   PROLOGUE_ROOM_WIDTH,
@@ -24,19 +25,17 @@ describe('bilingual room prologue', () => {
     expect(prologue.snapshot()).toMatchObject({
       phase: 'OBJECTIVES',
       portalOpen: false,
-      canReplay: false,
     });
     prologue.completeObjectives();
     expect(prologue.snapshot()).toMatchObject({
       phase: 'PORTAL',
       portalOpen: true,
-      canReplay: true,
     });
     expect(prologue.crossPortal().phase).toBe('RUN');
     expect(prologue.crossPortal().phase).toBe('RUN');
   });
 
-  it('blocks early skipping and allows replay only before crossing', () => {
+  it('blocks early skipping and makes the briefing button single-use', () => {
     const prologue = new PrologueDirector();
     prologue.enterRoom();
     prologue.pressButton(true);
@@ -45,7 +44,7 @@ describe('bilingual room prologue', () => {
     prologue.update(0.01);
     expect(prologue.skip().phase).toBe('OBJECTIVES');
     expect(prologue.completeObjectives().phase).toBe('PORTAL');
-    expect(prologue.pressButton(true).phase).toBe('BRIEFING');
+    expect(prologue.pressButton(true).phase).toBe('PORTAL');
   });
 
   it('declares the bounded room and portal crossing plane', () => {
@@ -54,8 +53,8 @@ describe('bilingual room prologue', () => {
       PROLOGUE_ROOM_DEPTH,
       PROLOGUE_ROOM_HEIGHT,
     ]).toEqual([14, 12, 4.5]);
-    expect(PROLOGUE_PORTAL_Z).toBeGreaterThan(58);
-    expect(PROLOGUE_PORTAL_Z).toBeLessThan(59);
+    expect(PROLOGUE_PORTAL_CENTER.toArray()).toEqual([64, 1.35, 59.5]);
+    expect(PROLOGUE_PORTAL_RADIUS).toBe(1.1);
   });
 
   it('keeps seven contiguous localized chapters on one 50-second timeline', () => {

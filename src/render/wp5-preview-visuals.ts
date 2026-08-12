@@ -2,10 +2,12 @@ import {
   BoxGeometry,
   ConeGeometry,
   CylinderGeometry,
+  DoubleSide,
   Group,
   IcosahedronGeometry,
   Mesh,
   MeshStandardMaterial,
+  RingGeometry,
   SphereGeometry,
   type Material,
   type Object3D,
@@ -47,11 +49,16 @@ export class Wp5PreviewVisuals {
 
   private readonly seedGroups = new Map<UnlockablePackId, Group>();
   private readonly previews: { object: Object3D; age: number }[] = [];
+  private readonly detonations: {
+    readonly object: Group;
+    readonly duration: number;
+    age: number;
+  }[] = [];
 
   constructor(
     scene: Scene,
     plan: MacroPlan,
-    _reducedFlashes = false,
+    private readonly reducedFlashes = false,
     private readonly textures?: ProceduralTextureLibrary,
   ) {
     this.root.name = 'wp5-gated-preview';
@@ -126,6 +133,41 @@ export class Wp5PreviewVisuals {
     this.root.userData.respawnPhase = phase;
   }
 
+  startBombDetonation(cellId: CellId, durationSeconds: number): void {
+    const [x, z] = positionOf(cellId);
+    const group = new Group();
+    group.name = 'consciousness-bomb-detonation';
+    group.position.set(x, 0.06, z);
+    const colors = [0xffcf3d, 0x79d34f, 0xff7b2f] as const;
+    const visibleColors = this.reducedFlashes ? colors.slice(0, 1) : colors;
+    visibleColors.forEach((color, index) => {
+      const material = new MeshStandardMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 1.1,
+        transparent: true,
+        opacity: 0.48 - index * 0.08,
+        wireframe: true,
+        side: DoubleSide,
+        depthWrite: false,
+      });
+      const dome = new Mesh(
+        new SphereGeometry(1, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+        material,
+      );
+      dome.name = `detonation-dome-${index}`;
+      dome.scale.setScalar(0.18 + index * 0.12);
+      group.add(dome);
+      const ring = new Mesh(new RingGeometry(0.82, 0.94, 32), material.clone());
+      ring.name = `detonation-ring-${index}`;
+      ring.rotation.x = -Math.PI / 2;
+      ring.scale.setScalar(0.22 + index * 0.12);
+      group.add(ring);
+    });
+    this.root.add(group);
+    this.detonations.push({ object: group, duration: durationSeconds, age: 0 });
+  }
+
   update(deltaSeconds: number, elapsedSeconds: number): void {
     for (const [packId, group] of this.seedGroups) {
       if (!group.visible) continue;
@@ -146,6 +188,27 @@ export class Wp5PreviewVisuals {
         this.previews.splice(index, 1);
       }
     }
+    for (let index = this.detonations.length - 1; index >= 0; index -= 1) {
+      const detonation = this.detonations[index]!;
+      detonation.age += deltaSeconds;
+      const progress = Math.min(1, detonation.age / detonation.duration);
+      detonation.object.children.forEach((child, childIndex) => {
+        child.scale.setScalar(
+          0.2 +
+            progress * (this.reducedFlashes ? 4.5 : 7.5) +
+            childIndex * 0.08,
+        );
+        if (child instanceof Mesh) {
+          const material = child.material as MeshStandardMaterial;
+          material.opacity = Math.max(0, 0.5 * (1 - progress));
+        }
+      });
+      if (detonation.age >= detonation.duration) {
+        this.root.remove(detonation.object);
+        disposeObject(detonation.object);
+        this.detonations.splice(index, 1);
+      }
+    }
   }
 
   dispose(): void {
@@ -153,6 +216,7 @@ export class Wp5PreviewVisuals {
     disposeObject(this.root);
     this.seedGroups.clear();
     this.previews.length = 0;
+    this.detonations.length = 0;
   }
 
   private textureForPack(

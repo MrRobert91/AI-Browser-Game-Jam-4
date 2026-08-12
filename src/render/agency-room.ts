@@ -13,6 +13,8 @@ import {
   PointLight,
   RectAreaLight,
   SRGBColorSpace,
+  SphereGeometry,
+  TextureLoader,
   VideoTexture,
   Vector3,
   type BufferGeometry,
@@ -30,7 +32,8 @@ export const PROLOGUE_ROOM_DEPTH = 12;
 export const PROLOGUE_ROOM_HEIGHT = 4.5;
 export const PROLOGUE_BUTTON_POSITION = new Vector3(64, 1.05, 64);
 export const PROLOGUE_ROOM_SPAWN = { x: 64, y: 0.85, z: 68 } as const;
-export const PROLOGUE_PORTAL_Z = 58.55;
+export const PROLOGUE_PORTAL_CENTER = new Vector3(64, 1.35, 59.5);
+export const PROLOGUE_PORTAL_RADIUS = 1.1;
 
 function canvasTexture(
   title: string,
@@ -72,7 +75,9 @@ export class AgencyRoom {
   readonly root = new Group();
   readonly screen: Mesh<PlaneGeometry, MeshBasicMaterial>;
   readonly button: Mesh<CylinderGeometry, MeshStandardMaterial>;
+  readonly portal: Mesh<SphereGeometry, MeshStandardMaterial>;
   private screenTexture: Texture | null = null;
+  private portraitTexture: Texture | null = null;
   private readonly forward = new Vector3();
   private readonly targetDirection = new Vector3();
 
@@ -145,10 +150,52 @@ export class AgencyRoom {
     this.screen = new Mesh(new PlaneGeometry(8, 4.1), screenMaterial);
     this.screen.position.set(64, 2.35, 58.17);
     this.root.add(this.screen);
+    const filterCanvas = document.createElement('canvas');
+    filterCanvas.width = 1280;
+    filterCanvas.height = 720;
+    const filterContext = filterCanvas.getContext('2d')!;
+    for (let y = 0; y < filterCanvas.height; y += 4) {
+      filterContext.fillStyle = `rgba(${y % 12 === 0 ? 255 : 60}, ${
+        y % 20 === 0 ? 100 : 240
+      }, 230, 0.045)`;
+      filterContext.fillRect(0, y, filterCanvas.width, 1);
+    }
+    const filterTexture = new CanvasTexture(filterCanvas);
+    const screenFilter = new Mesh(
+      new PlaneGeometry(8, 4.1),
+      new MeshBasicMaterial({
+        map: filterTexture,
+        transparent: true,
+        opacity: 0.42,
+        toneMapped: false,
+        depthWrite: false,
+      }),
+    );
+    screenFilter.name = 'agency-screen-filter';
+    screenFilter.position.set(64, 2.35, 58.19);
+    this.root.add(screenFilter);
     addBox([8.6, 0.16, 0.18], [64, 4.47, 58.12], cyan);
     addBox([8.6, 0.16, 0.18], [64, 0.23, 58.12], cyan);
     addBox([0.16, 4.4, 0.18], [59.7, 2.35, 58.12], cyan);
     addBox([0.16, 4.4, 0.18], [68.3, 2.35, 58.12], cyan);
+
+    this.portal = new Mesh(
+      new SphereGeometry(PROLOGUE_PORTAL_RADIUS, 32, 20),
+      new MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: 0xffffff,
+        emissiveIntensity: 2.4,
+        transparent: true,
+        opacity: 0.56,
+        roughness: 0.08,
+        metalness: 0.04,
+        depthWrite: false,
+      }),
+    );
+    this.portal.name = 'agency-white-sphere-portal';
+    this.portal.position.copy(PROLOGUE_PORTAL_CENTER);
+    this.portal.visible = false;
+    this.root.add(this.portal);
 
     const signTexture = canvasTexture(
       locale === 'en' ? 'AGENCY NOTICE 7-C' : 'AVISO DE AGENCIA 7-C',
@@ -206,6 +253,22 @@ export class AgencyRoom {
     this.screen.material.needsUpdate = true;
   }
 
+  attachPortrait(path: string): void {
+    this.screenTexture?.dispose();
+    this.portraitTexture?.dispose();
+    this.portraitTexture = new TextureLoader().load(path, (texture) => {
+      texture.colorSpace = SRGBColorSpace;
+      texture.magFilter = LinearFilter;
+      texture.minFilter = LinearFilter;
+      this.screenTexture = texture;
+      this.screen.material.map = texture;
+      this.screen.material.color = new Color(0xffffff);
+      this.screen.material.transparent = false;
+      this.screen.material.opacity = 1;
+      this.screen.material.needsUpdate = true;
+    });
+  }
+
   setFallbackSlide(title: string, body: string): void {
     this.screenTexture?.dispose();
     this.screenTexture = canvasTexture(title, body);
@@ -218,13 +281,18 @@ export class AgencyRoom {
 
   setPhase(phase: GamePhase): void {
     this.button.material.emissiveIntensity = phase === 'ROOM' ? 1.8 : 0.45;
+    this.button.material.color.set(phase === 'ROOM' ? 0xff6f5c : 0x413b3a);
     if (phase === 'PORTAL') {
-      this.screen.material.map = null;
-      this.screen.material.color = new Color(0x4df2e7);
-      this.screen.material.transparent = true;
-      this.screen.material.opacity = 0.42;
-      this.screen.material.needsUpdate = true;
+      this.portal.visible = true;
     }
+  }
+
+  isPortalEntered(camera: PerspectiveCamera): boolean {
+    return (
+      this.portal.visible &&
+      camera.position.distanceTo(PROLOGUE_PORTAL_CENTER) <=
+        PROLOGUE_PORTAL_RADIUS
+    );
   }
 
   update(elapsedSeconds: number, focused: boolean): void {
@@ -234,11 +302,17 @@ export class AgencyRoom {
       this.screen.material.opacity =
         0.34 + Math.sin(elapsedSeconds * 1.9) * 0.08;
     }
+    if (this.portal.visible) {
+      const portalPulse = 1 + Math.sin(elapsedSeconds * 3.1) * 0.06;
+      this.portal.scale.setScalar(portalPulse);
+      this.portal.rotation.y += 0.006;
+    }
   }
 
   dispose(): void {
     this.root.removeFromParent();
     this.screenTexture?.dispose();
+    this.portraitTexture?.dispose();
     const geometries = new Set<BufferGeometry>();
     const materials = new Set<Material>();
     this.root.traverse((object) => {

@@ -4,11 +4,18 @@ import type { NarrativeCueId } from './narrative';
 export const DEATH_FREEZE_SECONDS = 0.12;
 export const DEATH_DISSOLVE_SECONDS = 0.7;
 export const DEATH_FADE_SECONDS = 0.18;
+export const BOMB_DETONATION_SECONDS = 0.7;
 export const RESPAWN_INVULNERABILITY_SECONDS = 1.5;
 export const MAXIMUM_LIVES = 3;
 export const RESPAWN_POSITION: WorldVector3 = [64, 1.7, 64];
 export type RespawnPhase =
-  'ALIVE' | 'FROZEN' | 'DISSOLVING' | 'FADING' | 'INVULNERABLE' | 'TERMINAL';
+  | 'ALIVE'
+  | 'DETONATING'
+  | 'FROZEN'
+  | 'DISSOLVING'
+  | 'FADING'
+  | 'INVULNERABLE'
+  | 'TERMINAL';
 
 export interface DeathRequest {
   readonly cause: 'CONSCIOUSNESS_BOMB';
@@ -26,6 +33,10 @@ export interface RespawnSnapshot {
 }
 
 export type RespawnEvent =
+  | {
+      readonly type: 'DETONATION_STARTED';
+      readonly durationSeconds: typeof BOMB_DETONATION_SECONDS;
+    }
   | {
       readonly type: 'DEATH_STARTED';
       readonly cause: DeathRequest['cause'];
@@ -51,6 +62,7 @@ export class RespawnSystem {
   private phase: RespawnPhase = 'ALIVE';
   private phaseElapsedSeconds = 0;
   private deaths = 0;
+  private pendingRequest: DeathRequest | null = null;
 
   constructor(private readonly options: RespawnOptions) {
     options.ensureRespawnGround(RESPAWN_POSITION);
@@ -61,15 +73,12 @@ export class RespawnSystem {
 
   requestDeath(request: DeathRequest): boolean {
     if (this.phase !== 'ALIVE' || this.deaths >= MAXIMUM_LIVES) return false;
-    this.phase = 'FROZEN';
+    this.phase = 'DETONATING';
     this.phaseElapsedSeconds = 0;
-    this.deaths += 1;
+    this.pendingRequest = request;
     this.emit({
-      type: 'DEATH_STARTED',
-      cause: request.cause,
-      firstDeath: this.deaths === 1,
-      terminal: this.deaths === MAXIMUM_LIVES,
-      narrativeCueId: this.deaths === 1 ? 'firstDeath' : null,
+      type: 'DETONATION_STARTED',
+      durationSeconds: BOMB_DETONATION_SECONDS,
     });
     return true;
   }
@@ -124,6 +133,7 @@ export class RespawnSystem {
             )
           : 0,
       inputLocked:
+        this.phase === 'DETONATING' ||
         this.phase === 'FROZEN' ||
         this.phase === 'DISSOLVING' ||
         this.phase === 'FADING' ||
@@ -133,6 +143,8 @@ export class RespawnSystem {
 
   private currentPhaseDuration(): number {
     switch (this.phase) {
+      case 'DETONATING':
+        return BOMB_DETONATION_SECONDS;
       case 'FROZEN':
         return DEATH_FREEZE_SECONDS;
       case 'DISSOLVING':
@@ -149,6 +161,21 @@ export class RespawnSystem {
 
   private advancePhase(): RespawnEvent | null {
     switch (this.phase) {
+      case 'DETONATING': {
+        const request = this.pendingRequest;
+        if (!request)
+          throw new Error('Detonation completed without a death request.');
+        this.pendingRequest = null;
+        this.deaths += 1;
+        this.phase = 'FROZEN';
+        return {
+          type: 'DEATH_STARTED',
+          cause: request.cause,
+          firstDeath: this.deaths === 1,
+          terminal: this.deaths === MAXIMUM_LIVES,
+          narrativeCueId: this.deaths === 1 ? 'firstDeath' : null,
+        };
+      }
       case 'FROZEN':
         this.phase = 'DISSOLVING';
         return { type: 'DISSOLVE_STARTED' };

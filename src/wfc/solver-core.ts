@@ -682,8 +682,7 @@ export class SolverCore {
           if (treeDensity > 0.6) weight *= 0.35;
         } else if (
           treeDensity > 0.6 &&
-          (feature.tags.includes('empty') ||
-            feature.tags.includes('mushrooms'))
+          (feature.tags.includes('empty') || feature.tags.includes('mushrooms'))
         ) {
           weight *= 1.5;
         }
@@ -914,7 +913,8 @@ export class SolverCore {
   } {
     const x = cellId % WORLD_CELLS_PER_SIDE;
     const z = Math.floor(cellId / WORLD_CELLS_PER_SIDE);
-    const north = z > 0 && this.#isFixedLiquidCore(cellId - WORLD_CELLS_PER_SIDE);
+    const north =
+      z > 0 && this.#isFixedLiquidCore(cellId - WORLD_CELLS_PER_SIDE);
     const east =
       x + 1 < WORLD_CELLS_PER_SIDE && this.#isFixedLiquidCore(cellId + 1);
     const south =

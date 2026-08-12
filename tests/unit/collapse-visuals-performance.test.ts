@@ -36,8 +36,11 @@ describe('fixed world render batching', () => {
   it('keeps five visual variants for tree, rock and ruin definitions', () => {
     for (const featureTileId of [2, 8, 9, 12, 13, 14, 15]) {
       const variants = new Set(
-        Array.from({ length: 256 }, (_, cellId) =>
-          classifySliceTile({ ...event(cellId), featureTileId }).visualVariant,
+        Array.from(
+          { length: 256 },
+          (_, cellId) =>
+            classifySliceTile({ ...event(cellId), featureTileId })
+              .visualVariant,
         ),
       );
       expect(variants).toEqual(new Set([0, 1, 2, 3, 4]));

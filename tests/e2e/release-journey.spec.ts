@@ -83,10 +83,8 @@ async function skipBriefingAndCrossPortal(
   await expect(page.locator('[data-objectives-name]')).toHaveText(
     'Dr Alice Boole',
   );
-  await expect(page.locator('[data-objectives-portrait]')).toHaveAttribute(
-    'src',
-    '/assets/portraits/dr-alice-boole.webp',
-  );
+  await expect(shell).toHaveAttribute('data-alice-screen', 'visible');
+  await expect(shell).toHaveAttribute('data-briefing-button', 'disabled');
   const objectivesSkip = page.locator('[data-objectives-skip]');
   await expect(objectivesSkip).toBeEnabled({ timeout: 10_000 });
   await objectivesSkip.press('Enter');
@@ -94,6 +92,7 @@ async function skipBriefingAndCrossPortal(
     'data-game-phase',
     'PORTAL',
   );
+  await expect(shell).toHaveAttribute('data-portal', 'white-sphere');
   await page.keyboard.down('KeyW');
   for (let attempt = 0; attempt < 100; attempt += 1) {
     if ((await shell.getAttribute('data-game-phase')) === 'RUN') break;

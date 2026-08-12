@@ -126,6 +126,15 @@ describe('WP6 audio contracts', () => {
     director.playNarrativeCue(cue);
     expect(voice.src).toContain('/assets/audio/voice/es/start.mp3');
     expect(voice.play).toHaveBeenCalledTimes(2);
+    const terminalCue = {
+      ...NARRATIVE_CATALOG.cues.livesExhausted,
+      id: 'livesExhausted' as const,
+      locale: 'es-ES' as const,
+      text: NARRATIVE_CATALOG.cues.livesExhausted.text,
+    };
+    director.playExclusiveNarrativeCue(terminalCue);
+    expect(voice.pause).toHaveBeenCalled();
+    expect(voice.src).toContain('/assets/audio/voice/es/livesExhausted.mp3');
     expect(ambiencePlays.every((play) => play.mock.calls.length >= 1)).toBe(
       true,
     );

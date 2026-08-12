@@ -143,11 +143,11 @@ export async function createPlayerPhysicsRuntime(
                 2.5,
                 center[2],
               )
-        : rapier.ColliderDesc.cuboid(0.62, 0.85, 0.62).setTranslation(
-            center[0],
-            0.85,
-            center[2],
-          )
+            : rapier.ColliderDesc.cuboid(0.62, 0.85, 0.62).setTranslation(
+                center[0],
+                0.85,
+                center[2],
+              )
     ).setFriction(0.8);
     if (isBomb) descriptor.setSensor(true);
     featureColliders.set(commit.cellId, world.createCollider(descriptor));
