@@ -256,7 +256,7 @@ for (const locale of ['en', 'es'] as const) {
       if (url.origin !== appOrigin) externalRequests.push(request.url());
     });
     await page.goto(
-      '/?wp5=preview&replay=mission-complete&speed=8&evidence=1&start=599',
+      '/?wp5=preview&replay=mission-complete&speed=1&evidence=1&start=599',
     );
     await enterRoom(page, locale);
     await pressRoomButton(page);
@@ -272,37 +272,61 @@ for (const locale of ['en', 'es'] as const) {
       'MISSION_COMPLETE',
       { timeout: 20_000 },
     );
-    await expect(shell).toHaveAttribute(
-      'data-ending-phase',
-      'MISSION_VIDEO',
-      { timeout: 15_000 },
-    );
+    await expect(shell).toHaveAttribute('data-ending-phase', 'ASCENDING');
+    await page.screenshot({
+      path: testInfo.outputPath(`${locale}-mission-ascent.png`),
+    });
+    await expect(shell).toHaveAttribute('data-ending-phase', 'MISSION_VIDEO', {
+      timeout: 15_000,
+    });
     const mission = page.locator('[data-mission-complete]');
     await expect(mission).toBeVisible();
     await expect(mission).toHaveAttribute('data-media', 'video');
     await expect(mission).toHaveAttribute('data-voice', 'playing');
     await expect
       .poll(() =>
-        page.locator('[data-mission-video]').evaluate(
-          (element) => (element as HTMLVideoElement).currentTime,
-        ),
+        page
+          .locator('[data-mission-video]')
+          .evaluate((element) => (element as HTMLVideoElement).currentTime),
       )
       .toBeGreaterThan(0);
-    const caption = await page.locator('[data-mission-caption]').textContent();
-    expect(caption).toMatch(
+    const chapters =
       locale === 'en'
-        ? /Congratulations, Collapser|Thanks to your intervention|Should new Probability Condensates|Until then, you may provisionally assume/u
-        : /Enhorabuena, Colapsador|Gracias a su intervención|Si aparecen nuevos Condensados|Hasta entonces, puede asumir provisionalmente/u,
-    );
+        ? ([
+            ['recorded-seeds', 'Congratulations, Collapser'],
+            ['ending-uncertainty', 'Thanks to your intervention'],
+            ['new-condensates', 'Should new Probability Condensates'],
+            ['provisional-reality', 'Until then, you may provisionally assume'],
+          ] as const)
+        : ([
+            ['recorded-seeds', 'Enhorabuena, Colapsador'],
+            ['ending-uncertainty', 'Gracias a su intervención'],
+            ['new-condensates', 'Si aparecen nuevos Condensados'],
+            [
+              'provisional-reality',
+              'Hasta entonces, puede asumir provisionalmente',
+            ],
+          ] as const);
     const skip = page.locator('[data-mission-skip]');
+    for (const [index, [chapterId, caption]] of chapters.entries()) {
+      await expect(mission).toHaveAttribute('data-chapter', chapterId, {
+        timeout: index === 0 ? 5_000 : 12_000,
+      });
+      await expect(page.locator('[data-mission-caption]')).toContainText(
+        caption,
+      );
+      await page.screenshot({
+        path: testInfo.outputPath(
+          `${locale}-mission-${index + 1}-${chapterId}.png`,
+        ),
+      });
+    }
     await expect(skip).toBeEnabled();
-    expect(Number(await shell.getAttribute('data-ending-phase-elapsed'))).toBeGreaterThanOrEqual(3);
-    await page.screenshot({
-      path: testInfo.outputPath(`${locale}-mission-video.png`),
-    });
-    await skip.click();
+    expect(
+      Number(await shell.getAttribute('data-ending-phase-elapsed')),
+    ).toBeGreaterThanOrEqual(24);
     const result = page.locator('[data-slice-result]');
-    await expect(result).toBeVisible({ timeout: 10_000 });
+    await expect(result).toBeVisible({ timeout: 12_000 });
     await expect(result).toContainText(
       locale === 'en' ? 'MISSION COMPLETE' : 'MISIÓN COMPLETADA',
     );
@@ -319,12 +343,14 @@ test('mission video and voice failures keep captions and reach results once', as
   page,
 }, testInfo) => {
   test.slow();
-  await page.route('**/assets/mission-complete/agency-mission-complete.webm', (
-    route,
-  ) => route.abort());
-  await page.route('**/assets/mission-complete/agency-mission-complete.en.mp3', (
-    route,
-  ) => route.abort());
+  await page.route(
+    '**/assets/mission-complete/agency-mission-complete.webm',
+    (route) => route.abort(),
+  );
+  await page.route(
+    '**/assets/mission-complete/agency-mission-complete.en.mp3',
+    (route) => route.abort(),
+  );
   await page.goto(
     '/?wp5=preview&replay=mission-complete&speed=8&evidence=1&start=599',
   );

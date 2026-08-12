@@ -4,7 +4,7 @@ Este documento conserva la historia de implementación de **La Última Observaci
 
 ## Vista de pájaro
 
-Actualizado: 2026-08-12 (Europe/Madrid)
+Actualizado: 2026-08-13 (Europe/Madrid)
 
 | Fase | Issues | Estado | Gate o dependencia principal |
 |---|---:|---|---|
@@ -25,6 +25,7 @@ Actualizado: 2026-08-12 (Europe/Madrid)
 | POST — Media y mundo material | #96 | Implementada en rama | Audio autorizado, briefing 1080p, panorama completo, observación 20 m y texturas compartidas |
 | POST — WFC2 integral | #98–#103 | Implementada en `codex/epic-98-wfc2-gameplay` | Solver real, fractura, vidas, arte, objetivos y QA hacia `dev` |
 | POST — Biomas, detonación y portal | #105 | Implementada en rama | `codex/issue-105-visual-biomes-prologue` desde `origin/dev` `1f318b1` |
+| POST — Final «Misión completada» | #107–#112 | Implementada; gate humano pendiente | Rama `codex/issue-107-mission-complete`; #112 permanece NO-GO |
 | POST — Expansiones | #52–#56 | En rama acumulativa salvo #54 | #54 ya estaba cerrada; #52, #53, #55 y #56 listas para revisión |
 
 ### Estado operativo actual
@@ -41,6 +42,28 @@ Actualizado: 2026-08-12 (Europe/Madrid)
 - Evidencia actual: galerías/capturas locales, simulación de 10.000 seeds, WebM narrativo y QA automatizada bajo [`docs/progress/`](./progress/).
 - Gate humano: #83 y el epic #75 permanecen abiertos y **NO-GO 0/5**; la rama no afirma sesiones que no se han realizado.
 - Estado remoto verificado: PR #84 abierta y no draft; sus palabras de cierre excluyen deliberadamente #75 y #83.
+
+### 2026-08-13 — Epic #107 / issues #108–#112 — Final «Misión completada»
+
+- El clasificador concede la variante únicamente en modo estándar, por tiempo,
+  con al menos una vida, Agua/Bosque/Ruina/Tormenta y 1536 celdas `FIXED` al
+  finalizar. `FRACTURED` no cuenta y 1535 conserva el cierre normal.
+- La ascensión de ocho segundos sigue intacta. Después, un vídeo VP9 local mudo
+  de 32 segundos se sincroniza con Harper o Kore y captions HTML; puede omitirse
+  desde tres segundos y degrada a cuatro WebP sin bloquear resultados.
+- OpenRouter solo se usó para producción. Manifiestos locales registran prompts,
+  IDs, hashes, loudness, descartes y coste acumulado de 4,573846 USD. La partida
+  no contiene credenciales ni tráfico de runtime.
+- El replay opt-in construye el límite exacto sobre `WorldState`. E2E completa
+  EN/ES y fallback en Chromium/Firefox; vídeos y capturas viven en
+  [`docs/progress/issue-112-mission-complete/`](./progress/issue-112-mission-complete/).
+- `release:check` pasa 216 tests, validadores, 10.000 seeds/20.008 colapsos,
+  build, 21 E2E y perfil dentro de límites; la auditoría informa cero
+  vulnerabilidades. Docker Desktop no expone daemon local, así que el build de
+  contenedor se delega a CI sin fingir una ejecución local.
+- La automatización no sustituye calibración humana: #112 queda **NO-GO** hasta
+  una partida real de diez minutos según
+  [`docs/playtests/mission-complete/PROTOCOL.md`](./playtests/mission-complete/PROTOCOL.md).
 
 ### 2026-08-12 — Issue #105 — Biomas legibles, detonación y portal esférico
 

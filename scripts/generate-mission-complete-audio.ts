@@ -113,8 +113,7 @@ async function synthesize(
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer':
-            'https://github.com/MrRobert91/AI-Browser-Game-Jam-4',
+          'HTTP-Referer': 'https://github.com/MrRobert91/AI-Browser-Game-Jam-4',
           'X-Title': 'La Ultima Observacion mission complete voice production',
         },
         body: JSON.stringify({
@@ -333,9 +332,7 @@ async function main(): Promise<void> {
         id: chapter.id,
         locale,
         text: chapter.caption,
-        textSha256: createHash('sha256')
-          .update(chapter.caption)
-          .digest('hex'),
+        textSha256: createHash('sha256').update(chapter.caption).digest('hex'),
         generationId: synthesized.generationId,
         rawDurationSeconds: rawDuration,
         finalDurationSeconds: slotDuration,
@@ -424,7 +421,9 @@ async function main(): Promise<void> {
     }
     const durationSeconds = await mediaDuration(destination);
     if (Math.abs(durationSeconds - mission.durationSeconds) > 0.08) {
-      throw new Error(`${locale} duration ${durationSeconds} is not 32 seconds.`);
+      throw new Error(
+        `${locale} duration ${durationSeconds} is not 32 seconds.`,
+      );
     }
     const loudness = await measureLoudness(destination);
     if (

@@ -12,11 +12,7 @@ export const MISSION_COMPLETE_FIXED_CELLS = 1_536;
 export type RunEndReason = 'TIME_EXPIRED' | 'LIVES_EXHAUSTED';
 export type EndingVariant = 'STANDARD' | 'MISSION_COMPLETE';
 
-export type EndingPhase =
-  | 'IDLE'
-  | 'ASCENDING'
-  | 'MISSION_VIDEO'
-  | 'COMPLETE';
+export type EndingPhase = 'IDLE' | 'ASCENDING' | 'MISSION_VIDEO' | 'COMPLETE';
 
 export interface EndingEligibilityInput {
   readonly mode: RunMode;
@@ -57,9 +53,7 @@ export interface EndingSnapshot {
 
 const REQUIRED_PACKS = ['water', 'forest', 'ruin', 'storm'] as const;
 
-export function classifyEnding(
-  input: EndingEligibilityInput,
-): EndingVariant {
+export function classifyEnding(input: EndingEligibilityInput): EndingVariant {
   if (
     input.mode !== 'standard' ||
     input.endingReason !== 'TIME_EXPIRED' ||
@@ -83,8 +77,7 @@ export function normalizeRunResult(value: unknown): RunResult | null {
     legacy.endingReason ?? legacy.endReason ?? 'TIME_EXPIRED';
   const livesRemaining =
     legacy.livesRemaining ?? Math.max(0, 3 - legacy.portrait.deaths);
-  const finalFixedCells =
-    legacy.finalFixedCells ?? legacy.portrait.fixedCells;
+  const finalFixedCells = legacy.finalFixedCells ?? legacy.portrait.fixedCells;
   return {
     ...legacy,
     endingVariant: legacy.endingVariant ?? 'STANDARD',
@@ -261,10 +254,7 @@ export class EndingDirector {
       variant: this.variant,
       elapsedSeconds: this.ascentElapsedSeconds + this.missionElapsedSeconds,
       phaseElapsedSeconds,
-      progress: Math.min(
-        1,
-        this.ascentElapsedSeconds / ENDING_ASCENT_SECONDS,
-      ),
+      progress: Math.min(1, this.ascentElapsedSeconds / ENDING_ASCENT_SECONDS),
       canSkipMissionVideo:
         this.phase === 'MISSION_VIDEO' &&
         this.missionElapsedSeconds >= MISSION_VIDEO_SKIP_SECONDS,

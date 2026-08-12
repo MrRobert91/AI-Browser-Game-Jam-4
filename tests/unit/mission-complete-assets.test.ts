@@ -93,7 +93,10 @@ describe('mission-complete production assets', () => {
     ]);
     expect(Number(probe.format.duration)).toBeCloseTo(32, 2);
     for (const fallback of manifest.fallbacks) {
-      const path = resolve('public', fallback.path.replace(/^\/assets\//u, 'assets/'));
+      const path = resolve(
+        'public',
+        fallback.path.replace(/^\/assets\//u, 'assets/'),
+      );
       const fallbackBytes = await readFile(path);
       expect(fallbackBytes.subarray(0, 4).toString('ascii')).toBe('RIFF');
       expect(fallbackBytes.subarray(8, 12).toString('ascii')).toBe('WEBP');
@@ -147,15 +150,7 @@ describe('mission-complete production assets', () => {
       const probe = JSON.parse(
         execFileSync(
           'ffprobe',
-          [
-            '-v',
-            'error',
-            '-show_streams',
-            '-show_format',
-            '-of',
-            'json',
-            path,
-          ],
+          ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', path],
           { encoding: 'utf8' },
         ),
       ) as {

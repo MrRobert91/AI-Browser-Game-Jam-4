@@ -76,14 +76,32 @@ describe('local haiku and ending', () => {
     expect(
       classifyEnding({
         ...qualified,
+        livesRemaining: 3,
+        finalFixedCells: MISSION_COMPLETE_FIXED_CELLS + 1,
+      }),
+    ).toBe('MISSION_COMPLETE');
+    expect(
+      classifyEnding({
+        ...qualified,
         finalFixedCells: MISSION_COMPLETE_FIXED_CELLS - 1,
       }),
     ).toBe('STANDARD');
-    expect(classifyEnding({ ...qualified, collectedPacks: qualified.collectedPacks.slice(0, 3) })).toBe('STANDARD');
-    expect(classifyEnding({ ...qualified, livesRemaining: 0 })).toBe('STANDARD');
-    expect(classifyEnding({ ...qualified, endingReason: 'LIVES_EXHAUSTED' })).toBe('STANDARD');
+    expect(
+      classifyEnding({
+        ...qualified,
+        collectedPacks: qualified.collectedPacks.slice(0, 3),
+      }),
+    ).toBe('STANDARD');
+    expect(classifyEnding({ ...qualified, livesRemaining: 0 })).toBe(
+      'STANDARD',
+    );
+    expect(
+      classifyEnding({ ...qualified, endingReason: 'LIVES_EXHAUSTED' }),
+    ).toBe('STANDARD');
     expect(classifyEnding({ ...qualified, mode: 'brief' })).toBe('STANDARD');
-    expect(classifyEnding({ ...qualified, mode: 'contemplative' })).toBe('STANDARD');
+    expect(classifyEnding({ ...qualified, mode: 'contemplative' })).toBe(
+      'STANDARD',
+    );
   });
 
   it('places the mission video after ascent and only skips after three seconds', () => {

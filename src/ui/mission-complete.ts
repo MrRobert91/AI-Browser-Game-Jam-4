@@ -77,7 +77,11 @@ export class MissionCompletePlayback {
     void audioAuthorization.catch(() => undefined);
   }
 
-  start(masterVolume: number, voiceVolume: number, voicesEnabled: boolean): void {
+  start(
+    masterVolume: number,
+    voiceVolume: number,
+    voicesEnabled: boolean,
+  ): void {
     if (this.started) return;
     this.started = true;
     this.root.hidden = false;
@@ -115,10 +119,7 @@ export class MissionCompletePlayback {
       this.audio.currentTime = elapsed;
     }
     const chapters = manifest.chapters[this.options.locale];
-    const chapterIndex = Math.min(
-      chapters.length - 1,
-      Math.floor(elapsed / 8),
-    );
+    const chapterIndex = Math.min(chapters.length - 1, Math.floor(elapsed / 8));
     const chapter = chapters[chapterIndex]!;
     this.caption.textContent = chapter.caption;
     this.root.dataset.chapter = chapter.id;

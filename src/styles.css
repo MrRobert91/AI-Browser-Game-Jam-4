@@ -1147,7 +1147,10 @@ button {
   margin: 0 0 3rem;
   padding: 0.85rem 1rem;
   color: #f5fff8;
-  font: clamp(1rem, 2vw, 1.45rem) / 1.5 Georgia, "Times New Roman", serif;
+  font:
+    clamp(1rem, 2vw, 1.45rem) / 1.5 Georgia,
+    "Times New Roman",
+    serif;
   text-align: center;
   text-shadow: 0 2px 12px #000;
   background: rgb(3 10 15 / 72%);
@@ -1163,7 +1166,9 @@ button {
   padding: 0.7rem 0.95rem;
   color: #effff8;
   background: rgb(4 17 22 / 82%);
-  font: 0.68rem "Courier New", monospace;
+  font:
+    0.68rem "Courier New",
+    monospace;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   grid-area: 1 / 1;
