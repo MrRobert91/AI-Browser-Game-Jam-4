@@ -49,6 +49,17 @@ administrativa. La voz puede explicar el procedimiento ficticio —cuerpo de cam
 Colapsador y La Medida—, pero nunca presentar la conciencia como causa demostrada
 de un colapso físico.
 
+### La misión completada también es propaganda
+
+El cierre `MISSION_COMPLETE` felicita al Colapsador y declara que la Agencia
+está algo más cerca de acabar con la incertidumbre del mundo. Esa frase, y la
+invitación a asumir provisionalmente que cuanto existe es real «para nosotros»,
+expresan el objetivo burocrático y la autosatisfacción de la Agencia. No prueban
+que la incertidumbre sea una sustancia erradicable, que el expediente agote lo
+real ni que QBism describa una función de onda objetiva. Los resultados siguen
+siendo experiencias incorporadas por el agente; el vídeo es una comunicación
+institucional interesada, no una voz científica neutral.
+
 ## Instituciones y agentes
 
 ### Agencia de Actualización Cosmológica y Habitabilidad

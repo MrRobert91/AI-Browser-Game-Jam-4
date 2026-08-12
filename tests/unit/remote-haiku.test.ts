@@ -12,7 +12,10 @@ const LOCAL = {
   approximateSyllables: [8, 9, 8],
 } as const;
 const RESULT: RunResult = {
-  endReason: 'TIME_EXPIRED',
+  endingVariant: 'STANDARD',
+  endingReason: 'TIME_EXPIRED',
+  livesRemaining: 3,
+  finalFixedCells: 100,
   worldSeed: 0xa91f42c0,
   seedLabel: 'A91F-42C0',
   profile: 'Cartógrafo',

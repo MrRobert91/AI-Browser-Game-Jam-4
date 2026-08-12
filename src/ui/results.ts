@@ -1,6 +1,7 @@
 import {
   describeAgentUpdate,
   formatRunResult,
+  normalizeRunResult,
   type RunResult,
 } from '../gameplay/ending';
 import {
@@ -30,8 +31,9 @@ export function persistRunResult(result: RunResult): void {
   let shouldReplace = true;
   if (previous) {
     try {
-      const parsed = JSON.parse(previous) as RunResult;
-      shouldReplace = portraitBreadth(result) > portraitBreadth(parsed);
+      const parsed = normalizeRunResult(JSON.parse(previous));
+      shouldReplace =
+        parsed === null || portraitBreadth(result) > portraitBreadth(parsed);
     } catch {
       shouldReplace = true;
     }
@@ -73,7 +75,13 @@ export class ResultsPanel {
     const copy = uiCopy(this.locale);
     this.root.replaceChildren();
     const eyebrow = document.createElement('p');
-    eyebrow.textContent = copy.resultEyebrow;
+    eyebrow.textContent =
+      result.endingVariant === 'MISSION_COMPLETE'
+        ? this.locale === 'en'
+          ? 'MISSION COMPLETE'
+          : 'MISIÓN COMPLETADA'
+        : copy.resultEyebrow;
+    eyebrow.dataset.endingVariant = result.endingVariant;
     const title = document.createElement('h2');
     title.id = 'agent-update-title';
     title.textContent = copy.resultTitle;
