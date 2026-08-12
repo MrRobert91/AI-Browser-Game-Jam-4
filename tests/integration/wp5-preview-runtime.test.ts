@@ -8,6 +8,7 @@ import {
 function visuals(): Wp5VisualAdapter {
   return {
     collectSeed: vi.fn(),
+    startBombDetonation: vi.fn(),
     setRespawnPhase: vi.fn(),
     update: vi.fn(),
   };
@@ -42,6 +43,7 @@ describe('Wp5PreviewRuntime', () => {
     for (let tick = 0; tick < 18; tick += 1) runtime.update(frame);
     runtime.registerConsciousnessBomb(frame.playerCellId);
     runtime.update(frame);
+    runtime.update(frame);
     const snapshot = runtime.snapshot();
     expect(snapshot.progression.collectedPacks).toEqual([
       'water',
@@ -53,6 +55,7 @@ describe('Wp5PreviewRuntime', () => {
     expect(snapshot.respawn.deaths).toBe(1);
     expect(teleportPlayer).toHaveBeenCalledTimes(1);
     expect(fractureRegion).toHaveBeenCalledTimes(1);
+    expect(visualAdapter.startBombDetonation).toHaveBeenCalledWith(2_080, 0.7);
     expect(visualAdapter.collectSeed).toHaveBeenCalledTimes(4);
     expect(narrativeCues).toEqual([
       'unlockWater',

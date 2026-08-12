@@ -8,6 +8,7 @@ import {
   type SeedCollectionEvent,
 } from '../gameplay/progression';
 import type { NarrativeCueId } from '../gameplay/narrative';
+import type { BOMB_DETONATION_SECONDS } from '../gameplay/respawn';
 import {
   RespawnSystem,
   type RespawnEvent,
@@ -20,6 +21,10 @@ export interface Wp5VisualAdapter {
     silhouettes: readonly [string, string, string],
   ): void;
   setRespawnPhase(phase: RespawnSnapshot['phase']): void;
+  startBombDetonation(
+    cellId: CellId,
+    durationSeconds: typeof BOMB_DETONATION_SECONDS,
+  ): void;
   update(deltaSeconds: number, elapsedSeconds: number): void;
 }
 
@@ -68,6 +73,7 @@ export class Wp5PreviewRuntime {
   private readonly bombCells = new Map<CellId, number>();
   private readonly detonatedBombs = new Set<CellId>();
   private automatedBombCount = 0;
+  private pendingBombCellId: CellId | null = null;
   private readonly protectedCellIds: readonly CellId[];
 
   constructor(private readonly options: Wp5PreviewOptions) {
@@ -127,11 +133,8 @@ export class Wp5PreviewRuntime {
     ) {
       this.detonatedBombs.add(frame.playerCellId);
       this.bombCells.delete(frame.playerCellId);
-      this.options.fractureRegion(frame.playerCellId, this.protectedCellIds);
+      this.pendingBombCellId = frame.playerCellId;
       this.respawn.requestDeath({ cause: 'CONSCIOUSNESS_BOMB' });
-      if (this.respawn.snapshot().livesRemaining === 0) {
-        this.options.onTerminalContact?.();
-      }
     }
 
     this.respawn.update(delta);
@@ -164,10 +167,24 @@ export class Wp5PreviewRuntime {
   }
 
   private handleRespawnEvent(event: RespawnEvent): void {
-    if (event.type === 'DEATH_STARTED') {
+    if (event.type === 'DETONATION_STARTED') {
+      if (this.pendingBombCellId !== null)
+        this.options.visuals.startBombDetonation(
+          this.pendingBombCellId,
+          event.durationSeconds,
+        );
+    } else if (event.type === 'DEATH_STARTED') {
+      if (this.pendingBombCellId !== null) {
+        this.options.fractureRegion(
+          this.pendingBombCellId,
+          this.protectedCellIds,
+        );
+        this.pendingBombCellId = null;
+      }
       this.progression.notifyDeath();
       if (event.narrativeCueId)
         this.options.onNarrativeCue?.(event.narrativeCueId);
+      if (event.terminal) this.options.onTerminalContact?.();
     } else if (event.type === 'RESPAWNED') {
       this.options.onNarrativeCue?.('respawn');
     } else if (event.type === 'LIVES_EXHAUSTED') {

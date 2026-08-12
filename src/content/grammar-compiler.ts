@@ -41,6 +41,9 @@ export function compileGrammar(source: GrammarSource): CompiledGrammar {
       maxSlopeDegrees: definition.maxSlopeDegrees,
       blocksMovement: definition.blocksMovement,
       lethal: definition.lethal,
+      ...(definition.neighborBias === undefined
+        ? {}
+        : { neighborBias: definition.neighborBias }),
     }),
   );
 
@@ -88,6 +91,12 @@ export function compileTerrainVariants(
         lethal: definition.lethal,
         heightClass: definition.heightClass,
         fallbackRank: definition.fallbackRank,
+        ...(definition.distanceCurve === undefined
+          ? {}
+          : { distanceCurve: definition.distanceCurve }),
+        ...(definition.neighborBias === undefined
+          ? {}
+          : { neighborBias: definition.neighborBias }),
       });
     }
   }

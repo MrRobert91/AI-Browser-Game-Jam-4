@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { planSeedAnchors } from '../../src/gameplay/anchors';
 import { ProgressionSystem } from '../../src/gameplay/progression';
 import {
+  BOMB_DETONATION_SECONDS,
   DEATH_DISSOLVE_SECONDS,
   DEATH_FADE_SECONDS,
   DEATH_FREEZE_SECONDS,
@@ -35,7 +36,10 @@ describe('RespawnSystem integration', () => {
 
     expect(respawn.requestDeath({ cause: 'CONSCIOUSNESS_BOMB' })).toBe(true);
     const deathDuration =
-      DEATH_FREEZE_SECONDS + DEATH_DISSOLVE_SECONDS + DEATH_FADE_SECONDS;
+      BOMB_DETONATION_SECONDS +
+      DEATH_FREEZE_SECONDS +
+      DEATH_DISSOLVE_SECONDS +
+      DEATH_FADE_SECONDS;
     runClockSeconds -= deathDuration;
     respawn.update(deathDuration);
 
@@ -47,7 +51,7 @@ describe('RespawnSystem integration', () => {
       terrainRotationQuarterTurns: 3,
     });
     expect(progression.hasCollected('water')).toBe(true);
-    expect(runClockSeconds).toBe(59);
+    expect(runClockSeconds).toBe(58.3);
     expect(respawn.snapshot()).toMatchObject({
       phase: 'INVULNERABLE',
       deaths: 1,
@@ -63,15 +67,23 @@ describe('RespawnSystem integration', () => {
       onEvent: (event) => events.push(event),
     });
     const deathDuration =
-      DEATH_FREEZE_SECONDS + DEATH_DISSOLVE_SECONDS + DEATH_FADE_SECONDS;
+      BOMB_DETONATION_SECONDS +
+      DEATH_FREEZE_SECONDS +
+      DEATH_DISSOLVE_SECONDS +
+      DEATH_FADE_SECONDS;
 
     respawn.requestDeath({ cause: 'CONSCIOUSNESS_BOMB' });
-    expect(events[0]).toMatchObject({
+    expect(events[0]).toEqual({
+      type: 'DETONATION_STARTED',
+      durationSeconds: BOMB_DETONATION_SECONDS,
+    });
+    respawn.update(BOMB_DETONATION_SECONDS);
+    expect(events[1]).toMatchObject({
       type: 'DEATH_STARTED',
       firstDeath: true,
       narrativeCueId: 'firstDeath',
     });
-    respawn.update(deathDuration);
+    respawn.update(deathDuration - BOMB_DETONATION_SECONDS);
     expect(respawn.isInvulnerable()).toBe(true);
     expect(respawn.requestDeath({ cause: 'CONSCIOUSNESS_BOMB' })).toBe(false);
     respawn.update(RESPAWN_INVULNERABILITY_SECONDS - 0.01);
@@ -80,6 +92,7 @@ describe('RespawnSystem integration', () => {
     expect(respawn.canTakeDamage()).toBe(true);
 
     respawn.requestDeath({ cause: 'CONSCIOUSNESS_BOMB' });
+    respawn.update(BOMB_DETONATION_SECONDS);
     expect(events).toContainEqual(
       expect.objectContaining({
         type: 'DEATH_STARTED',
@@ -98,7 +111,10 @@ describe('RespawnSystem integration', () => {
       onEvent: (event) => events.push(event.type),
     });
     const deathDuration =
-      DEATH_FREEZE_SECONDS + DEATH_DISSOLVE_SECONDS + DEATH_FADE_SECONDS;
+      BOMB_DETONATION_SECONDS +
+      DEATH_FREEZE_SECONDS +
+      DEATH_DISSOLVE_SECONDS +
+      DEATH_FADE_SECONDS;
     for (let death = 0; death < 3; death += 1) {
       expect(respawn.requestDeath({ cause: 'CONSCIOUSNESS_BOMB' })).toBe(true);
       respawn.update(deathDuration);

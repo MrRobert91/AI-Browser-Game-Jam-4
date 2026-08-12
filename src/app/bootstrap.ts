@@ -57,17 +57,16 @@ import {
   type SuperpositionCell,
 } from '../render/superposition';
 import { Wp5PreviewVisuals } from '../render/wp5-preview-visuals';
-import {
-  AgencyRoom,
-  PROLOGUE_PORTAL_Z,
-  PROLOGUE_ROOM_SPAWN,
-} from '../render/agency-room';
+import { AgencyRoom, PROLOGUE_ROOM_SPAWN } from '../render/agency-room';
 import { ObservationReticle } from '../ui/observation-reticle';
 import { GameHud } from '../ui/hud';
 import { loadGameSettings, PauseMenu, type GameSettings } from '../ui/pause';
 import { ProgressionHud } from '../ui/progression-hud';
 import { ResultsPanel } from '../ui/results';
-import { SliceCollapseVisuals } from '../world/collapse-visuals';
+import {
+  SliceCollapseVisuals,
+  visualVariantIndex,
+} from '../world/collapse-visuals';
 import { createOriginDetailField } from '../world/origin-details';
 import { createWorldBoundaryVisual } from '../world/world-boundary';
 import {
@@ -148,16 +147,12 @@ function shellMarkup(locale: Locale): string {
     </section>
 
     <section class="objectives-transmission" data-objectives-transmission hidden aria-labelledby="alice-name">
-      <figure>
-        <img data-objectives-portrait src="/assets/portraits/dr-alice-boole.webp" alt="" width="1280" height="720" />
-        <figcaption>
-          <span>${locale === 'en' ? 'AGENCY OPERATIONS' : 'OPERACIONES DE LA AGENCIA'}</span>
-          <h2 id="alice-name" data-objectives-name>Dr Alice Boole</h2>
-        </figcaption>
-      </figure>
+      <p class="objectives-transmission__identity">
+        <span>${locale === 'en' ? 'AGENCY OPERATIONS' : 'OPERACIONES DE LA AGENCIA'}</span>
+        <strong id="alice-name" data-objectives-name>Dr Alice Boole</strong>
+      </p>
       <p data-objectives-subtitle role="status" aria-live="polite"></p>
       <div>
-        <button type="button" data-objectives-replay>${locale === 'en' ? 'REPEAT DIRECTIVE' : 'REPETIR DIRECTIVA'}</button>
         <button type="button" data-objectives-skip disabled>${locale === 'en' ? 'SKIP' : 'OMITIR'}</button>
       </div>
       <audio data-objectives-audio preload="auto"></audio>
@@ -340,9 +335,6 @@ function bootstrapGame(
   const objectivesSubtitle = root.querySelector<HTMLElement>(
     '[data-objectives-subtitle]',
   );
-  const objectivesReplay = root.querySelector<HTMLButtonElement>(
-    '[data-objectives-replay]',
-  );
   const objectivesSkip = root.querySelector<HTMLButtonElement>(
     '[data-objectives-skip]',
   );
@@ -374,7 +366,6 @@ function bootstrapGame(
     !briefingSkip ||
     !objectivesTransmission ||
     !objectivesSubtitle ||
-    !objectivesReplay ||
     !objectivesSkip ||
     !objectivesAudio
   ) {
@@ -495,17 +486,18 @@ function bootstrapGame(
       prologue.completeObjectives();
     }
     shell.dataset.gamePhase = 'PORTAL';
+    shell.dataset.portal = 'white-sphere';
     systemState.textContent = locale === 'en' ? 'PORTAL READY' : 'PORTAL LISTO';
     roomInteraction.textContent = copy.enterPortal;
     roomInteraction.hidden = false;
     room?.setPhase('PORTAL');
-    playerPhysics?.openProloguePortal();
     objectivesTransmission.hidden = true;
     objectivesSkip.hidden = true;
   };
   const completeBriefing = (): void => {
     prologue.completeBriefing();
     shell.dataset.gamePhase = 'OBJECTIVES';
+    shell.dataset.briefingButton = 'disabled';
     systemState.textContent =
       locale === 'en' ? 'OPERATIONAL DIRECTIVE' : 'DIRECTIVA OPERATIVA';
     objectivesElapsedSeconds = 0;
@@ -514,6 +506,9 @@ function bootstrapGame(
     objectivesSkip.hidden = false;
     objectivesSkip.disabled = true;
     roomInteraction.hidden = true;
+    room?.setPhase('OBJECTIVES');
+    room?.attachPortrait('/assets/portraits/dr-alice-boole.webp');
+    shell.dataset.aliceScreen = 'visible';
     startObjectivesAudio('objectivesDirective');
   };
   const briefing = new BriefingPlayback(shell, locale, {
@@ -556,7 +551,10 @@ function bootstrapGame(
     {
       onMessage: () => undefined,
       onSubtitle: (message) => hud.showSubtitle(message),
-      onAudioCue: (cue) => audioDirector.playNarrativeCue(cue),
+      onAudioCue: (cue) =>
+        cue.id === 'livesExhausted'
+          ? audioDirector.playExclusiveNarrativeCue(cue)
+          : audioDirector.playNarrativeCue(cue),
     },
     narrativeCatalog(locale),
   );
@@ -667,15 +665,6 @@ function bootstrapGame(
     'ended',
     () => {
       if (!defeatTransmission) openPortalAfterObjectives();
-    },
-    { signal: abortController.signal },
-  );
-  objectivesReplay.addEventListener(
-    'click',
-    () => {
-      startObjectivesAudio(
-        defeatTransmission ? 'livesExhausted' : 'objectivesDirective',
-      );
     },
     { signal: abortController.signal },
   );
@@ -889,7 +878,8 @@ function bootstrapGame(
         objectivesTransmission.hidden = false;
         objectivesSubtitle.textContent = defeatText;
         objectivesSkip.hidden = true;
-        startObjectivesAudio('livesExhausted');
+        objectivesAudio.pause();
+        narrative.play('livesExhausted');
         runClock!.endNow();
       },
     });
@@ -914,6 +904,43 @@ function bootstrapGame(
     originDetails.family.mesh.visible = true;
     worldBoundary.root.visible = true;
     superposition.root.visible = true;
+    if (evidenceMode && search.get('showcase') === 'variants') {
+      const usedCellIds = new Set<number>();
+      const families = [
+        { featureTileId: 8, terrainTileIds: [13, 14, 13, 14, 13], z: 62 },
+        { featureTileId: 12, terrainTileIds: [17, 18, 17, 18, 17], z: 65 },
+        { featureTileId: 2, terrainTileIds: [9, 10, 9, 10, 9], z: 68 },
+      ] as const;
+      for (const family of families) {
+        for (let variant = 0; variant < 5; variant += 1) {
+          let cellId = 0;
+          while (
+            usedCellIds.has(cellId) ||
+            visualVariantIndex(worldSeed, cellId, family.featureTileId) !==
+              variant
+          )
+            cellId += 1;
+          usedCellIds.add(cellId);
+          fixedVisuals.begin(
+            {
+              type: 'COLLAPSE',
+              cellId,
+              terrainTileId: family.terrainTileIds[variant],
+              featureTileId: family.featureTileId,
+              terrainRotationQuarterTurns: 0,
+              entropyBefore: 1,
+              durationMs: 225,
+              worldSeed,
+            },
+            [60 + variant * 2, 0, family.z],
+          );
+          fixedVisuals.complete(cellId);
+        }
+      }
+      playerPhysics?.controller.respawn({ x: 64, y: 1.7, z: 75 });
+      camera.lookAt(64, 2.5, 64);
+      shell.dataset.visualShowcase = 'ready';
+    }
     fixedVisuals.root.visible = true;
     if (wp5Visuals) wp5Visuals.root.visible = true;
     if (progressionHud) progressionHud.element.hidden = false;
@@ -1041,19 +1068,14 @@ function bootstrapGame(
       objectivesSkip.disabled = objectivesElapsedSeconds < 3;
     }
     const buttonFocused =
-      (gamePhase === 'ROOM' || gamePhase === 'PORTAL') &&
-      room?.isButtonFocused(camera) === true;
+      gamePhase === 'ROOM' && room?.isButtonFocused(camera) === true;
     room?.update(elapsedSeconds, buttonFocused);
     if (gamePhase === 'ROOM' || gamePhase === 'PORTAL') {
-      roomInteraction.hidden = !buttonFocused && gamePhase !== 'PORTAL';
+      roomInteraction.hidden = gamePhase === 'ROOM' ? !buttonFocused : false;
       roomInteraction.textContent =
-        gamePhase === 'PORTAL' && !buttonFocused
-          ? copy.enterPortal
-          : gamePhase === 'PORTAL'
-            ? copy.replayBriefing
-            : copy.interactHint;
+        gamePhase === 'PORTAL' ? copy.enterPortal : copy.interactHint;
       if (playerInput.consumeInteract() && buttonFocused) beginBriefing();
-      if (gamePhase === 'PORTAL' && camera.position.z <= PROLOGUE_PORTAL_Z) {
+      if (gamePhase === 'PORTAL' && room?.isPortalEntered(camera)) {
         enterRun();
         gamePhase = prologue.snapshot().phase;
       }
@@ -1087,6 +1109,10 @@ function bootstrapGame(
         0,
         64 + Math.sin(angle + 0.4) * (radius + 4),
       );
+    }
+    if (shell.dataset.visualShowcase === 'ready') {
+      camera.position.set(64, 11, 78);
+      camera.lookAt(64, 2, 64);
     }
 
     const playerPosition = [
@@ -1301,7 +1327,7 @@ function bootstrapGame(
         };
         pauseMenu?.setOpen(false);
         shell.dataset.paused = 'false';
-        narrative.play('final');
+        if (runEndReason !== 'LIVES_EXHAUSTED') narrative.play('final');
         resultsPanel.show(result);
         shell.dataset.complete = 'true';
       }

@@ -7,6 +7,8 @@ import {
   MAX_OBSERVATION_DISTANCE_METERS,
   SolverCore,
   runHeadlessSimulation,
+  waterClosureMultiplier,
+  waterCoreContinuationMultiplier,
 } from '../../src/wfc/solver-core';
 
 const playerPosition = [64, 1.7, 64] as const;
@@ -29,6 +31,14 @@ function observation(
 }
 
 describe('incremental SolverCore', () => {
+  it('grows medium water bodies and then strongly prefers closure', () => {
+    expect([1, 8, 17, 24].map(waterCoreContinuationMultiplier)).toEqual([
+      2, 1.4, 0.6, 0.15,
+    ]);
+    expect([1, 8, 17, 24].map(waterClosureMultiplier)).toEqual([
+      1, 1.25, 2.2, 4,
+    ]);
+  });
   it('uses the deterministic stepped 1-10 percent bomb curve', () => {
     expect([0, 60, 120, 540, 1_200].map(consciousnessBombProbability)).toEqual([
       0.01, 0.02, 0.03, 0.1, 0.1,

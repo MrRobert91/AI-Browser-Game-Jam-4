@@ -529,18 +529,25 @@ La bomba de consciencia es el único enemigo y la única causa de pérdida de vi
 - Su probabilidad marginal entre features legales es 1 % durante el minuto 0, 2 % durante el minuto 1 y así sucesivamente hasta 10 % desde el minuto 9. El reloj de peligro empieza con el primer colapso y la distancia no modifica esta curva.
 - Su sensor físico se activa al 70 % del colapso. Solo detona por contacto.
 - Una detonación consume exactamente una vida y no provoca reacciones en cadena.
+- Antes de consumir la vida, el contacto bloquea el control durante 700 ms y
+  muestra la detonación completa: tres semiesferas concéntricas amarilla,
+  verde y naranja, más ondas de suelo. No usa fuego ni flash de pantalla
+  completa. En movimiento reducido se sustituye por una cúpula y un anillo de
+  fundido suave.
 - La explosión convierte en `FRACTURED` toda celda `FIXED` cuyo centro esté a 30 m o menos, salvo origen, Semillas, reservas y corredores.
 - `FRACTURED` conserva una superficie agrietada caminable, no participa en WFC, no cuenta como cobertura y nunca vuelve a colapsarse.
 - Bombas alcanzadas por la explosión quedan fracturadas y desactivadas.
 
 Muerte:
 
-1. congelar 120 ms;
-2. disolver cuerpo 700 ms;
-3. fundido breve;
-4. en primera y segunda muerte, respawn en monolito con 1,5 s de invulnerabilidad;
-5. conservar Semillas, reloj y toda celda no fracturada;
-6. en la tercera muerte, detener el reloj y comenzar el final anticipado sin respawn.
+1. mostrar la detonación durante 700 ms sin consumir aún la vida;
+2. fracturar la región y consumir exactamente una vida;
+3. congelar 120 ms;
+4. disolver cuerpo 700 ms;
+5. fundido breve;
+6. en primera y segunda muerte, respawn en monolito con 1,5 s de invulnerabilidad;
+7. conservar Semillas, reloj y toda celda no fracturada;
+8. en la tercera muerte, detener el reloj y comenzar el final anticipado sin respawn.
 
 Hay tres vidas totales. El final anticipado conserva panorama, perfil, haiku y seed del mundo superviviente.
 
@@ -696,7 +703,13 @@ Build de jam: diez minutos. Mejoras opcionales: Contemplación 15 min; Breve 5 m
   antes de entrar y queda fijado hasta reiniciar.
 - Tras elegir idioma, el Colapsador aparece en una sala cerrada de la Agencia.
   Un botón central reproduce un briefing local de cincuenta segundos en una
-  pantalla que después se convierte en portal hacia el Condensado.
+  pantalla. El botón es de un solo uso y queda desactivado al terminar el
+  briefing.
+- La directiva de Alice Boole aparece en esa misma pantalla física con el
+  filtro audiovisual del briefing; nunca en una pantalla HTML superpuesta.
+- Tras la directiva aparece ante la pantalla una esfera blanca de 1,1 m de
+  radio. La partida comienza al entrar en la esfera; la pared permanece cerrada
+  y atravesar el plano de pantalla no es un mecanismo de transporte.
 - Sala, briefing y portal no consumen tiempo. El reloj continúa empezando con
   el primer colapso aceptado.
 - El briefing presenta como doctrina de la Agencia que una consciencia cierra

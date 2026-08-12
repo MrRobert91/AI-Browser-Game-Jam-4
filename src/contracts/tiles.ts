@@ -67,6 +67,8 @@ export interface CompiledTerrainVariant {
   readonly lethal: boolean;
   readonly heightClass: 0 | 1;
   readonly fallbackRank: 0 | 1 | 2;
+  readonly distanceCurve?: readonly (readonly [number, number])[];
+  readonly neighborBias?: Readonly<Record<string, number>>;
 }
 
 export interface CompiledFeatureVariant {
@@ -82,6 +84,7 @@ export interface CompiledFeatureVariant {
   readonly maxSlopeDegrees: number;
   readonly blocksMovement: boolean;
   readonly lethal: boolean;
+  readonly neighborBias?: Readonly<Record<string, number>>;
 }
 
 export interface CompiledGrammar {

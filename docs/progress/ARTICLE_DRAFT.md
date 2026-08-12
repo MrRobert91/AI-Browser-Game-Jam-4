@@ -340,3 +340,35 @@ Entre el briefing y el portal, Dr Alice Boole enuncia por fin la operación comp
 ![Final anticipado tras agotar las tres vidas](./wfc2-integral/02-lives-final.png)
 
 [Ver el flujo de fractura y final por vidas](./wfc2-integral/wfc2-lives-final.webm)
+
+## Cuando un bioma deja de ser ruido y empieza a recordar a sus vecinos
+
+El vocabulario de WFC2 ya incluía agua y bosque, pero dos detalles anulaban su intención: los pesos blandos se perdían al compilar la gramática y cada celda se ponderaba sin leer los tags ya fijados a su alrededor. Conservar `distanceCurve` y `neighborBias` permite que la elección siga siendo probabilística sin parecer dispersión uniforme.
+
+El agua desbloqueada parte ahora con más presencia y consulta el tamaño de su componente conectado. Crece con fuerza por debajo de ocho celdas, continúa con moderación hasta dieciséis y, desde diecisiete, prefiere orilla, marisma y cierre. A partir de veinticuatro, la salida hacia terreno abierto pesa mucho más. Vecinos opuestos favorecen ríos estrechos; esquinas y tres lados favorecen lagos que se cierran. Son preferencias, nunca incompatibilidades capaces de bloquear el solver.
+
+![Cinco siluetas y suelos de bosque, ruina y agua](./issue-105-visual-biomes-prologue/03-visual-biomes.webp)
+
+Los árboles usan la misma lógica social: un vecino duplica como mínimo su probabilidad relativa, mientras una densidad superior al 60 % inclina el siguiente resultado hacia claros, setas o vacío. La escala acompaña a esa gramática. Jóvenes y viejos alcanzan alturas forestales; rocas y ruinas ocupan casi toda la celda y bloquean con colliders acordes. Cinco geometrías compuestas por definición se eligen con seed y celda, pero terminan en lotes instanciados para no cambiar silueta por draw calls.
+
+## La explosión necesita existir antes que la muerte
+
+El contacto con una bomba ya no salta directamente a la disolución del cuerpo. Una fase pública `DETONATING` conserva la cámara durante 0,7 segundos: el núcleo rojo con pinchos negros queda rodeado por semiesferas y anillos amarillos, verdes y naranjas. Solo al terminar esa lectura visual se fractura la región y se consume exactamente una vida. El modo de movimiento reducido sustituye la expansión rápida por una única cúpula y un anillo que se desvanecen.
+
+![Detonación sin fuego antes de consumir la vida](./issue-105-visual-biomes-prologue/04-bomb-detonating.png)
+
+[Ver detonación, fractura y cierre por tres vidas](./issue-105-visual-biomes-prologue/bomb-detonation-and-terminal.webm)
+
+El final anticipado también corrige un fallo auditivo: la línea terminal cancela cualquier voz anterior mediante `AudioDirector` y el cierre por vidas no vuelve a reproducir la voz genérica de final. El haiku, el perfil y el texto permanecen, pero solo habla una fuente.
+
+## La pantalla sigue siendo pantalla; el portal ocupa la sala
+
+Alice Boole ya no aparece como una gran capa HTML delante de la escena. Su WebP local se aplica al mismo material de la pantalla 3D que mostró el vídeo, con scanlines y tratamiento cromático compartido. Los subtítulos y el control de omisión permanecen como interfaz accesible inferior, y la antigua acción de repetir la directiva desaparece.
+
+![Alice Boole integrada en la pantalla física](./issue-105-visual-biomes-prologue/01-alice-on-screen.png)
+
+Al terminar, el botón coral queda apagado y no vuelve a aceptar interacción. La pared no se abre: delante de la pantalla nace una esfera blanca emisiva de 1,1 m de radio y `RUN` solo comienza cuando el cuerpo entra en su volumen.
+
+![Portal esférico delante de la pantalla cerrada](./issue-105-visual-biomes-prologue/02-white-sphere-portal.png)
+
+[Ver prólogo, esfera y entrada al mundo](./issue-105-visual-biomes-prologue/prologue-portal-run.webm)

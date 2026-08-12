@@ -7,15 +7,12 @@ export interface PrologueSnapshot {
   readonly phase: GamePhase;
   readonly briefingElapsedSeconds: number;
   readonly canSkip: boolean;
-  readonly canReplay: boolean;
   readonly portalOpen: boolean;
 }
 
 export class PrologueDirector {
   private phase: GamePhase = 'LANGUAGE_SELECT';
   private briefingElapsedSeconds = 0;
-  private hasCompletedBriefing = false;
-  private hasCompletedObjectives = false;
 
   enterRoom(): PrologueSnapshot {
     if (this.phase === 'LANGUAGE_SELECT') this.phase = 'ROOM';
@@ -23,10 +20,7 @@ export class PrologueDirector {
   }
 
   pressButton(inRangeAndFocused: boolean): PrologueSnapshot {
-    if (
-      inRangeAndFocused &&
-      (this.phase === 'ROOM' || this.phase === 'PORTAL')
-    ) {
+    if (inRangeAndFocused && this.phase === 'ROOM') {
       this.phase = 'BRIEFING';
       this.briefingElapsedSeconds = 0;
     }
@@ -60,7 +54,6 @@ export class PrologueDirector {
 
   completeBriefing(): PrologueSnapshot {
     if (this.phase === 'BRIEFING') {
-      this.hasCompletedBriefing = true;
       this.phase = 'OBJECTIVES';
       this.briefingElapsedSeconds = BRIEFING_DURATION_SECONDS;
     }
@@ -69,7 +62,6 @@ export class PrologueDirector {
 
   completeObjectives(): PrologueSnapshot {
     if (this.phase === 'OBJECTIVES') {
-      this.hasCompletedObjectives = true;
       this.phase = 'PORTAL';
     }
     return this.snapshot();
@@ -92,10 +84,6 @@ export class PrologueDirector {
       canSkip:
         this.phase === 'BRIEFING' &&
         this.briefingElapsedSeconds >= BRIEFING_SKIP_DELAY_SECONDS,
-      canReplay:
-        this.phase === 'PORTAL' &&
-        this.hasCompletedBriefing &&
-        this.hasCompletedObjectives,
       portalOpen: this.phase === 'PORTAL' || this.phase === 'RUN',
     };
   }

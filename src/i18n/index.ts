@@ -24,7 +24,6 @@ export interface UiCopy {
   readonly briefingPaused: string;
   readonly resumeBriefing: string;
   readonly skipBriefing: string;
-  readonly replayBriefing: string;
   readonly enterPortal: string;
   readonly possibilities: string;
   readonly superposed: string;
@@ -126,8 +125,7 @@ export const UI_COPY: LocalizedCatalog<UiCopy> = {
     briefingPaused: 'BRIEFING PAUSED',
     resumeBriefing: 'Resume',
     skipBriefing: 'Skip briefing',
-    replayBriefing: 'Replay briefing',
-    enterPortal: 'Cross the screen to begin',
+    enterPortal: 'Enter the white sphere to begin',
     possibilities: 'POSSIBILITIES',
     superposed: 'SUPERPOSED',
     undetermined: 'UNDETERMINED',
@@ -256,8 +254,7 @@ export const UI_COPY: LocalizedCatalog<UiCopy> = {
     briefingPaused: 'BRIEFING EN PAUSA',
     resumeBriefing: 'Reanudar',
     skipBriefing: 'Omitir briefing',
-    replayBriefing: 'Repetir briefing',
-    enterPortal: 'Cruza la pantalla para comenzar',
+    enterPortal: 'Entra en la esfera blanca para comenzar',
     possibilities: 'POSIBILIDADES',
     superposed: 'SUPERPUESTA',
     undetermined: 'INDETERMINADA',
