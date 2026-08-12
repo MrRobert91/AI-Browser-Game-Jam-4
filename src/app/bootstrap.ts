@@ -10,9 +10,11 @@ import type { UnlockablePackId } from '../contracts/tiles';
 import { planSeedAnchors } from '../gameplay/anchors';
 import { resolveWorldSeed } from '../gameplay/daily-seed';
 import {
+  classifyEnding,
   closureForSeedCount,
   EndingDirector,
   formatSeed,
+  type EndingVariant,
   type RunResult,
   type RunEndReason,
 } from '../gameplay/ending';
@@ -33,6 +35,7 @@ import { RunClock, type RunMode } from '../gameplay/run-clock';
 import { PrologueDirector } from '../gameplay/prologue';
 import { applyDocumentLocale, loadLocale, saveLocale, uiCopy } from '../i18n';
 import { DebugOverlay, debugToolsAvailable } from '../dev/debug-overlay';
+import { applyMissionCompleteReplayOutcome } from '../dev/mission-complete-replay';
 import {
   isGrammarViewerMode,
   renderGrammarViewer,
@@ -63,6 +66,7 @@ import { GameHud } from '../ui/hud';
 import { loadGameSettings, PauseMenu, type GameSettings } from '../ui/pause';
 import { ProgressionHud } from '../ui/progression-hud';
 import { ResultsPanel } from '../ui/results';
+import { MissionCompletePlayback } from '../ui/mission-complete';
 import {
   SliceCollapseVisuals,
   visualVariantIndex,
@@ -161,6 +165,15 @@ function shellMarkup(locale: Locale): string {
     <section class="audio-diagnostic" data-audio-diagnostic hidden>
       <span data-audio-diagnostic-status role="status"></span>
       <button type="button" data-audio-retry>${copy.audioRetry}</button>
+    </section>
+
+    <section class="mission-complete" data-mission-complete hidden aria-label="${locale === 'en' ? 'Mission complete transmission' : 'Transmisión de misión completada'}">
+      <video data-mission-video muted playsinline></video>
+      <img data-mission-fallback hidden alt="${locale === 'en' ? 'Agency mission record' : 'Expediente de misión de la Agencia'}" />
+      <div class="mission-complete__veil"></div>
+      <p data-mission-caption aria-live="polite"></p>
+      <button type="button" data-mission-skip disabled></button>
+      <audio data-mission-audio></audio>
     </section>
 
     <section class="slice-result" data-slice-result hidden>
@@ -378,6 +391,7 @@ function bootstrapGame(
 
   const abortController = new AbortController();
   const settings = loadGameSettings();
+  let currentSettings = settings;
   const search = new URLSearchParams(window.location.search);
   const requestedMode = search.get('mode');
   const runMode: RunMode =
@@ -562,9 +576,16 @@ function bootstrapGame(
   const endingDirector = new EndingDirector();
   const evidenceMode =
     new URLSearchParams(window.location.search).get('evidence') === '1';
+  const missionCompleteReplay =
+    evidenceMode && search.get('replay') === 'mission-complete';
   let pauseMenu: PauseMenu | null = null;
   let runClock: RunClock | null = null;
   let runEndReason: RunEndReason = 'TIME_EXPIRED';
+  let endingVariant: EndingVariant = 'STANDARD';
+  let finalFixedCells = 0;
+  let finalLivesRemaining = 3;
+  let finalCollectedPacks: readonly UnlockablePackId[] = [];
+  let missionPlaybackStarted = false;
   let wp5Preview: Wp5PreviewRuntime | null = null;
   const playerInput = new PlayerInput(shell, {
     keepRunningWithoutPointerLock: evidenceMode,
@@ -602,6 +623,7 @@ function bootstrapGame(
     },
   });
   const applySettings = (nextSettings: GameSettings): void => {
+    currentSettings = nextSettings;
     playerInput.setSettings({
       mouseSensitivity: nextSettings.mouseSensitivity,
       invertY: nextSettings.invertY,
@@ -741,6 +763,11 @@ function bootstrapGame(
   );
   fixedVisuals.root.visible = false;
   let resultPresented = false;
+  const missionPlayback = new MissionCompletePlayback(shell, {
+    locale,
+    onSkip: () => endingDirector.skipMissionVideo(),
+    onFinished: () => endingDirector.finishMissionVideo(),
+  });
   runClock = new RunClock(
     {
       onCountdown: (remainingSeconds) => {
@@ -748,14 +775,36 @@ function bootstrapGame(
         if (remainingSeconds === 30) narrative.play('lastThirtySeconds');
       },
       onEnding: () => {
+        const replayOutcome = missionCompleteReplay
+          ? applyMissionCompleteReplayOutcome(worldState)
+          : null;
+        finalFixedCells =
+          replayOutcome?.finalFixedCells ?? worldState.countFixedCells();
+        finalLivesRemaining =
+          replayOutcome?.livesRemaining ??
+          wp5Preview?.respawn.snapshot().livesRemaining ??
+          3;
+        finalCollectedPacks =
+          replayOutcome?.collectedPacks ??
+          wp5Preview?.progression.snapshot().collectedPacks ??
+          [];
+        endingVariant = classifyEnding({
+          mode: runMode,
+          endingReason: runEndReason,
+          livesRemaining: finalLivesRemaining,
+          collectedPacks: finalCollectedPacks,
+          finalFixedCells,
+        });
         prologue.startEnding();
         shell.dataset.gamePhase = 'ENDING';
         shell.dataset.ending = 'true';
+        shell.dataset.endingVariant = endingVariant;
+        shell.dataset.endingPhase = 'ASCENDING';
         playerInput.setEnabled(false);
         superposition.root.visible = false;
         fixedVisuals.setEndingMode(true);
         narrative.play('lastThirtySeconds');
-        endingDirector.start();
+        endingDirector.start(endingVariant);
       },
     },
     { mode: runMode, startAtSeconds },
@@ -824,7 +873,9 @@ function bootstrapGame(
 
   const replayMode = search.get('replay');
   const wp5PreviewEnabled = search.get('wp5') !== 'off';
-  const wp5Replay = wp5PreviewEnabled && replayMode === 'wp5';
+  const wp5Replay =
+    wp5PreviewEnabled &&
+    (replayMode === 'wp5' || replayMode === 'mission-complete');
   const livesReplay = wp5PreviewEnabled && replayMode === 'wfc2-lives';
   const canonicalReplay =
     replayMode === 'canonical' || wp5Replay || livesReplay;
@@ -1301,21 +1352,47 @@ function bootstrapGame(
       contextualFixedCells = fixedCells;
     }
     if (clock.phase === 'ENDING') {
-      const ending = endingDirector.update(deltaSeconds * replaySpeed);
+      const ending = endingDirector.update(
+        deltaSeconds *
+          (endingDirector.snapshot().phase === 'MISSION_VIDEO'
+            ? 1
+            : replaySpeed),
+      );
+      shell.dataset.endingPhase = ending.phase;
+      shell.dataset.endingPhaseElapsed = ending.phaseElapsedSeconds.toFixed(3);
       camera.position.y = Math.max(
         camera.position.y,
         1.7 + ending.progress * 24.8,
       );
       camera.lookAt(64, 0, 64);
+      if (ending.phase === 'MISSION_VIDEO') {
+        if (!missionPlaybackStarted) {
+          missionPlaybackStarted = true;
+          audioDirector.setMissionVideoActive(true);
+          missionPlayback.start(
+            currentSettings.volumes.master,
+            currentSettings.volumes.voice,
+            currentSettings.voicesEnabled,
+          );
+        }
+        missionPlayback.update(ending.phaseElapsedSeconds);
+      }
       if (ending.phase === 'COMPLETE' && !resultPresented) {
         resultPresented = true;
+        if (missionPlaybackStarted) {
+          missionPlayback.stop();
+          audioDirector.setMissionVideoActive(false);
+        }
         runClock!.markComplete();
         const portrait = portraitTracker.snapshot();
         const profile = classifyAttentionPortrait(portrait);
         const haiku = generateHaiku(worldSeed, portrait, profile, locale);
-        const closure = closureForSeedCount(portrait.unlockedPacks.length);
+        const closure = closureForSeedCount(finalCollectedPacks.length);
         const result: RunResult = {
-          endReason: runEndReason,
+          endingVariant,
+          endingReason: runEndReason,
+          livesRemaining: finalLivesRemaining,
+          finalFixedCells,
           worldSeed,
           seedLabel: formatSeed(worldSeed),
           seedMode: seedSelection.mode,
@@ -1356,6 +1433,7 @@ function bootstrapGame(
     // Start both privileged operations synchronously from the same gesture.
     // Audio is optional; Pointer Lock is the transactional calibration gate.
     void briefing.authorizeAudioFromGesture();
+    missionPlayback.authorizeFromGesture();
     const audioStart = audioDirector.startFromGesture();
     shell.dataset.audioStarted = 'pending';
     const pointerLockAcquired = evidenceMode
@@ -1451,6 +1529,7 @@ function bootstrapGame(
     hud.destroy();
     debugOverlay?.destroy();
     pauseMenu?.destroy();
+    missionPlayback.dispose();
     audioDirector.dispose();
     briefing.dispose();
     objectivesAudio.pause();

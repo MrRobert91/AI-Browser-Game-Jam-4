@@ -1104,6 +1104,75 @@ button {
   animation: death-pulse 820ms ease-out both;
 }
 
+.mission-complete {
+  position: absolute;
+  z-index: 26;
+  inset: 0;
+  display: grid;
+  overflow: hidden;
+  background: #02070b;
+  place-items: center;
+}
+
+.mission-complete[hidden] {
+  display: none;
+}
+
+.mission-complete video,
+.mission-complete img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  grid-area: 1 / 1;
+}
+
+.mission-complete__veil {
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(180deg, rgb(2 8 14 / 8%) 40%, rgb(2 8 14 / 76%) 100%),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 3px,
+      rgb(190 255 241 / 3%) 4px 5px
+    );
+  grid-area: 1 / 1;
+  pointer-events: none;
+}
+
+.mission-complete p {
+  z-index: 2;
+  align-self: end;
+  width: min(62rem, calc(100% - 3rem));
+  margin: 0 0 3rem;
+  padding: 0.85rem 1rem;
+  color: #f5fff8;
+  font: clamp(1rem, 2vw, 1.45rem) / 1.5 Georgia, "Times New Roman", serif;
+  text-align: center;
+  text-shadow: 0 2px 12px #000;
+  background: rgb(3 10 15 / 72%);
+  grid-area: 1 / 1;
+}
+
+.mission-complete button {
+  z-index: 3;
+  align-self: start;
+  justify-self: end;
+  margin: 1.25rem;
+  border: 1px solid rgb(199 255 239 / 65%);
+  padding: 0.7rem 0.95rem;
+  color: #effff8;
+  background: rgb(4 17 22 / 82%);
+  font: 0.68rem "Courier New", monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  grid-area: 1 / 1;
+}
+
+.mission-complete button:disabled {
+  opacity: 0.35;
+}
+
 .slice-result {
   position: absolute;
   z-index: 25;

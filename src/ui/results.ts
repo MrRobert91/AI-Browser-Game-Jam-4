@@ -96,7 +96,7 @@ export class ResultsPanel {
     const metrics = document.createElement('dl');
     metrics.className = 'slice-result__metrics';
     const metricEntries = [
-      [copy.resultMetrics[0], String(result.portrait.fixedCells)],
+      [copy.resultMetrics[0], String(result.finalFixedCells)],
       [
         copy.resultMetrics[1],
         String(

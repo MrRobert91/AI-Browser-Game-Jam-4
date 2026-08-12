@@ -245,6 +245,114 @@ test('canonical offline English journey reaches the qualitative ending', async (
   await expect(shell).toHaveAttribute('data-game-phase', 'ENDING');
 });
 
+for (const locale of ['en', 'es'] as const) {
+  test(`qualified ${locale.toUpperCase()} replay reaches mission video after ascent`, async ({
+    page,
+  }, testInfo) => {
+    test.slow();
+    const externalRequests: string[] = [];
+    page.on('request', (request) => {
+      const url = new URL(request.url());
+      if (url.origin !== appOrigin) externalRequests.push(request.url());
+    });
+    await page.goto(
+      '/?wp5=preview&replay=mission-complete&speed=8&evidence=1&start=599',
+    );
+    await enterRoom(page, locale);
+    await pressRoomButton(page);
+    await skipBriefingAndCrossPortal(
+      page,
+      locale === 'en'
+        ? 'collapse as much of the Condensate as possible'
+        : 'colapsa la mayor superficie posible',
+    );
+    const shell = page.locator('.observation-shell');
+    await expect(shell).toHaveAttribute(
+      'data-ending-variant',
+      'MISSION_COMPLETE',
+      { timeout: 20_000 },
+    );
+    await expect(shell).toHaveAttribute(
+      'data-ending-phase',
+      'MISSION_VIDEO',
+      { timeout: 15_000 },
+    );
+    const mission = page.locator('[data-mission-complete]');
+    await expect(mission).toBeVisible();
+    await expect(mission).toHaveAttribute('data-media', 'video');
+    await expect(mission).toHaveAttribute('data-voice', 'playing');
+    await expect
+      .poll(() =>
+        page.locator('[data-mission-video]').evaluate(
+          (element) => (element as HTMLVideoElement).currentTime,
+        ),
+      )
+      .toBeGreaterThan(0);
+    const caption = await page.locator('[data-mission-caption]').textContent();
+    expect(caption).toMatch(
+      locale === 'en'
+        ? /Congratulations, Collapser|Thanks to your intervention|Should new Probability Condensates|Until then, you may provisionally assume/u
+        : /Enhorabuena, Colapsador|Gracias a su intervención|Si aparecen nuevos Condensados|Hasta entonces, puede asumir provisionalmente/u,
+    );
+    const skip = page.locator('[data-mission-skip]');
+    await expect(skip).toBeEnabled();
+    expect(Number(await shell.getAttribute('data-ending-phase-elapsed'))).toBeGreaterThanOrEqual(3);
+    await page.screenshot({
+      path: testInfo.outputPath(`${locale}-mission-video.png`),
+    });
+    await skip.click();
+    const result = page.locator('[data-slice-result]');
+    await expect(result).toBeVisible({ timeout: 10_000 });
+    await expect(result).toContainText(
+      locale === 'en' ? 'MISSION COMPLETE' : 'MISIÓN COMPLETADA',
+    );
+    await expect(result).toContainText('1536');
+    await page.screenshot({
+      path: testInfo.outputPath(`${locale}-mission-results.png`),
+    });
+    await expect(page.locator('[data-mission-complete]')).toBeHidden();
+    expect(externalRequests).toEqual([]);
+  });
+}
+
+test('mission video and voice failures keep captions and reach results once', async ({
+  page,
+}, testInfo) => {
+  test.slow();
+  await page.route('**/assets/mission-complete/agency-mission-complete.webm', (
+    route,
+  ) => route.abort());
+  await page.route('**/assets/mission-complete/agency-mission-complete.en.mp3', (
+    route,
+  ) => route.abort());
+  await page.goto(
+    '/?wp5=preview&replay=mission-complete&speed=8&evidence=1&start=599',
+  );
+  await enterRoom(page, 'en');
+  await pressRoomButton(page);
+  await skipBriefingAndCrossPortal(
+    page,
+    'collapse as much of the Condensate as possible',
+  );
+  const shell = page.locator('.observation-shell');
+  await expect(shell).toHaveAttribute('data-ending-phase', 'MISSION_VIDEO', {
+    timeout: 20_000,
+  });
+  const mission = page.locator('[data-mission-complete]');
+  await expect(mission).toHaveAttribute('data-media', 'fallback');
+  await expect(mission).toHaveAttribute('data-voice', 'fallback');
+  await expect(page.locator('[data-mission-fallback]')).toBeVisible();
+  await expect(page.locator('[data-mission-caption]')).not.toBeEmpty();
+  await page.screenshot({
+    path: testInfo.outputPath('mission-fallback.png'),
+  });
+  const skip = page.locator('[data-mission-skip]');
+  await expect(skip).toBeEnabled({ timeout: 5_000 });
+  await skip.click();
+  await expect(page.locator('[data-slice-result]')).toHaveCount(1);
+  await expect(page.locator('[data-slice-result]')).toBeVisible();
+});
+
 test('Spanish fallback briefing keeps captions and reaches RUN', async ({
   page,
 }) => {
