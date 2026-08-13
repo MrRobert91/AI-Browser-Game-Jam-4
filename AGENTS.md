@@ -534,7 +534,7 @@ La bomba de consciencia es el único enemigo y la única causa de pérdida de vi
   verde y naranja, más ondas de suelo. No usa fuego ni flash de pantalla
   completa. En movimiento reducido se sustituye por una cúpula y un anillo de
   fundido suave.
-- La explosión convierte en `FRACTURED` toda celda `FIXED` cuyo centro esté a 30 m o menos, salvo origen, Semillas, reservas y corredores.
+- La explosión convierte en `FRACTURED` toda celda `FIXED` cuyo centro esté a 15 m o menos, salvo origen, Semillas, reservas y corredores.
 - `FRACTURED` conserva una superficie agrietada caminable, no participa en WFC, no cuenta como cobertura y nunca vuelve a colapsarse.
 - Bombas alcanzadas por la explosión quedan fracturadas y desactivadas.
 
@@ -797,7 +797,7 @@ export interface FractureRegionInput {
   type: 'FRACTURE_REGION';
   tick: number;
   centerCellId: number;
-  radiusMeters: 30;
+  radiusMeters: 15;
   protectedCellIds: readonly number[];
 }
 

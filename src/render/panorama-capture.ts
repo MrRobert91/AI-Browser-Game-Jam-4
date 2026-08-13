@@ -1,5 +1,5 @@
 import {
-  OrthographicCamera,
+  PerspectiveCamera,
   SRGBColorSpace,
   WebGLRenderTarget,
   type Scene,
@@ -11,6 +11,8 @@ import type { CellId } from '../contracts/world';
 export const PANORAMA_WIDTH = 1600;
 export const PANORAMA_HEIGHT = 900;
 export const PANORAMA_PADDING_METERS = 4;
+export const FINAL_WORLD_PORTRAIT_FOV_DEGREES = 70;
+export const FINAL_WORLD_PORTRAIT_MINIMUM_HEIGHT_METERS = 36;
 
 export interface ObservedWorldBounds {
   readonly minX: number;
@@ -85,25 +87,58 @@ export function panoramaFrustum(
   return { halfWidth, halfHeight };
 }
 
-/** Renders a fog-free, top-down map to an isolated target without moving gameplay camera. */
+export interface FinalWorldCameraPose {
+  readonly position: readonly [number, number, number];
+  readonly target: readonly [number, number, number];
+}
+
+export function finalWorldCameraPose(
+  bounds: ObservedWorldBounds,
+  aspect = PANORAMA_WIDTH / PANORAMA_HEIGHT,
+  verticalFovDegrees = FINAL_WORLD_PORTRAIT_FOV_DEGREES,
+): FinalWorldCameraPose {
+  const safeAspect = Math.max(1, aspect);
+  const verticalHalfAngle = (verticalFovDegrees * Math.PI) / 360;
+  const horizontalHalfAngle = Math.atan(
+    Math.tan(verticalHalfAngle) * safeAspect,
+  );
+  const halfWidth = Math.max(2, (bounds.maxX - bounds.minX) / 2);
+  const halfDepth = Math.max(2, (bounds.maxZ - bounds.minZ) / 2);
+  const fittedHeight =
+    Math.max(
+      halfDepth / Math.tan(verticalHalfAngle),
+      halfWidth / Math.tan(horizontalHalfAngle),
+    ) *
+      1.12 +
+    8;
+  const height = Math.max(
+    FINAL_WORLD_PORTRAIT_MINIMUM_HEIGHT_METERS,
+    fittedHeight,
+  );
+  return {
+    position: [bounds.centerX, height, bounds.centerZ],
+    target: [bounds.centerX, 0, bounds.centerZ],
+  };
+}
+
+/** Renders the same fog-free, complete-world portrait used by the final ascent. */
 export function renderObservedWorldMapCanvas(
   renderer: WebGLRenderer,
   scene: Scene,
   fixedCellIds: readonly CellId[],
 ): HTMLCanvasElement {
   const bounds = observedWorldBounds(fixedCellIds);
-  const { halfWidth, halfHeight } = panoramaFrustum(bounds);
-  const camera = new OrthographicCamera(
-    -halfWidth,
-    halfWidth,
-    halfHeight,
-    -halfHeight,
+  const aspect = PANORAMA_WIDTH / PANORAMA_HEIGHT;
+  const pose = finalWorldCameraPose(bounds, aspect);
+  const camera = new PerspectiveCamera(
+    FINAL_WORLD_PORTRAIT_FOV_DEGREES,
+    aspect,
     0.1,
-    180,
+    300,
   );
-  camera.position.set(bounds.centerX, 96, bounds.centerZ);
+  camera.position.set(...pose.position);
   camera.up.set(0, 0, -1);
-  camera.lookAt(bounds.centerX, 0, bounds.centerZ);
+  camera.lookAt(...pose.target);
   camera.updateProjectionMatrix();
 
   const target = new WebGLRenderTarget(PANORAMA_WIDTH, PANORAMA_HEIGHT, {

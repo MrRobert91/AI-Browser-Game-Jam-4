@@ -21,7 +21,7 @@ export interface FractureRegionInput {
   readonly type: 'FRACTURE_REGION';
   readonly tick: number;
   readonly centerCellId: CellId;
-  readonly radiusMeters: 30;
+  readonly radiusMeters: 15;
   readonly protectedCellIds: readonly CellId[];
 }
 

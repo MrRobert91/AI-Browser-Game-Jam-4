@@ -53,6 +53,14 @@ describe('RunClock', () => {
     });
   });
 
+  it('announces the five-minute midpoint in a standard run', () => {
+    const onCountdown = vi.fn();
+    const clock = new RunClock({ onCountdown });
+    clock.notifyFirstCollapse();
+    clock.update(301);
+    expect(onCountdown).toHaveBeenCalledWith(300);
+  });
+
   it('supports optional five and fifteen minute modes', () => {
     expect(
       new RunClock({}, { mode: 'brief' }).snapshot().remainingSeconds,

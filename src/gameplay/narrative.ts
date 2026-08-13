@@ -13,6 +13,7 @@ export type NarrativeCueId =
   | 'respawn'
   | 'lastSixtySeconds'
   | 'lastThirtySeconds'
+  | 'fiveMinutes'
   | 'final'
   | 'distanceNear'
   | 'distanceMid'
@@ -44,6 +45,21 @@ export type NarrativeCueId =
   | 'ambientB'
   | 'ambientC'
   | 'ambientD'
+  | 'seedWaterHint'
+  | 'seedForestHint'
+  | 'seedRuinHint'
+  | 'seedStormHint'
+  | 'bombRiskThreePercent'
+  | 'bombRiskFivePercent'
+  | 'bombRiskSevenPercent'
+  | 'bombRiskNinePercent'
+  | 'coverageBehindA'
+  | 'coverageBehindB'
+  | 'coverageBehindC'
+  | 'coverageBehindD'
+  | 'rockJumpA'
+  | 'rockJumpB'
+  | 'rockJumpC'
   | 'objectivesDirective'
   | 'livesExhausted';
 export type NarrativeCategory =
@@ -54,11 +70,16 @@ export type NarrativeCategory =
   | 'risk'
   | 'stalled'
   | 'death'
-  | 'ambient';
+  | 'ambient'
+  | 'hint'
+  | 'forecast'
+  | 'coverage'
+  | 'traversal';
 export type NarrativeSpeaker = 'LA_MEDIDA';
 
-export const NARRATIVE_COOLDOWN_MS = 25_000;
-export const MAX_NARRATIVE_CUES_PER_RUN = 22;
+export const NARRATIVE_COOLDOWN_MS = 18_000;
+export const REACTIVE_NARRATIVE_COOLDOWN_MS = 6_000;
+export const MAX_NARRATIVE_CUES_PER_RUN = 34;
 
 export interface NarrativeCueDefinition {
   readonly event: string;
@@ -192,7 +213,10 @@ export class NarrativeDirector {
     if (this.history.length >= MAX_NARRATIVE_CUES_PER_RUN) return text;
     if (
       !definition.critical &&
-      nowMs - this.lastPlayedAtMs < NARRATIVE_COOLDOWN_MS
+      nowMs - this.lastPlayedAtMs <
+        (definition.category === 'traversal' || definition.category === 'hint'
+          ? REACTIVE_NARRATIVE_COOLDOWN_MS
+          : NARRATIVE_COOLDOWN_MS)
     ) {
       return text;
     }
@@ -210,6 +234,16 @@ export class NarrativeDirector {
     this.events.onCue?.(cue);
     this.events.onAudioCue?.(cue);
     return text;
+  }
+
+  tryPlay(
+    cueId: NarrativeCueId,
+    repeat = false,
+    nowMs = performance.now(),
+  ): boolean {
+    const previousCount = this.history.length;
+    this.play(cueId, repeat, nowMs);
+    return this.history.length > previousCount;
   }
 
   playPool(

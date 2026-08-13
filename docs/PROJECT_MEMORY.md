@@ -32,7 +32,7 @@ Actualizado: 2026-08-13 (Europe/Madrid)
 
 - Fase actual: épica #98 con issues #99–#103 desde `origin/dev` `cafe6b4`; la rama acumulativa es `codex/epic-98-wfc2-gameplay` y no se fusiona automáticamente.
 - Contrato WFC2: terreno y feature salen de `COMPILED_GRAMMAR`, el worker publica dominios visibles, rotación y fracturas; los replays anteriores son intencionadamente incompatibles.
-- Juego: una consecuencia forzada resuelve huecos visibles rodeados sin recursión; las bombas escalan del 1 % al 10 %, fracturan 30 m y consumen una de tres vidas. La tercera activa `LIVES_EXHAUSTED`.
+- Juego: una consecuencia forzada resuelve huecos visibles rodeados sin recursión; las bombas escalan del 1 % al 10 %, fracturan 15 m y consumen una de tres vidas. La tercera activa `LIVES_EXHAUSTED`.
 - Presentación: Dr Alice Boole entrega la directiva bilingüe entre briefing y portal; HUD muestra cobertura, vidas y las cuatro Semillas en orden. Todas las voces y el retrato son assets locales.
 - Arte/física: cinco variantes deterministas por familia frecuente, superposición alimentada por dominios reales y colliders próximos para rocas/features bloqueantes.
 
@@ -80,7 +80,10 @@ Actualizado: 2026-08-13 (Europe/Madrid)
 - El solver simplificado se sustituye por dominios de terreno y feature derivados de la gramática compilada. La propagación cardinal, rollback de radio tres, rotación elegida y fallback compatible pertenecen al worker; el render ya no inventa resultados con un hash paralelo.
 - Una celda visible dentro de 20 m rodeada por cuatro `FIXED` entra como una única consecuencia forzada. No genera una segunda búsqueda y `FRACTURED` nunca cuenta como borde fijado.
 - `feature.consciousness-bomb` es el único enemigo. Su probabilidad marginal determinista sube por minutos completos de 1 % a 10 %, respeta origen/corredores/reservas y solo detona por contacto tras el 70 % del colapso.
-- La explosión convierte los `FIXED` no protegidos a ≤30 m horizontales en `FRACTURED`, retira objetos/colliders, conserva Semillas y reduce cobertura. Las dos primeras muertes respawnean; la tercera congela el reloj y conserva panorama, perfil, haiku y seed.
+- La explosión convierte los `FIXED` no protegidos a ≤15 m horizontales en `FRACTURED`, retira objetos/colliders, conserva Semillas y reduce cobertura. Las dos primeras muertes respawnean; la tercera congela el reloj y conserva panorama, perfil, haiku y seed.
+- Seguridad de colapso: un feature bloqueante no activa su collider mientras el jugador permanezca a ≤2,5 m de su celda recién fijada; se activa al despejarla. La frontera no resuelta prioriza proxies y recibe todos los parches de dominio visibles, sin el antiguo recorte de 120 celdas.
+- Cierre: el ascenso desactiva niebla, calcula una pose cenital desde los límites observados y reutiliza ese encuadre para el PNG local 1600 × 900 mostrado dentro de resultados.
+- Narrativa v3: 60 cues por idioma, cadencia contextual de 20 s, avisos a cinco minutos, pistas tras Semillas, riesgo creciente de bombas, cobertura retrasada y saltos de roca. Los 32 clips nuevos conservan Harper/Kore, están normalizados y funcionan offline.
 - Dr Alice Boole es un retrato original local con nombre HTML accesible. La directiva EN/ES, repetible y omitible tras tres segundos, precede al portal; la derrota reutiliza la transmisión. Cuatro clips nuevos se generaron con Harper/Kore, se normalizaron, transcribieron y registraron en el manifiesto.
 - La presentación usa cinco variaciones visuales deterministas para árboles, rocas, arbustos, flores, setas y juncos; la superposición alterna todas las familias legales del `DOMAIN_PATCH`. Las rocas bloquean el paso a ras de suelo, admiten salto y no aparecen en corredores.
 - Validación acumulada: 205 tests unitarios/integración, gramática/assets, 100 seeds con 20.011 colapsos sin vacíos/fallbacks/divergencias y E2E Chromium de inglés, español/fallback y final por tres vidas. La evidencia reproducible vive en [`docs/progress/wfc2-integral/`](./progress/wfc2-integral/).

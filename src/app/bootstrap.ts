@@ -52,9 +52,14 @@ import {
   type GameRendererPerformanceSnapshot,
 } from '../render/renderer';
 import { FinalArtDirector } from '../render/final-art-director';
-import { renderObservedWorldMapCanvas } from '../render/panorama-capture';
+import {
+  finalWorldCameraPose,
+  observedWorldBounds,
+  renderObservedWorldMapCanvas,
+} from '../render/panorama-capture';
 import {
   domainSuperpositionCandidates,
+  hasFixedCardinalNeighbor,
   SuperpositionRenderer,
   type SuperpositionCandidate,
   type SuperpositionCell,
@@ -478,8 +483,8 @@ function bootstrapGame(
   let enterRun = (): void => undefined;
   const objectiveText =
     locale === 'en'
-      ? 'Agency operational directive. During the next ten minutes, collapse as much of the Condensate as possible. Recover the Possibility Seeds in the authorized order: Water, Forest, Ruin, and Storm. Avoid consciousness bombs; detonation revokes thirty metres of approved reality. You have been allocated three lives. The loss of the third will close the record, regardless of your objections.'
-      : 'Directiva operativa de la Agencia. Durante los próximos diez minutos, colapsa la mayor superficie posible del Condensado. Recupera las Semillas de Posibilidad en el orden autorizado: Agua, Bosque, Ruina y Tormenta. Evita las bombas de consciencia; su detonación revoca treinta metros de realidad aprobada. Se te han asignado tres vidas. La pérdida de la tercera cerrará el expediente, con independencia de tus objeciones.';
+      ? 'Agency operational directive. During the next ten minutes, collapse as much of the Condensate as possible. Recover the Possibility Seeds in the authorized order: Water, Forest, Ruin, and Storm. Avoid consciousness bombs; detonation revokes fifteen metres of approved reality. You have been allocated three lives. The loss of the third will close the record, regardless of your objections.'
+      : 'Directiva operativa de la Agencia. Durante los próximos diez minutos, colapsa la mayor superficie posible del Condensado. Recupera las Semillas de Posibilidad en el orden autorizado: Agua, Bosque, Ruina y Tormenta. Evita las bombas de consciencia; su detonación revoca quince metros de realidad aprobada. Se te han asignado tres vidas. La pérdida de la tercera cerrará el expediente, con independencia de tus objeciones.';
   const defeatText =
     locale === 'en'
       ? 'Third life exhausted. You are dead. The Agency regrets to inform you that no further field body has been authorized. It was not in vain: part of the Condensate was collapsed by your attention and will remain in the record. Your absence has been classified as a conclusive contribution.'
@@ -586,6 +591,8 @@ function bootstrapGame(
   let finalLivesRemaining = 3;
   let finalCollectedPacks: readonly UnlockablePackId[] = [];
   let missionPlaybackStarted = false;
+  const endingCameraStart = new Vector3();
+  let endingCameraPose = finalWorldCameraPose(observedWorldBounds([]));
   let wp5Preview: Wp5PreviewRuntime | null = null;
   const playerInput = new PlayerInput(shell, {
     keepRunningWithoutPointerLock: evidenceMode,
@@ -771,6 +778,7 @@ function bootstrapGame(
   runClock = new RunClock(
     {
       onCountdown: (remainingSeconds) => {
+        if (remainingSeconds === 300) narrative.play('fiveMinutes');
         if (remainingSeconds === 60) narrative.play('lastSixtySeconds');
         if (remainingSeconds === 30) narrative.play('lastThirtySeconds');
       },
@@ -803,6 +811,14 @@ function bootstrapGame(
         playerInput.setEnabled(false);
         superposition.root.visible = false;
         fixedVisuals.setEndingMode(true);
+        endingCameraStart.copy(camera.position);
+        endingCameraPose = finalWorldCameraPose(
+          observedWorldBounds(worldState.fixedCellIds()),
+          camera.aspect,
+          camera.fov,
+        );
+        camera.up.set(0, 0, -1);
+        gameRenderer.setWorldFogEnabled(false);
         narrative.play('lastThirtySeconds');
         endingDirector.start(endingVariant);
       },
@@ -1011,6 +1027,19 @@ function bootstrapGame(
       ruin: 'unlockRuin',
       storm: 'unlockStorm',
     };
+  const seedHintCueByPack: Readonly<Record<UnlockablePackId, NarrativeCueId>> =
+    {
+      water: 'seedWaterHint',
+      forest: 'seedForestHint',
+      ruin: 'seedRuinHint',
+      storm: 'seedStormHint',
+    };
+  const bombForecastCueByStage: Readonly<Record<number, NarrativeCueId>> = {
+    1: 'bombRiskThreePercent',
+    2: 'bombRiskFivePercent',
+    3: 'bombRiskSevenPercent',
+    4: 'bombRiskNinePercent',
+  };
   const announcedPacks = new Set<UnlockablePackId>();
   const debugOverlay = debugToolsAvailable()
     ? new DebugOverlay({
@@ -1087,6 +1116,13 @@ function bootstrapGame(
   let firstDangerAnnounced = false;
   let lastContextualSlot = 0;
   let contextualFixedCells = 0;
+  let lastBombForecastStage = 0;
+  let pendingRockJumpUntilSeconds = 0;
+  let rockJumpSequence = 0;
+  const pendingSeedHints: Array<{
+    readonly cueId: NarrativeCueId;
+    readonly dueAtRunSeconds: number;
+  }> = [];
   const briefingTarget = new Vector3(64, 2.35, 58.17);
   const briefingLookMatrix = new Matrix4();
   const briefingTargetQuaternion = new Quaternion();
@@ -1172,6 +1208,19 @@ function bootstrapGame(
       camera.position.z,
     ] as const;
     playerPhysics?.updateFeatureColliders(playerPosition);
+    if (playerPhysics?.consumeRockJump(playerPosition)) {
+      rockJumpSequence += 1;
+      pendingRockJumpUntilSeconds = elapsedSeconds + 7;
+    }
+    if (pendingRockJumpUntilSeconds > 0) {
+      if (elapsedSeconds > pendingRockJumpUntilSeconds) {
+        pendingRockJumpUntilSeconds = 0;
+      } else if (
+        narrative.playPool('traversal', worldSeed ^ rockJumpSequence) !== null
+      ) {
+        pendingRockJumpUntilSeconds = 0;
+      }
+    }
     camera.getWorldDirection(forwardVector);
     replayRecorder.record(Math.floor(elapsedSeconds * 10), playerPosition, [
       forwardVector.x,
@@ -1239,6 +1288,15 @@ function bootstrapGame(
           cellId,
           center: cellCenterToWorld(cellId, 0),
           observationCharge: cell.observationCharge,
+          frontier: hasFixedCardinalNeighbor(
+            cellId,
+            (neighborId) =>
+              worldState.getCellView(neighborId).phase === 'FIXED',
+          ),
+          distanceToPlayer: Math.hypot(
+            cellCenterToWorld(cellId, 0)[0] - playerPosition[0],
+            cellCenterToWorld(cellId, 0)[2] - playerPosition[2],
+          ),
           candidates: domainSuperpositionCandidates(
             cell.terrainDomain,
             cell.featureDomain,
@@ -1307,6 +1365,10 @@ function bootstrapGame(
         audioDirector.playUnlockCue(packId);
         audioDirector.setAmbienceScene(packId === 'forest' ? 'base' : packId);
         narrative.play(narrativeCueByPack[packId]);
+        pendingSeedHints.push({
+          cueId: seedHintCueByPack[packId],
+          dueAtRunSeconds: runClock!.snapshot().elapsedSeconds + 8,
+        });
       }
       if (wp5Snapshot.respawn.deaths > recordedDeaths) {
         portraitTracker.recordDeath();
@@ -1325,7 +1387,15 @@ function bootstrapGame(
     hud.setCoverage(worldState.countFixedCells());
     hud.setLives(wp5Preview?.respawn.snapshot().livesRemaining ?? 3);
     audioDirector.updateCountdown(clock.remainingSeconds, clock.elapsedSeconds);
-    const contextualSlot = Math.floor(clock.elapsedSeconds / 30);
+    const pendingSeedHint = pendingSeedHints[0];
+    if (
+      pendingSeedHint &&
+      clock.elapsedSeconds >= pendingSeedHint.dueAtRunSeconds &&
+      narrative.tryPlay(pendingSeedHint.cueId)
+    ) {
+      pendingSeedHints.shift();
+    }
+    const contextualSlot = Math.floor(clock.elapsedSeconds / 20);
     if (
       clock.phase === 'RUNNING' &&
       clock.remainingSeconds > 60 &&
@@ -1333,21 +1403,38 @@ function bootstrapGame(
     ) {
       const portrait = portraitTracker.snapshot();
       const fixedCells = worldState.countFixedCells();
-      const category =
-        recordedDeaths > 1
-          ? 'death'
-          : fixedCells <= contextualFixedCells
-            ? 'stalled'
-            : portrait.dangerExposureSeconds >= 12
-              ? 'risk'
-              : portrait.revisitRatio >= 0.25
-                ? 'revisit'
-                : portrait.averageGazeDwell >= 1.4
-                  ? 'attention'
-                  : portrait.maxDistance >= 18
-                    ? 'distance'
-                    : 'ambient';
-      narrative.playPool(category, worldSeed ^ contextualSlot);
+      const bombForecastStage = Math.min(
+        4,
+        Math.floor(clock.elapsedSeconds / 120),
+      );
+      const forecastCue = bombForecastCueByStage[bombForecastStage];
+      if (
+        forecastCue &&
+        bombForecastStage > lastBombForecastStage &&
+        narrative.tryPlay(forecastCue)
+      ) {
+        lastBombForecastStage = bombForecastStage;
+      } else if (bombForecastStage <= lastBombForecastStage) {
+        const expectedFixedCells = (clock.elapsedSeconds / 600) * 1_536;
+        const category =
+          recordedDeaths > 1
+            ? 'death'
+            : clock.elapsedSeconds >= 90 &&
+                fixedCells < expectedFixedCells * 0.65
+              ? 'coverage'
+              : fixedCells <= contextualFixedCells
+                ? 'stalled'
+                : portrait.dangerExposureSeconds >= 12
+                  ? 'risk'
+                  : portrait.revisitRatio >= 0.25
+                    ? 'revisit'
+                    : portrait.averageGazeDwell >= 1.4
+                      ? 'attention'
+                      : portrait.maxDistance >= 18
+                        ? 'distance'
+                        : 'ambient';
+        narrative.playPool(category, worldSeed ^ contextualSlot);
+      }
       lastContextualSlot = contextualSlot;
       contextualFixedCells = fixedCells;
     }
@@ -1360,11 +1447,19 @@ function bootstrapGame(
       );
       shell.dataset.endingPhase = ending.phase;
       shell.dataset.endingPhaseElapsed = ending.phaseElapsedSeconds.toFixed(3);
-      camera.position.y = Math.max(
-        camera.position.y,
-        1.7 + ending.progress * 24.8,
+      const ascentProgress =
+        ending.progress * ending.progress * (3 - 2 * ending.progress);
+      camera.position.set(
+        endingCameraStart.x +
+          (endingCameraPose.position[0] - endingCameraStart.x) * ascentProgress,
+        endingCameraStart.y +
+          (endingCameraPose.position[1] - endingCameraStart.y) * ascentProgress,
+        endingCameraStart.z +
+          (endingCameraPose.position[2] - endingCameraStart.z) * ascentProgress,
       );
-      camera.lookAt(64, 0, 64);
+      camera.lookAt(...endingCameraPose.target);
+      shell.dataset.endingCameraHeight = camera.position.y.toFixed(3);
+      shell.dataset.endingFog = gameRenderer.scene.fog === null ? 'off' : 'on';
       if (ending.phase === 'MISSION_VIDEO') {
         if (!missionPlaybackStarted) {
           missionPlaybackStarted = true;

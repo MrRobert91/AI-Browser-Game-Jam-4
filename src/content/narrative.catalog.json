@@ -385,13 +385,157 @@
     "es": "La Medida registra experiencia, no verdad. La verdad pertenece a otro departamento."
   },
   {
+    "id": "fiveMinutes",
+    "category": "critical",
+    "priority": 96,
+    "durationMs": 6500,
+    "once": true,
+    "en": "Five minutes remain. Half the window is gone; the unresolved half has submitted no complaint.",
+    "es": "Quedan cinco minutos. La mitad de la ventana ha desaparecido; la mitad sin resolver no ha presentado queja."
+  },
+  {
+    "id": "seedWaterHint",
+    "category": "hint",
+    "priority": 58,
+    "durationMs": 6800,
+    "once": true,
+    "en": "Water has been filed. Forest authorization waits farther from the origin; follow the taller uncertain silhouettes.",
+    "es": "El agua ha quedado registrada. La autorización del bosque espera más lejos del origen; sigue las siluetas inciertas más altas."
+  },
+  {
+    "id": "seedForestHint",
+    "category": "hint",
+    "priority": 58,
+    "durationMs": 6500,
+    "once": true,
+    "en": "Forest has been filed. Ruin authorization prefers greater distance and excellent structural denial.",
+    "es": "El bosque ha quedado registrado. La autorización de ruina prefiere mayor distancia y una excelente negación estructural."
+  },
+  {
+    "id": "seedRuinHint",
+    "category": "hint",
+    "priority": 59,
+    "durationMs": 6800,
+    "once": true,
+    "en": "Ruins admitted. The Storm Seed waits in the outer ring, where risk notices are printed smaller.",
+    "es": "Ruinas admitidas. La Semilla de Tormenta espera en el anillo exterior, donde los avisos de riesgo se imprimen más pequeños."
+  },
+  {
+    "id": "seedStormHint",
+    "category": "hint",
+    "priority": 60,
+    "durationMs": 7200,
+    "once": true,
+    "en": "All four vocabularies are authorized. The Agency now expects quantity, quality, and your continued survival, in that order.",
+    "es": "Los cuatro vocabularios están autorizados. La Agencia espera ahora cantidad, calidad y tu supervivencia continuada, por ese orden."
+  },
+  {
+    "id": "bombRiskThreePercent",
+    "category": "forecast",
+    "priority": 50,
+    "durationMs": 6600,
+    "once": true,
+    "en": "Bomb expectation has risen to three percent per eligible result. The Agency calls this a modest correction.",
+    "es": "La expectativa de bomba ha subido al tres por ciento por resultado elegible. La Agencia lo llama corrección modesta."
+  },
+  {
+    "id": "bombRiskFivePercent",
+    "category": "forecast",
+    "priority": 52,
+    "durationMs": 6800,
+    "once": true,
+    "en": "Bomb expectation is now five percent. Probability has noticed your continued employment.",
+    "es": "La expectativa de bomba es ahora del cinco por ciento. La probabilidad ha reparado en que sigues trabajando."
+  },
+  {
+    "id": "bombRiskSevenPercent",
+    "category": "forecast",
+    "priority": 54,
+    "durationMs": 7000,
+    "once": true,
+    "en": "Seven percent bomb expectation. New terrain should now be treated as innocent only provisionally.",
+    "es": "Siete por ciento de expectativa de bomba. El terreno nuevo solo debe considerarse inocente de forma provisional."
+  },
+  {
+    "id": "bombRiskNinePercent",
+    "category": "forecast",
+    "priority": 56,
+    "durationMs": 7200,
+    "once": true,
+    "en": "Bomb expectation has reached nine percent. Confidence remains available, but no longer complimentary.",
+    "es": "La expectativa de bomba ha alcanzado el nueve por ciento. La confianza sigue disponible, pero ya no es gratuita."
+  },
+  {
+    "id": "coverageBehindA",
+    "category": "coverage",
+    "priority": 46,
+    "durationMs": 6800,
+    "once": true,
+    "en": "A substantial portion remains unresolved. This is artistically valid and operationally inconvenient.",
+    "es": "Una parte sustancial sigue sin resolver. Es artísticamente válido y operativamente incómodo."
+  },
+  {
+    "id": "coverageBehindB",
+    "category": "coverage",
+    "priority": 48,
+    "durationMs": 7600,
+    "once": true,
+    "en": "Your coverage is behind the approved fiction. Hold your gaze on a nearby frontier; running past it does not count as observation.",
+    "es": "Tu cobertura va por detrás de la ficción aprobada. Mantén la mirada en una frontera cercana; pasar corriendo no cuenta como observación."
+  },
+  {
+    "id": "coverageBehindC",
+    "category": "coverage",
+    "priority": 47,
+    "durationMs": 7400,
+    "once": true,
+    "en": "Many cells still lack a result. The reticle closes when attention is sufficient; paperwork closes when I am.",
+    "es": "Muchas casillas aún carecen de resultado. La retícula se cierra con atención suficiente; el papeleo, cuando yo lo diga."
+  },
+  {
+    "id": "coverageBehindD",
+    "category": "coverage",
+    "priority": 45,
+    "durationMs": 7000,
+    "once": true,
+    "en": "The dark grid is winning by acreage. Fix connected frontiers before filing this as minimalism.",
+    "es": "La cuadrícula oscura está ganando por superficie. Fija fronteras conectadas antes de registrar esto como minimalismo."
+  },
+  {
+    "id": "rockJumpA",
+    "category": "traversal",
+    "priority": 62,
+    "durationMs": 5200,
+    "once": true,
+    "en": "Obstacle cleared. The rock has filed an appeal against gravity.",
+    "es": "Obstáculo superado. La roca ha presentado un recurso contra la gravedad."
+  },
+  {
+    "id": "rockJumpB",
+    "category": "traversal",
+    "priority": 61,
+    "durationMs": 5600,
+    "once": true,
+    "en": "A successful jump over approved geology. No additional permit will be issued.",
+    "es": "Salto correcto sobre geología aprobada. No se expedirá ningún permiso adicional."
+  },
+  {
+    "id": "rockJumpC",
+    "category": "traversal",
+    "priority": 60,
+    "durationMs": 6200,
+    "once": true,
+    "en": "You have vaulted a mineral result. It remains fixed; your dignity is still probabilistic.",
+    "es": "Has saltado un resultado mineral. Sigue fijado; tu dignidad aún es probabilística."
+  },
+  {
     "id": "objectivesDirective",
     "category": "critical",
     "priority": 100,
     "durationMs": 30000,
     "once": true,
-    "en": "Agency operational directive. During the next ten minutes, collapse as much of the Condensate as possible. Recover the Possibility Seeds in the authorized order: Water, Forest, Ruin, and Storm. Avoid consciousness bombs; detonation revokes thirty metres of approved reality. You have been allocated three lives. The loss of the third will close the record, regardless of your objections.",
-    "es": "Directiva operativa de la Agencia. Durante los próximos diez minutos, colapsa la mayor superficie posible del Condensado. Recupera las Semillas de Posibilidad en el orden autorizado: Agua, Bosque, Ruina y Tormenta. Evita las bombas de consciencia; su detonación revoca treinta metros de realidad aprobada. Se te han asignado tres vidas. La pérdida de la tercera cerrará el expediente, con independencia de tus objeciones."
+    "en": "Agency operational directive. During the next ten minutes, collapse as much of the Condensate as possible. Recover the Possibility Seeds in the authorized order: Water, Forest, Ruin, and Storm. Avoid consciousness bombs; detonation revokes fifteen metres of approved reality. You have been allocated three lives. The loss of the third will close the record, regardless of your objections.",
+    "es": "Directiva operativa de la Agencia. Durante los próximos diez minutos, colapsa la mayor superficie posible del Condensado. Recupera las Semillas de Posibilidad en el orden autorizado: Agua, Bosque, Ruina y Tormenta. Evita las bombas de consciencia; su detonación revoca quince metros de realidad aprobada. Se te han asignado tres vidas. La pérdida de la tercera cerrará el expediente, con independencia de tus objeciones."
   },
   {
     "id": "livesExhausted",

@@ -1183,13 +1183,43 @@ button {
   z-index: 25;
   inset: 0;
   display: grid;
-  place-content: center;
+  place-content: start center;
   gap: 1rem;
   padding: 2rem;
+  overflow: auto;
   color: #e7fff7;
   text-align: center;
   background: rgb(3 9 15 / 74%);
   backdrop-filter: blur(8px);
+}
+
+.slice-result__panorama {
+  display: grid;
+  width: min(760px, 92vw);
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.slice-result__panorama[hidden] {
+  display: none;
+}
+
+.slice-result__panorama img {
+  display: block;
+  width: 100%;
+  max-height: min(34vh, 360px);
+  border: 1px solid rgb(169 255 237 / 30%);
+  object-fit: contain;
+  background: #03090f;
+  box-shadow: 0 1.2rem 3rem rgb(0 0 0 / 35%);
+}
+
+.slice-result__panorama figcaption {
+  color: #8fb9b1;
+  font-family: "Courier New", monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .slice-result[hidden] {

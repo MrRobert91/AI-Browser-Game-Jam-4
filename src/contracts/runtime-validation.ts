@@ -93,7 +93,7 @@ function isFractureRegionInput(
     value.type === 'FRACTURE_REGION' &&
     isNonNegativeInteger(value.tick) &&
     isNonNegativeInteger(value.centerCellId) &&
-    value.radiusMeters === 30 &&
+    value.radiusMeters === 15 &&
     Array.isArray(value.protectedCellIds) &&
     value.protectedCellIds.every(isNonNegativeInteger)
   );

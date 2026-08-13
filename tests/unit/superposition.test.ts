@@ -6,7 +6,9 @@ import {
   SUPERPOSITION_MIN_INTERVAL_MS,
   SuperpositionRenderer,
   domainSuperpositionCandidates,
+  hasFixedCardinalNeighbor,
   normalizeCandidatePercentages,
+  prioritizeSuperpositionCells,
   selectSuperpositionProxy,
   type SuperpositionCell,
 } from '../../src/render/superposition';
@@ -67,7 +69,7 @@ describe('superposition proxy selection', () => {
     expect(charged.opacity).toBeLessThan(low.opacity);
   });
 
-  it('caps shared instanced proxies globally at 120', () => {
+  it('caps shared instanced proxies globally while covering the observation disc', () => {
     const renderer = new SuperpositionRenderer('medium');
     const cells = Array.from(
       { length: MAX_VISIBLE_SUPERPOSITION_PROXIES + 25 },
@@ -76,6 +78,21 @@ describe('superposition proxy selection', () => {
 
     expect(renderer.update(cells, 0)).toBe(MAX_VISIBLE_SUPERPOSITION_PROXIES);
     renderer.dispose();
+  });
+
+  it('prioritizes every unresolved frontier before interior possibilities', () => {
+    const cells: SuperpositionCell[] = [
+      { ...cell, cellId: 1, distanceToPlayer: 1 },
+      { ...cell, cellId: 2, distanceToPlayer: 8, frontier: true },
+      { ...cell, cellId: 3, distanceToPlayer: 3, frontier: true },
+    ];
+    expect(
+      prioritizeSuperpositionCells(cells).map(({ cellId }) => cellId),
+    ).toEqual([3, 2, 1]);
+    expect(
+      hasFixedCardinalNeighbor(65, (neighborId) => neighborId === 64),
+    ).toBe(true);
+    expect(hasFixedCardinalNeighbor(0, () => false)).toBe(false);
   });
 
   it('shows deterministic normalized percentages that total exactly 100', () => {

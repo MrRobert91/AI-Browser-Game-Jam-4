@@ -49,8 +49,8 @@ describe('WP6 final art direction', () => {
 
 describe('WP6 audio contracts', () => {
   it('uses local bilingual voices, eight positional sources and 60/30 s cadence', () => {
-    expect(NARRATIVE_VOICE_COUNT_PER_LOCALE).toBe(44);
-    expect(NARRATIVE_VOICE_TOTAL_COUNT).toBe(88);
+    expect(NARRATIVE_VOICE_COUNT_PER_LOCALE).toBe(60);
+    expect(NARRATIVE_VOICE_TOTAL_COUNT).toBe(120);
     expect(MAX_POSITIONAL_AUDIO_SOURCES).toBe(8);
     expect(countdownPulseInterval(61)).toBeNull();
     expect(countdownPulseInterval(60)).toBe(2.5);

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-12T17:46:41.868Z",
+  "generatedAt": "2026-08-13T17:53:37.980Z",
   "entries": [
     {
       "id": "start",
@@ -792,6 +792,312 @@
       "targetLufs": -16,
       "integratedLufs": -16.51,
       "truePeakDbtp": -1.56,
+      "valid": true
+    },
+    {
+      "id": "missionComplete",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -15.98,
+      "truePeakDbtp": -1.54,
+      "valid": true
+    },
+    {
+      "id": "missionComplete",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16,
+      "truePeakDbtp": -1.83,
+      "valid": true
+    },
+    {
+      "id": "fiveMinutes",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.82,
+      "truePeakDbtp": -2.06,
+      "valid": true
+    },
+    {
+      "id": "seedWaterHint",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.78,
+      "truePeakDbtp": -2.02,
+      "valid": true
+    },
+    {
+      "id": "seedForestHint",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.79,
+      "truePeakDbtp": -2.01,
+      "valid": true
+    },
+    {
+      "id": "seedRuinHint",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -17.02,
+      "truePeakDbtp": -2.11,
+      "valid": true
+    },
+    {
+      "id": "seedStormHint",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.7,
+      "truePeakDbtp": -1.99,
+      "valid": true
+    },
+    {
+      "id": "bombRiskThreePercent",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.91,
+      "truePeakDbtp": -1.56,
+      "valid": true
+    },
+    {
+      "id": "bombRiskFivePercent",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.75,
+      "truePeakDbtp": -2.13,
+      "valid": true
+    },
+    {
+      "id": "bombRiskSevenPercent",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.88,
+      "truePeakDbtp": -2.17,
+      "valid": true
+    },
+    {
+      "id": "bombRiskNinePercent",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.96,
+      "truePeakDbtp": -2.04,
+      "valid": true
+    },
+    {
+      "id": "coverageBehindA",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -17.03,
+      "truePeakDbtp": -2.21,
+      "valid": true
+    },
+    {
+      "id": "coverageBehindB",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -17.02,
+      "truePeakDbtp": -2.03,
+      "valid": true
+    },
+    {
+      "id": "coverageBehindC",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -17.02,
+      "truePeakDbtp": -2.14,
+      "valid": true
+    },
+    {
+      "id": "coverageBehindD",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.89,
+      "truePeakDbtp": -2.12,
+      "valid": true
+    },
+    {
+      "id": "rockJumpA",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -17.1,
+      "truePeakDbtp": -2.09,
+      "valid": true
+    },
+    {
+      "id": "rockJumpB",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.67,
+      "truePeakDbtp": -2.17,
+      "valid": true
+    },
+    {
+      "id": "rockJumpC",
+      "locale": "en",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.72,
+      "truePeakDbtp": -2.05,
+      "valid": true
+    },
+    {
+      "id": "fiveMinutes",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.58,
+      "truePeakDbtp": -2.25,
+      "valid": true
+    },
+    {
+      "id": "seedWaterHint",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.71,
+      "truePeakDbtp": -1.73,
+      "valid": true
+    },
+    {
+      "id": "seedForestHint",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.5,
+      "truePeakDbtp": -2.12,
+      "valid": true
+    },
+    {
+      "id": "seedRuinHint",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.51,
+      "truePeakDbtp": -2.01,
+      "valid": true
+    },
+    {
+      "id": "seedStormHint",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.51,
+      "truePeakDbtp": -2.02,
+      "valid": true
+    },
+    {
+      "id": "bombRiskThreePercent",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.49,
+      "truePeakDbtp": -2.25,
+      "valid": true
+    },
+    {
+      "id": "bombRiskFivePercent",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.49,
+      "truePeakDbtp": -2.16,
+      "valid": true
+    },
+    {
+      "id": "bombRiskSevenPercent",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.45,
+      "truePeakDbtp": -2.37,
+      "valid": true
+    },
+    {
+      "id": "bombRiskNinePercent",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.55,
+      "truePeakDbtp": -2.17,
+      "valid": true
+    },
+    {
+      "id": "coverageBehindA",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.58,
+      "truePeakDbtp": -2.12,
+      "valid": true
+    },
+    {
+      "id": "coverageBehindB",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.7,
+      "truePeakDbtp": -2.04,
+      "valid": true
+    },
+    {
+      "id": "coverageBehindC",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.55,
+      "truePeakDbtp": -2.11,
+      "valid": true
+    },
+    {
+      "id": "coverageBehindD",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.72,
+      "truePeakDbtp": -1.98,
+      "valid": true
+    },
+    {
+      "id": "rockJumpA",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.64,
+      "truePeakDbtp": -2.25,
+      "valid": true
+    },
+    {
+      "id": "rockJumpB",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.56,
+      "truePeakDbtp": -2.52,
+      "valid": true
+    },
+    {
+      "id": "rockJumpC",
+      "locale": "es",
+      "kind": "voice",
+      "targetLufs": -16,
+      "integratedLufs": -16.47,
+      "truePeakDbtp": -2.2,
       "valid": true
     },
     {

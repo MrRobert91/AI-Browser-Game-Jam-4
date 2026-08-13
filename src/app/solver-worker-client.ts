@@ -65,7 +65,7 @@ export class SolverWorkerClient {
       type: 'FRACTURE_REGION',
       tick,
       centerCellId,
-      radiusMeters: 30,
+      radiusMeters: 15,
       protectedCellIds,
     };
     this.#worker.postMessage(message);

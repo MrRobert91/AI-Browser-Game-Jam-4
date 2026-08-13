@@ -59,6 +59,8 @@ async function copyText(text: string): Promise<void> {
 }
 
 export class ResultsPanel {
+  #panoramaPreviewUrl: string | null = null;
+
   constructor(
     private readonly root: HTMLElement,
     private readonly onRestart: () => void,
@@ -85,6 +87,21 @@ export class ResultsPanel {
     const title = document.createElement('h2');
     title.id = 'agent-update-title';
     title.textContent = copy.resultTitle;
+    const panoramaPreview = document.createElement('figure');
+    panoramaPreview.className = 'slice-result__panorama';
+    panoramaPreview.hidden = true;
+    const panoramaImage = document.createElement('img');
+    panoramaImage.dataset.panoramaPreview = 'true';
+    panoramaImage.alt =
+      this.locale === 'en'
+        ? `Final observed world for seed ${result.seedLabel}`
+        : `Mundo observado final de la seed ${result.seedLabel}`;
+    const panoramaCaption = document.createElement('figcaption');
+    panoramaCaption.textContent =
+      this.locale === 'en'
+        ? 'Final world portrait · fog-free local capture'
+        : 'Retrato final del mundo · captura local sin niebla';
+    panoramaPreview.append(panoramaImage, panoramaCaption);
     const closure = document.createElement('p');
     closure.className = 'slice-result__closure';
     closure.textContent = `${copy.closures[result.closure] ?? result.closure} · ${copy.readings[result.reading] ?? result.reading}`;
@@ -164,6 +181,12 @@ export class ResultsPanel {
       void this.panorama
         .capture(result)
         .then(async (record) => {
+          if (this.#panoramaPreviewUrl !== null) {
+            URL.revokeObjectURL(this.#panoramaPreviewUrl);
+          }
+          this.#panoramaPreviewUrl = URL.createObjectURL(record.png);
+          panoramaImage.src = this.#panoramaPreviewUrl;
+          panoramaPreview.hidden = false;
           download.disabled = false;
           download.textContent = uiCopy(this.locale).downloadPanorama;
           download.addEventListener('click', () => downloadPanorama(record));
@@ -186,6 +209,7 @@ export class ResultsPanel {
     this.root.append(
       eyebrow,
       title,
+      panoramaPreview,
       closure,
       profile,
       interpretation,

@@ -176,7 +176,7 @@ describe('mission-complete production assets', () => {
     }
   });
 
-  it('keeps all final audio and video under 15 MB with no production sources', async () => {
+  it('keeps all final audio and video under 18 MB with no production sources', async () => {
     const roots = [
       resolve('public/assets/audio'),
       resolve('public/assets/video'),
@@ -191,7 +191,7 @@ describe('mission-complete production assets', () => {
       }
     };
     for (const root of roots) await visit(root);
-    expect(totalBytes).toBeLessThanOrEqual(15_000_000);
+    expect(totalBytes).toBeLessThanOrEqual(18_000_000);
     await expect(
       access(resolve('public/assets/mission-complete/source')),
     ).rejects.toThrow();

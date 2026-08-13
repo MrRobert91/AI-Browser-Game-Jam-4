@@ -1,4 +1,5 @@
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
@@ -212,6 +213,10 @@ test('canonical offline English journey reaches the qualitative ending', async (
 
   const result = page.locator('[data-slice-result]');
   await expect(result).toBeVisible({ timeout: 20_000 });
+  await expect(shell).toHaveAttribute('data-ending-fog', 'off');
+  expect(
+    Number(await shell.getAttribute('data-ending-camera-height')),
+  ).toBeGreaterThan(35);
   await expect(result).toHaveAttribute('role', 'dialog');
   await expect(result).toBeFocused();
   await expect(result).toContainText('AGENT UPDATE RECORD');
@@ -225,6 +230,21 @@ test('canonical offline English journey reaches the qualitative ending', async (
   const panorama = page.locator('[data-panorama-download]');
   await expect(panorama).toBeEnabled();
   await expect(panorama).toHaveAttribute('data-gallery-saved', 'true');
+  await expect(page.locator('[data-panorama-preview]')).toBeVisible();
+  await expect(page.locator('[data-panorama-preview]')).toHaveAttribute(
+    'src',
+    /blob:/,
+  );
+  if (process.env.PLAYWRIGHT_EVIDENCE === '1') {
+    const evidenceDirectory = resolve(
+      'docs/progress/issue-115-gameplay-polish',
+    );
+    await mkdir(evidenceDirectory, { recursive: true });
+    await page.screenshot({
+      path: resolve(evidenceDirectory, 'final-results-with-panorama.png'),
+      fullPage: true,
+    });
+  }
   const downloadEvent = page.waitForEvent('download');
   await panorama.click();
   const download = await downloadEvent;

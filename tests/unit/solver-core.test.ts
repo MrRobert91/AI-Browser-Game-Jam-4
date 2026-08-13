@@ -45,6 +45,30 @@ describe('incremental SolverCore', () => {
     ]);
   });
 
+  it('publishes domains for the complete visible disc instead of a scan-order slice', () => {
+    const core = new SolverCore(7, { now: () => 0 });
+    const visibleCells = Array.from({ length: 64 * 64 }, (_, cellId) => {
+      const x = (cellId % 64) * 2 + 1;
+      const z = Math.floor(cellId / 64) * 2 + 1;
+      return {
+        cellId,
+        distance: Math.hypot(x - 64, z - 64),
+        alignment: 0,
+        lineOfSight: true,
+      };
+    })
+      .filter(({ distance }) => distance <= MAX_OBSERVATION_DISTANCE_METERS)
+      .slice(0, 180);
+    const patch = core
+      .simulationTick({ ...observation(1), visibleCells })
+      .find((output) => output.type === 'DOMAIN_PATCH');
+
+    expect(patch?.type).toBe('DOMAIN_PATCH');
+    if (patch?.type !== 'DOMAIN_PATCH') throw new Error('missing domain patch');
+    expect(patch.cells.length).toBeGreaterThan(120);
+    expect(patch.cells.at(-1)?.cellId).toBe(visibleCells.at(-1)?.cellId);
+  });
+
   it('fills one visible four-neighbour hole as a forced consequence', () => {
     const core = new SolverCore(99, { now: () => 0 });
     const hole = 30 * 64 + 30;
@@ -75,11 +99,11 @@ describe('incremental SolverCore', () => {
     ).toBe(true);
   });
 
-  it('fractures fixed cells at 30 m, preserves protected cells and is idempotent', () => {
+  it('fractures fixed cells at 15 m, preserves protected cells and is idempotent', () => {
     const core = new SolverCore(1);
     const center = 20 * 64 + 20;
-    const inside = center + 15;
-    const outside = center + 16;
+    const inside = center + 7;
+    const outside = center + 8;
     const protectedCell = center + 1;
     for (const cellId of [center, inside, outside, protectedCell]) {
       core.primeFixedCell(cellId);
@@ -88,7 +112,7 @@ describe('incremental SolverCore', () => {
       type: 'FRACTURE_REGION' as const,
       tick: 4,
       centerCellId: center,
-      radiusMeters: 30 as const,
+      radiusMeters: 15 as const,
       protectedCellIds: [protectedCell],
     };
     const first = core.fractureRegion(request);

@@ -77,6 +77,7 @@ export class PlayerController {
   #verticalVelocity = 0;
   #grounded = false;
   #headBobDistance = 0;
+  #jumpStartedSinceLastRead = false;
 
   constructor(
     world: World,
@@ -135,6 +136,7 @@ export class PlayerController {
     if (this.#grounded && this.#input.consumeJump() && !this.#input.paused) {
       this.#verticalVelocity = JUMP_SPEED_METERS_PER_SECOND;
       this.#grounded = false;
+      this.#jumpStartedSinceLastRead = true;
     } else {
       this.#verticalVelocity -= GRAVITY_METERS_PER_SECOND_SQUARED * delta;
     }
@@ -171,6 +173,7 @@ export class PlayerController {
     this.#velocity = { x: 0, z: 0 };
     this.#verticalVelocity = 0;
     this.#grounded = safePosition.y === PLAYER_CAPSULE_CENTER_HEIGHT_METERS;
+    this.#jumpStartedSinceLastRead = false;
     this.#body.setTranslation(safePosition, true);
     this.#body.setNextKinematicTranslation(safePosition);
     this.#camera.position.set(
@@ -180,6 +183,12 @@ export class PlayerController {
         PLAYER_CAPSULE_CENTER_HEIGHT_METERS,
       safePosition.z,
     );
+  }
+
+  consumeJumpStarted(): boolean {
+    const started = this.#jumpStartedSinceLastRead;
+    this.#jumpStartedSinceLastRead = false;
+    return started;
   }
 
   dispose(): void {

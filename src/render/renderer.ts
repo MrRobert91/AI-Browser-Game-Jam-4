@@ -54,6 +54,7 @@ export class GameRenderer {
   #requestedQuality: QualityPreset;
   #lastRenderTime: number | null = null;
   #slowFramesAtMinimum = 0;
+  #worldFogEnabled = true;
 
   constructor(options: GameRendererOptions) {
     this.#container = options.container;
@@ -124,6 +125,15 @@ export class GameRenderer {
     if (!visible) {
       this.scene.fog = null;
       this.scene.background = new Color(0x071018);
+    } else if (this.#worldFogEnabled) {
+      this.#atmosphere.applyQuality(this.#profile);
+    }
+  }
+
+  setWorldFogEnabled(enabled: boolean): void {
+    this.#worldFogEnabled = enabled;
+    if (!enabled || !this.#atmosphere.group.visible) {
+      this.scene.fog = null;
     } else {
       this.#atmosphere.applyQuality(this.#profile);
     }
@@ -139,6 +149,7 @@ export class GameRenderer {
     this.#profile = profile;
     this.#resolution.setProfile(this.#profile);
     this.#atmosphere.applyQuality(this.#profile);
+    if (!this.#worldFogEnabled) this.scene.fog = null;
     this.#postprocessing.applyQuality(this.#profile);
     this.#applyQuality();
     this.resize();
