@@ -1468,7 +1468,10 @@ function bootstrapGame(
       );
       shell.dataset.endingPhase = ending.phase;
       shell.dataset.endingPhaseElapsed = ending.phaseElapsedSeconds.toFixed(3);
-      if (ending.phase === 'ASCENDING') {
+      if (
+        ending.phase === 'ASCENDING' ||
+        (ending.phase === 'COMPLETE' && !returnRoom)
+      ) {
         const ascentProgress =
           ending.progress * ending.progress * (3 - 2 * ending.progress);
         camera.position.set(
