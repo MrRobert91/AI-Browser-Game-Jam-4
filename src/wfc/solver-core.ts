@@ -777,7 +777,7 @@ export class SolverCore {
 
   #emitDomainPatch(input: ObservationInput): void {
     const cells: DomainPatchCell[] = [];
-    for (const visible of input.visibleCells.slice(0, 120)) {
+    for (const visible of input.visibleCells) {
       const cell = this.#cells[visible.cellId];
       if (cell === undefined || cell.phase === 'UNINITIALIZED' || cell.fixed)
         continue;

@@ -20,7 +20,7 @@ export interface RunClockSnapshot {
 }
 
 export interface RunClockEvents {
-  readonly onCountdown?: (remainingSeconds: 60 | 30) => void;
+  readonly onCountdown?: (remainingSeconds: 300 | 60 | 30) => void;
   readonly onEnding?: () => void;
 }
 
@@ -35,7 +35,7 @@ export class RunClock {
   private readonly mode: RunMode;
   private readonly durationSeconds: number;
   private readonly pauseReasons = new Set<RunPauseReason>();
-  private readonly announcedCountdowns = new Set<60 | 30>();
+  private readonly announcedCountdowns = new Set<300 | 60 | 30>();
   private phase: RunClockPhase = 'READY';
   private elapsedSeconds: number;
 
@@ -83,7 +83,7 @@ export class RunClock {
       this.elapsedSeconds + deltaSeconds,
     );
     const after = this.remainingSeconds();
-    for (const threshold of [60, 30] as const) {
+    for (const threshold of [300, 60, 30] as const) {
       if (
         before > threshold &&
         after <= threshold &&

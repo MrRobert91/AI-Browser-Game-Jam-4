@@ -15,7 +15,7 @@ import type { CellId, WorldVector3 } from '../contracts/world';
 import type { DomainMask } from '../contracts/world';
 import { COMPILED_GRAMMAR } from '../contracts/grammar-runtime';
 
-export const MAX_VISIBLE_SUPERPOSITION_PROXIES = 120;
+export const MAX_VISIBLE_SUPERPOSITION_PROXIES = 384;
 export const SUPERPOSITION_MIN_INTERVAL_MS = 160;
 export const SUPERPOSITION_MAX_INTERVAL_MS = 260;
 
@@ -35,6 +35,8 @@ export interface SuperpositionCell {
   readonly center: WorldVector3;
   readonly observationCharge: number;
   readonly candidates: readonly SuperpositionCandidate[];
+  readonly frontier?: boolean;
+  readonly distanceToPlayer?: number;
 }
 
 export interface ProxySelection {
@@ -46,6 +48,34 @@ export interface ProxySelection {
 
 export interface CandidatePercentage extends SuperpositionCandidate {
   readonly percentage: number;
+}
+
+export function hasFixedCardinalNeighbor(
+  cellId: CellId,
+  isFixed: (neighborId: CellId) => boolean,
+  cellsPerSide = 64,
+): boolean {
+  const x = cellId % cellsPerSide;
+  const z = Math.floor(cellId / cellsPerSide);
+  return (
+    (z > 0 && isFixed(cellId - cellsPerSide)) ||
+    (x + 1 < cellsPerSide && isFixed(cellId + 1)) ||
+    (z + 1 < cellsPerSide && isFixed(cellId + cellsPerSide)) ||
+    (x > 0 && isFixed(cellId - 1))
+  );
+}
+
+export function prioritizeSuperpositionCells(
+  cells: readonly SuperpositionCell[],
+): readonly SuperpositionCell[] {
+  return [...cells].sort(
+    (left, right) =>
+      Number(Boolean(right.frontier)) - Number(Boolean(left.frontier)) ||
+      (left.distanceToPlayer ?? Number.POSITIVE_INFINITY) -
+        (right.distanceToPlayer ?? Number.POSITIVE_INFINITY) ||
+      right.observationCharge - left.observationCharge ||
+      left.cellId - right.cellId,
+  );
 }
 
 /** Reduces real WFC domains to one alternating proxy per legal visual family. */
@@ -334,7 +364,7 @@ export class SuperpositionRenderer {
     }
 
     let visibleCount = 0;
-    for (const cell of cells) {
+    for (const cell of prioritizeSuperpositionCells(cells)) {
       if (visibleCount >= MAX_VISIBLE_SUPERPOSITION_PROXIES) {
         break;
       }

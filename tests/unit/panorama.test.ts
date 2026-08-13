@@ -7,6 +7,7 @@ import {
 } from '../../src/gameplay/panorama';
 import {
   observedWorldBounds,
+  finalWorldCameraPose,
   panoramaFrustum,
 } from '../../src/render/panorama-capture';
 import { cellCoordinatesToId } from '../../src/world/world-state';
@@ -66,5 +67,10 @@ describe('local panorama', () => {
     const frustum = panoramaFrustum(bounds);
     expect(frustum.halfWidth * 2).toBeGreaterThanOrEqual(120);
     expect(frustum.halfHeight * 2).toBeGreaterThanOrEqual(98);
+    const pose = finalWorldCameraPose(bounds);
+    expect(pose.position[0]).toBe(bounds.centerX);
+    expect(pose.position[2]).toBe(bounds.centerZ);
+    expect(pose.position[1]).toBeGreaterThan(80);
+    expect(pose.target).toEqual([bounds.centerX, 0, bounds.centerZ]);
   });
 });

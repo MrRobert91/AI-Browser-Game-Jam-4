@@ -19,7 +19,9 @@ import {
 import { movementIntentFromKeys } from '../../src/player/input';
 import {
   ADJACENT_ROCK_GAP_METERS,
+  FEATURE_COLLIDER_ACTIVATION_CLEARANCE_METERS,
   SMALL_ROCK_COLLIDER_HEIGHT_METERS,
+  isSafeToActivateFeatureCollider,
 } from '../../src/player/physics';
 import {
   WORLD_BOUNDARY_RADIUS_METERS,
@@ -31,6 +33,18 @@ describe('player movement contract', () => {
   it('makes adjacent rocks too narrow to pass but low enough to jump', () => {
     expect(ADJACENT_ROCK_GAP_METERS).toBeLessThan(0.7);
     expect(SMALL_ROCK_COLLIDER_HEIGHT_METERS).toBeLessThan(JUMP_HEIGHT_METERS);
+  });
+
+  it('defers a newly collapsed rigid feature until the player clears its cell', () => {
+    const cellId = 32 * 64 + 32;
+    expect(isSafeToActivateFeatureCollider(cellId, [65, 1.7, 65])).toBe(false);
+    expect(
+      isSafeToActivateFeatureCollider(cellId, [
+        65 + FEATURE_COLLIDER_ACTIVATION_CLEARANCE_METERS + 0.01,
+        1.7,
+        65,
+      ]),
+    ).toBe(true);
   });
   it('normalizes diagonal WASD and arrow input', () => {
     const wasd = movementIntentFromKeys(new Set(['KeyW', 'KeyD', 'ShiftLeft']));

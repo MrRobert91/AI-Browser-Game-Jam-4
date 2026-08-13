@@ -73,8 +73,8 @@ describe('audio settings v2', () => {
 });
 
 describe('bounded bilingual Measure narration', () => {
-  it('has exact EN/ES parity with 44 active cues per language', () => {
-    expect(NARRATIVE_CUE_ORDER).toHaveLength(44);
+  it('has exact EN/ES parity with 60 active cues per language', () => {
+    expect(NARRATIVE_CUE_ORDER).toHaveLength(60);
     expect(Object.keys(NARRATIVE_CATALOGS.en.cues)).toEqual(
       Object.keys(NARRATIVE_CATALOGS.es.cues),
     );
@@ -82,7 +82,7 @@ describe('bounded bilingual Measure narration', () => {
     expect(NARRATIVE_CATALOGS.es.cues.start.text).toContain('Mira.');
   });
 
-  it('enforces cooldown, deterministic pools and the 22-intervention ceiling', () => {
+  it('enforces cooldown, deterministic pools and the intervention ceiling', () => {
     const events = { onMessage: vi.fn(), onSubtitle: vi.fn() };
     const director = new NarrativeDirector(events, NARRATIVE_CATALOGS.en);
     expect(director.playPool('distance', 42, true, 0)).not.toBeNull();
@@ -135,7 +135,7 @@ describe('generated local audio assets', () => {
           asset.locale === 'en' &&
           asset.id !== 'briefing',
       ),
-    ).toHaveLength(45);
+    ).toHaveLength(61);
     expect(
       manifest.assets.filter(
         (asset) =>
@@ -143,7 +143,7 @@ describe('generated local audio assets', () => {
           asset.locale === 'es' &&
           asset.id !== 'briefing',
       ),
-    ).toHaveLength(45);
+    ).toHaveLength(61);
     expect(
       manifest.assets.filter(
         (asset) => asset.kind === 'voice' && asset.id === 'missionComplete',
@@ -166,7 +166,7 @@ describe('generated local audio assets', () => {
       );
       expect(asset.durationSeconds).toBeGreaterThan(1);
     }
-    expect(bytes).toBeLessThan(8_000_000);
+    expect(bytes).toBeLessThan(10_000_000);
   });
 
   it('contains no production references to the removed song, SAPI or old records', async () => {

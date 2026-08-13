@@ -12,6 +12,19 @@ import { GRAMMAR_SOURCE } from '../content/grammar';
 export const SMALL_ROCK_COLLIDER_WIDTH_METERS = 1.6;
 export const SMALL_ROCK_COLLIDER_HEIGHT_METERS = 0.9;
 export const ADJACENT_ROCK_GAP_METERS = 2 - SMALL_ROCK_COLLIDER_WIDTH_METERS;
+export const FEATURE_COLLIDER_ACTIVATION_CLEARANCE_METERS = 2.5;
+export const ROCK_JUMP_COMMENT_RADIUS_METERS = 2.75;
+
+export function isSafeToActivateFeatureCollider(
+  cellId: CellId,
+  playerPosition: readonly [number, number, number],
+): boolean {
+  const center = cellCenterToWorld(cellId);
+  return (
+    Math.hypot(center[0] - playerPosition[0], center[2] - playerPosition[2]) >
+    FEATURE_COLLIDER_ACTIVATION_CLEARANCE_METERS
+  );
+}
 
 export interface PlayerPhysicsRuntime {
   readonly controller: PlayerController;
@@ -22,6 +35,7 @@ export interface PlayerPhysicsRuntime {
   updateFeatureColliders(
     playerPosition: readonly [number, number, number],
   ): void;
+  consumeRockJump(playerPosition: readonly [number, number, number]): boolean;
   removeFeatureColliders(cellIds: readonly CellId[]): void;
   dispose(): void;
 }
@@ -46,6 +60,7 @@ export async function createPlayerPhysicsRuntime(
   let portalBarrier: Collider | null = null;
   const featureColliders = new Map<CellId, Collider>();
   const featureCommits = new Map<CellId, FixedCellCommit>();
+  const pendingSafeActivation = new Set<CellId>();
   const featureById = new Map(
     GRAMMAR_SOURCE.features.map((feature) => [feature.numericId, feature]),
   );
@@ -98,6 +113,7 @@ export async function createPlayerPhysicsRuntime(
       if (collider) world.removeCollider(collider, true);
       featureColliders.delete(cellId);
       featureCommits.delete(cellId);
+      pendingSafeActivation.delete(cellId);
     }
   };
 
@@ -106,6 +122,7 @@ export async function createPlayerPhysicsRuntime(
     const feature = featureById.get(commit.featureTileId);
     if (!feature?.blocksMovement) return;
     featureCommits.set(commit.cellId, commit);
+    pendingSafeActivation.add(commit.cellId);
   };
 
   const createFeatureCollider = (commit: FixedCellCommit): void => {
@@ -163,14 +180,43 @@ export async function createPlayerPhysicsRuntime(
           center[0] - playerPosition[0],
           center[2] - playerPosition[2],
         ) <= 12;
-      if (near) createFeatureCollider(commit);
-      else {
+      if (near) {
+        if (
+          pendingSafeActivation.has(cellId) &&
+          !isSafeToActivateFeatureCollider(cellId, playerPosition)
+        ) {
+          continue;
+        }
+        createFeatureCollider(commit);
+        pendingSafeActivation.delete(cellId);
+      } else {
         const collider = featureColliders.get(cellId);
         if (!collider) continue;
         world.removeCollider(collider, true);
         featureColliders.delete(cellId);
       }
     }
+  };
+
+  const consumeRockJump = (
+    playerPosition: readonly [number, number, number],
+  ): boolean => {
+    if (!controller.consumeJumpStarted()) return false;
+    for (const commit of featureCommits.values()) {
+      if (commit.featureTileId === null) continue;
+      const feature = featureById.get(commit.featureTileId);
+      if (feature?.id !== 'feature.small-rock') continue;
+      const center = cellCenterToWorld(commit.cellId);
+      if (
+        Math.hypot(
+          center[0] - playerPosition[0],
+          center[2] - playerPosition[2],
+        ) <= ROCK_JUMP_COMMENT_RADIUS_METERS
+      ) {
+        return true;
+      }
+    }
+    return false;
   };
 
   return {
@@ -180,11 +226,13 @@ export async function createPlayerPhysicsRuntime(
     deactivatePrologueRoom,
     enableFeatureCollider,
     updateFeatureColliders,
+    consumeRockJump,
     removeFeatureColliders,
     dispose: () => {
       deactivatePrologueRoom();
       removeFeatureColliders([...featureColliders.keys()]);
       featureCommits.clear();
+      pendingSafeActivation.clear();
       controller.dispose();
       world.free();
     },

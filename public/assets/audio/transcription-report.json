@@ -1,8 +1,8 @@
 {
   "version": 1,
   "model": "openai/gpt-4o-mini-transcribe",
-  "generatedAt": "2026-08-12T18:27:51.268Z",
-  "totalCostUsd": 0.018012499999999994,
+  "generatedAt": "2026-08-13T17:54:15.049Z",
+  "totalCostUsd": 0.025035,
   "minimumSimilarity": 0.7272727272727273,
   "entries": [
     {
@@ -708,6 +708,262 @@
       "transcription": "Tercera vida agotada. Has muerto. La agencia lamenta informarte de que no procede otro cuerpo de campo. No ha sido en vano. Una parte del condensado quedó colapsada por tu atención y permanecerá en el expediente. Tu ausencia ha sido clasificada como aportación concluyente.",
       "similarity": 1,
       "costUsd": 0.0005825
+    },
+    {
+      "id": "fiveMinutes",
+      "locale": "en",
+      "expected": "Five minutes remain. Half the window is gone; the unresolved half has submitted no complaint.",
+      "transcription": "Five minutes remain. Half the window is gone. The unresolved half has submitted no complaint.",
+      "similarity": 1,
+      "costUsd": 0.00017375
+    },
+    {
+      "id": "seedWaterHint",
+      "locale": "en",
+      "expected": "Water has been filed. Forest authorization waits farther from the origin; follow the taller uncertain silhouettes.",
+      "transcription": "Water has been filed. Forest authorization waits farther from the origin. Follow the taller, uncertain silhouettes.",
+      "similarity": 1,
+      "costUsd": 0.0002175
+    },
+    {
+      "id": "seedForestHint",
+      "locale": "en",
+      "expected": "Forest has been filed. Ruin authorization prefers greater distance and excellent structural denial.",
+      "transcription": "Forest has been filed. Ruin authorization prefers greater distance and excellent structural denial.",
+      "similarity": 1,
+      "costUsd": 0.00018
+    },
+    {
+      "id": "seedRuinHint",
+      "locale": "en",
+      "expected": "Ruins admitted. The Storm Seed waits in the outer ring, where risk notices are printed smaller.",
+      "transcription": "Ruins admitted, the storm seed waits in the outer ring, where risk notices are printed smaller.",
+      "similarity": 1,
+      "costUsd": 0.000185
+    },
+    {
+      "id": "seedStormHint",
+      "locale": "en",
+      "expected": "All four vocabularies are authorized. The Agency now expects quantity, quality, and your continued survival, in that order.",
+      "transcription": "All four vocabularies are authorized. The agency now expects quantity, quality, and your continued survival, in that order.",
+      "similarity": 1,
+      "costUsd": 0.00025125
+    },
+    {
+      "id": "bombRiskThreePercent",
+      "locale": "en",
+      "expected": "Bomb expectation has risen to three percent per eligible result. The Agency calls this a modest correction.",
+      "transcription": "Bomb expectation has risen to 3% per eligible result. The agency calls this a modest correction.",
+      "similarity": 0.8823529411764706,
+      "costUsd": 0.00018875
+    },
+    {
+      "id": "bombRiskFivePercent",
+      "locale": "en",
+      "expected": "Bomb expectation is now five percent. Probability has noticed your continued employment.",
+      "transcription": "Bomb expectation is now 5%. Probability has noticed your continued employment.",
+      "similarity": 0.8333333333333334,
+      "costUsd": 0.00015875
+    },
+    {
+      "id": "bombRiskSevenPercent",
+      "locale": "en",
+      "expected": "Seven percent bomb expectation. New terrain should now be treated as innocent only provisionally.",
+      "transcription": "7% bomb expectation. New terrain should now be treated as innocent only provisionally.",
+      "similarity": 0.8571428571428571,
+      "costUsd": 0.00018625
+    },
+    {
+      "id": "bombRiskNinePercent",
+      "locale": "en",
+      "expected": "Bomb expectation has reached nine percent. Confidence remains available, but no longer complimentary.",
+      "transcription": "Bomb expectation has reached 9%, confidence remains available, but no longer complimentary.",
+      "similarity": 0.8461538461538461,
+      "costUsd": 0.00017625
+    },
+    {
+      "id": "coverageBehindA",
+      "locale": "en",
+      "expected": "A substantial portion remains unresolved. This is artistically valid and operationally inconvenient.",
+      "transcription": "A substantial portion remains unresolved. This is artistically valid and operationally inconvenient.",
+      "similarity": 1,
+      "costUsd": 0.00019625
+    },
+    {
+      "id": "coverageBehindB",
+      "locale": "en",
+      "expected": "Your coverage is behind the approved fiction. Hold your gaze on a nearby frontier; running past it does not count as observation.",
+      "transcription": "Your coverage is behind the approved fiction. Hold your gaze on a nearby frontier. Running past it does not count as observation.",
+      "similarity": 1,
+      "costUsd": 0.00024625
+    },
+    {
+      "id": "coverageBehindC",
+      "locale": "en",
+      "expected": "Many cells still lack a result. The reticle closes when attention is sufficient; paperwork closes when I am.",
+      "transcription": "Many cells still lack a result. The reticle closes when attention is sufficient. Paperwork closes when I am.",
+      "similarity": 1,
+      "costUsd": 0.000225
+    },
+    {
+      "id": "coverageBehindD",
+      "locale": "en",
+      "expected": "The dark grid is winning by acreage. Fix connected frontiers before filing this as minimalism.",
+      "transcription": "The dark grid is winning by acreage. Fix connected frontiers before filing this as minimalism.",
+      "similarity": 1,
+      "costUsd": 0.00019375
+    },
+    {
+      "id": "rockJumpA",
+      "locale": "en",
+      "expected": "Obstacle cleared. The rock has filed an appeal against gravity.",
+      "transcription": "Obstacle cleared. The rock has filed an appeal against gravity.",
+      "similarity": 1,
+      "costUsd": 0.000125
+    },
+    {
+      "id": "rockJumpB",
+      "locale": "en",
+      "expected": "A successful jump over approved geology. No additional permit will be issued.",
+      "transcription": "A successful jump over approved geology. No additional permit will be issued.",
+      "similarity": 1,
+      "costUsd": 0.00017125
+    },
+    {
+      "id": "rockJumpC",
+      "locale": "en",
+      "expected": "You have vaulted a mineral result. It remains fixed; your dignity is still probabilistic.",
+      "transcription": "You have vaulted a mineral result. It remains fixed, your dignity is still probabilistic.",
+      "similarity": 1,
+      "costUsd": 0.00021625
+    },
+    {
+      "id": "fiveMinutes",
+      "locale": "es",
+      "expected": "Quedan cinco minutos. La mitad de la ventana ha desaparecido; la mitad sin resolver no ha presentado queja.",
+      "transcription": "Quedan cinco minutos. La mitad de la ventana ha desaparecido. La mitad sin resolver no ha presentado queja.",
+      "similarity": 1,
+      "costUsd": 0.000255
+    },
+    {
+      "id": "seedWaterHint",
+      "locale": "es",
+      "expected": "El agua ha quedado registrada. La autorización del bosque espera más lejos del origen; sigue las siluetas inciertas más altas.",
+      "transcription": "El agua ha quedado registrada. La autorización del bosque espera más lejos del origen. Sigue las siluetas inciertas más altas.",
+      "similarity": 1,
+      "costUsd": 0.00027375
+    },
+    {
+      "id": "seedForestHint",
+      "locale": "es",
+      "expected": "El bosque ha quedado registrado. La autorización de ruina prefiere mayor distancia y una excelente negación estructural.",
+      "transcription": "El bosque ha quedado registrado. La autorización de ruina prefiere mayor distancia y una excelente negación estructural.",
+      "similarity": 1,
+      "costUsd": 0.00026
+    },
+    {
+      "id": "seedRuinHint",
+      "locale": "es",
+      "expected": "Ruinas admitidas. La Semilla de Tormenta espera en el anillo exterior, donde los avisos de riesgo se imprimen más pequeños.",
+      "transcription": "ruinas admitidas. La semilla de tormenta espera en el anillo exterior, donde los avisos de riesgo se imprimen más pequeños.",
+      "similarity": 1,
+      "costUsd": 0.0002825
+    },
+    {
+      "id": "seedStormHint",
+      "locale": "es",
+      "expected": "Los cuatro vocabularios están autorizados. La Agencia espera ahora cantidad, calidad y tu supervivencia continuada, por ese orden.",
+      "transcription": "Los cuatro vocabularios están autorizados. La agencia espera ahora cantidad, calidad y tu supervivencia continuada, por ese orden.",
+      "similarity": 1,
+      "costUsd": 0.00029625
+    },
+    {
+      "id": "bombRiskThreePercent",
+      "locale": "es",
+      "expected": "La expectativa de bomba ha subido al tres por ciento por resultado elegible. La Agencia lo llama corrección modesta.",
+      "transcription": "La expectativa de bomba ha subido al tres por ciento por resultado elegible. La agencia lo llama \"corrección modesta\".",
+      "similarity": 1,
+      "costUsd": 0.00025875
+    },
+    {
+      "id": "bombRiskFivePercent",
+      "locale": "es",
+      "expected": "La expectativa de bomba es ahora del cinco por ciento. La probabilidad ha reparado en que sigues trabajando.",
+      "transcription": "La expectativa de bomba es ahora del cinco por ciento. La probabilidad ha reparado en que sigues trabajando.",
+      "similarity": 1,
+      "costUsd": 0.00023625
+    },
+    {
+      "id": "bombRiskSevenPercent",
+      "locale": "es",
+      "expected": "Siete por ciento de expectativa de bomba. El terreno nuevo solo debe considerarse inocente de forma provisional.",
+      "transcription": "Siete por ciento de expectativa de bomba. El terreno nuevo sólo debe considerarse inocente de forma provisional.",
+      "similarity": 1,
+      "costUsd": 0.00022625
+    },
+    {
+      "id": "bombRiskNinePercent",
+      "locale": "es",
+      "expected": "La expectativa de bomba ha alcanzado el nueve por ciento. La confianza sigue disponible, pero ya no es gratuita.",
+      "transcription": "La expectativa de bomba ha alcanzado el nueve por ciento. La confianza sigue disponible, pero ya no es gratuita.",
+      "similarity": 1,
+      "costUsd": 0.00023625
+    },
+    {
+      "id": "coverageBehindA",
+      "locale": "es",
+      "expected": "Una parte sustancial sigue sin resolver. Es artísticamente válido y operativamente incómodo.",
+      "transcription": "una parte sustancial sigue sin resolver. Es artísticamente válido y operativamente incómodo.",
+      "similarity": 1,
+      "costUsd": 0.0002125
+    },
+    {
+      "id": "coverageBehindB",
+      "locale": "es",
+      "expected": "Tu cobertura va por detrás de la ficción aprobada. Mantén la mirada en una frontera cercana; pasar corriendo no cuenta como observación.",
+      "transcription": "Tu cobertura va por detrás de la ficción aprobada. Mantén la mirada en una frontera cercana. Pasar corriendo no cuenta como observación.",
+      "similarity": 1,
+      "costUsd": 0.00030625
+    },
+    {
+      "id": "coverageBehindC",
+      "locale": "es",
+      "expected": "Muchas casillas aún carecen de resultado. La retícula se cierra con atención suficiente; el papeleo, cuando yo lo diga.",
+      "transcription": "Muchas casillas aún carecen de resultado. La retícula se cierra con atención suficiente. El papeleo, cuando yo lo diga.",
+      "similarity": 1,
+      "costUsd": 0.0002875
+    },
+    {
+      "id": "coverageBehindD",
+      "locale": "es",
+      "expected": "La cuadrícula oscura está ganando por superficie. Fija fronteras conectadas antes de registrar esto como minimalismo.",
+      "transcription": "La cuadrícula oscura está ganando por superficie. Fija fronteras conectadas antes de registrar esto como minimalismo.",
+      "similarity": 1,
+      "costUsd": 0.00025125
+    },
+    {
+      "id": "rockJumpA",
+      "locale": "es",
+      "expected": "Obstáculo superado. La roca ha presentado un recurso contra la gravedad.",
+      "transcription": "Obstáculo superado: la roca ha presentado un recurso contra la gravedad.",
+      "similarity": 1,
+      "costUsd": 0.00016125
+    },
+    {
+      "id": "rockJumpB",
+      "locale": "es",
+      "expected": "Salto correcto sobre geología aprobada. No se expedirá ningún permiso adicional.",
+      "transcription": "Salto correcto sobre geología aprobada. No se expedirá ningún permiso adicional.",
+      "similarity": 1,
+      "costUsd": 0.00019125
+    },
+    {
+      "id": "rockJumpC",
+      "locale": "es",
+      "expected": "Has saltado un resultado mineral. Sigue fijado; tu dignidad aún es probabilística.",
+      "transcription": "ha saltado un resultado mineral. Sigue fijado, tu dignidad aún es probabilística.",
+      "similarity": 0.9166666666666666,
+      "costUsd": 0.00019625
     }
   ]
 }

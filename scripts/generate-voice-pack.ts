@@ -172,8 +172,8 @@ async function main(): Promise<void> {
   const catalog = JSON.parse(
     await readFile(resolve(ROOT, 'src/content/narrative.catalog.json'), 'utf8'),
   ) as CatalogEntry[];
-  if (catalog.length !== 44)
-    throw new Error(`Expected 44 narrative cues, found ${catalog.length}.`);
+  if (catalog.length !== 60)
+    throw new Error(`Expected 60 narrative cues, found ${catalog.length}.`);
   const locales = (requested === 'all' ? ['en', 'es'] : [requested]) as (
     'en' | 'es'
   )[];
