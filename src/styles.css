@@ -96,6 +96,21 @@ body {
   display: none;
 }
 
+.observation-shell[data-ending-phase="MISSION_VIDEO"] .slice-hud,
+.observation-shell[data-ending-phase="MISSION_VIDEO"] .progression-hud,
+.observation-shell[data-ending-phase="MISSION_VIDEO"] .wp5-gate-status,
+.observation-shell[data-ending-phase="MISSION_VIDEO"] .run-status,
+.observation-shell[data-ending-phase="MISSION_VIDEO"] .observation-reticle,
+.observation-shell[data-ending-phase="MISSION_VIDEO"] .narrative-subtitle,
+.observation-shell[data-ending-phase="MISSION_VIDEO"] .system-bar {
+  display: none;
+}
+
+.observation-shell[data-ending-phase="MISSION_VIDEO"][data-wp5-preview]
+  .wp5-gate-status {
+  display: none;
+}
+
 .audio-diagnostic {
   position: absolute;
   z-index: 30;
@@ -1110,8 +1125,7 @@ button {
   inset: 0;
   display: grid;
   overflow: hidden;
-  background: #02070b;
-  place-items: center;
+  pointer-events: none;
 }
 
 .mission-complete[hidden] {
@@ -1120,24 +1134,38 @@ button {
 
 .mission-complete video,
 .mission-complete img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  grid-area: 1 / 1;
+  display: none;
 }
 
-.mission-complete__veil {
-  width: 100%;
-  height: 100%;
-  background:
-    linear-gradient(180deg, rgb(2 8 14 / 8%) 40%, rgb(2 8 14 / 76%) 100%),
-    repeating-linear-gradient(
-      0deg,
-      transparent 0 3px,
-      rgb(190 255 241 / 3%) 4px 5px
-    );
+.mission-complete__status {
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  align-self: start;
+  justify-self: start;
+  gap: 0.55rem;
+  margin: 1.25rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid rgb(116 236 255 / 44%);
+  color: #b8f7ff;
+  background: linear-gradient(90deg, rgb(4 17 27 / 88%), rgb(21 10 39 / 78%));
   grid-area: 1 / 1;
+  font: 700 0.68rem/1.2 monospace;
+  letter-spacing: 0.08em;
   pointer-events: none;
+}
+
+.mission-complete__status i {
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 50%;
+  background: #69e9ff;
+  box-shadow: 0 0 0.7rem #69e9ff;
+}
+
+.mission-complete__status i:nth-child(3) {
+  background: #b271ff;
+  box-shadow: 0 0 0.7rem #b271ff;
 }
 
 .mission-complete p {
@@ -1153,8 +1181,9 @@ button {
     serif;
   text-align: center;
   text-shadow: 0 2px 12px #000;
-  background: rgb(3 10 15 / 72%);
+  background: rgb(3 10 15 / 84%);
   grid-area: 1 / 1;
+  pointer-events: auto;
 }
 
 .mission-complete button {
@@ -1163,6 +1192,7 @@ button {
   justify-self: end;
   margin: 1.25rem;
   border: 1px solid rgb(199 255 239 / 65%);
+  pointer-events: auto;
   padding: 0.7rem 0.95rem;
   color: #effff8;
   background: rgb(4 17 22 / 82%);

@@ -400,6 +400,30 @@ fuera del objetivo y un coste acumulado de proyecto de 4,573846 USD.
 
 [Ver cierre completo en español](./issue-112-mission-complete/mission-complete-es.webm)
 
+## Regresar del Condensado también necesita un lugar
+
+La primera versión del cierre especial ocupaba toda la ventana con el vídeo y
+lo mantenía alineado a un cronómetro de treinta y dos segundos. Esa doble
+autoridad podía adelantar el `currentTime` o abandonar la pieza antes de que el
+navegador hubiera completado ambos medios. El regreso ahora es diegético: al
+terminar el ascenso aparece una sala de reintegración 3D, más oscura y
+tecnológica que la Cámara inicial, y el expediente se reproduce en la pantalla
+física que espera frente al cuerpo recuperado.
+
+![El expediente reproducido en la sala de reintegración](./issue-117-final-chamber-audio-fractures/return-chamber-recorded-seeds.png)
+
+Vídeo y voz conservan sus propios relojes. La fase solo concluye cuando ambos
+han emitido `ended`; los fallos cambian a las láminas WebP y mantienen captions,
+con un watchdog final para que un medio averiado tampoco bloquee el resultado.
+La Medida adopta la misma disciplina: una voz activa no se corta, no se mezcla
+y no deja una cola que comente tarde una acción ya pasada. El disparo ocupado se
+descarta y puede volver a intentarse únicamente si el acontecimiento sucede de
+nuevo. Finalmente, una celda `FRACTURED` desaparece de los proxies en el mismo
+evento de explosión: una cicatriz terminal ya no finge que todavía puede ser
+observada.
+
+[Ver la reproducción completa en la sala de retorno](./issue-117-final-chamber-audio-fractures/return-chamber-playback.webm)
+
 El replay automatizado prueba el borde exacto sin hacerse pasar por una persona.
 La pregunta de balance queda abierta y explícita: hace falta una partida humana
 real de diez minutos para saber si 1536 es exigente pero alcanzable. Hasta

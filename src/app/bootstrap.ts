@@ -60,12 +60,18 @@ import {
 import {
   domainSuperpositionCandidates,
   hasFixedCardinalNeighbor,
+  isSuperpositionPhase,
   SuperpositionRenderer,
   type SuperpositionCandidate,
   type SuperpositionCell,
 } from '../render/superposition';
 import { Wp5PreviewVisuals } from '../render/wp5-preview-visuals';
-import { AgencyRoom, PROLOGUE_ROOM_SPAWN } from '../render/agency-room';
+import {
+  AgencyRoom,
+  PROLOGUE_ROOM_SPAWN,
+  RETURN_ROOM_CAMERA_POSITION,
+  RETURN_ROOM_SCREEN_TARGET,
+} from '../render/agency-room';
 import { ObservationReticle } from '../ui/observation-reticle';
 import { GameHud } from '../ui/hud';
 import { loadGameSettings, PauseMenu, type GameSettings } from '../ui/pause';
@@ -172,10 +178,13 @@ function shellMarkup(locale: Locale): string {
       <button type="button" data-audio-retry>${copy.audioRetry}</button>
     </section>
 
-    <section class="mission-complete" data-mission-complete hidden aria-label="${locale === 'en' ? 'Mission complete transmission' : 'Transmisión de misión completada'}">
+    <section class="mission-complete" data-mission-complete hidden aria-label="${locale === 'en' ? 'Mission complete transmission in the Agency return chamber' : 'Transmisión de misión en la sala de retorno de la Agencia'}">
       <video data-mission-video muted playsinline></video>
       <img data-mission-fallback hidden alt="${locale === 'en' ? 'Agency mission record' : 'Expediente de misión de la Agencia'}" />
-      <div class="mission-complete__veil"></div>
+      <div class="mission-complete__status" aria-hidden="true">
+        <span>${locale === 'en' ? 'REINTEGRATION BAY // RECORD PLAYBACK' : 'SALA DE REINTEGRACIÓN // REPRODUCCIÓN DE EXPEDIENTE'}</span>
+        <i></i><i></i><i></i>
+      </div>
       <p data-mission-caption aria-live="polite"></p>
       <button type="button" data-mission-skip disabled></button>
       <audio data-mission-audio></audio>
@@ -570,10 +579,7 @@ function bootstrapGame(
     {
       onMessage: () => undefined,
       onSubtitle: (message) => hud.showSubtitle(message),
-      onAudioCue: (cue) =>
-        cue.id === 'livesExhausted'
-          ? audioDirector.playExclusiveNarrativeCue(cue)
-          : audioDirector.playNarrativeCue(cue),
+      onAudioCue: (cue) => audioDirector.playNarrativeCue(cue),
     },
     narrativeCatalog(locale),
   );
@@ -591,6 +597,7 @@ function bootstrapGame(
   let finalLivesRemaining = 3;
   let finalCollectedPacks: readonly UnlockablePackId[] = [];
   let missionPlaybackStarted = false;
+  let missionPlaybackStartedAtSeconds = 0;
   const endingCameraStart = new Vector3();
   let endingCameraPose = finalWorldCameraPose(observedWorldBounds([]));
   let wp5Preview: Wp5PreviewRuntime | null = null;
@@ -611,7 +618,9 @@ function bootstrapGame(
       runClock?.setPaused('MENU', paused);
       shell.dataset.paused = String(paused);
       if (shell.dataset.calibrated === 'true') {
-        audioDirector.setPaused(paused);
+        audioDirector.setPaused(
+          shell.dataset.ending === 'true' ? false : paused,
+        );
         systemState.textContent =
           shell.dataset.playerState === 'death'
             ? copy.rebuilding
@@ -770,10 +779,12 @@ function bootstrapGame(
   );
   fixedVisuals.root.visible = false;
   let resultPresented = false;
+  let returnRoom: AgencyRoom | null = null;
   const missionPlayback = new MissionCompletePlayback(shell, {
     locale,
     onSkip: () => endingDirector.skipMissionVideo(),
     onFinished: () => endingDirector.finishMissionVideo(),
+    onFallbackFrame: (path) => returnRoom?.attachPortrait(path),
   });
   runClock = new RunClock(
     {
@@ -819,7 +830,6 @@ function bootstrapGame(
         );
         camera.up.set(0, 0, -1);
         gameRenderer.setWorldFogEnabled(false);
-        narrative.play('lastThirtySeconds');
         endingDirector.start(endingVariant);
       },
     },
@@ -881,6 +891,17 @@ function bootstrapGame(
       fracturedCellCount += cellIds.length;
       shell.dataset.fracturedCells = String(fracturedCellCount);
       playerPhysics?.removeFeatureColliders(cellIds);
+      const fractured = new Set(cellIds);
+      superposedCells = superposedCells.filter(
+        (cell) => !fractured.has(cell.cellId),
+      );
+      if (
+        focusedSuperposedCell &&
+        fractured.has(focusedSuperposedCell.cellId)
+      ) {
+        focusedSuperposedCell = null;
+      }
+      superposition.update(superposedCells, performance.now());
     },
   });
   let worldInitialized = false;
@@ -1282,7 +1303,7 @@ function bootstrapGame(
           });
           continue;
         }
-        if (cell.phase === 'COLLAPSING') continue;
+        if (!isSuperpositionPhase(cell.phase)) continue;
         maximumCharge = Math.max(maximumCharge, cell.observationCharge);
         const superposedCell: SuperpositionCell = {
           cellId,
@@ -1447,30 +1468,67 @@ function bootstrapGame(
       );
       shell.dataset.endingPhase = ending.phase;
       shell.dataset.endingPhaseElapsed = ending.phaseElapsedSeconds.toFixed(3);
-      const ascentProgress =
-        ending.progress * ending.progress * (3 - 2 * ending.progress);
-      camera.position.set(
-        endingCameraStart.x +
-          (endingCameraPose.position[0] - endingCameraStart.x) * ascentProgress,
-        endingCameraStart.y +
-          (endingCameraPose.position[1] - endingCameraStart.y) * ascentProgress,
-        endingCameraStart.z +
-          (endingCameraPose.position[2] - endingCameraStart.z) * ascentProgress,
-      );
-      camera.lookAt(...endingCameraPose.target);
+      if (
+        ending.phase === 'ASCENDING' ||
+        (ending.phase === 'COMPLETE' && !returnRoom)
+      ) {
+        const ascentProgress =
+          ending.progress * ending.progress * (3 - 2 * ending.progress);
+        camera.position.set(
+          endingCameraStart.x +
+            (endingCameraPose.position[0] - endingCameraStart.x) *
+              ascentProgress,
+          endingCameraStart.y +
+            (endingCameraPose.position[1] - endingCameraStart.y) *
+              ascentProgress,
+          endingCameraStart.z +
+            (endingCameraPose.position[2] - endingCameraStart.z) *
+              ascentProgress,
+        );
+        camera.lookAt(...endingCameraPose.target);
+      }
       shell.dataset.endingCameraHeight = camera.position.y.toFixed(3);
       shell.dataset.endingFog = gameRenderer.scene.fog === null ? 'off' : 'on';
       if (ending.phase === 'MISSION_VIDEO') {
+        if (!returnRoom) {
+          fixedVisuals.root.visible = false;
+          finalArt.vegetation.root.visible = false;
+          originDetails.family.mesh.visible = false;
+          worldBoundary.root.visible = false;
+          gameRenderer.setWorldAtmosphereVisible(false);
+          returnRoom = new AgencyRoom(
+            gameRenderer.scene,
+            locale,
+            gameRenderer.textures,
+            'return',
+          );
+          returnRoom.attachVideo(missionPlayback.video);
+          shell.dataset.missionChamber = 'return';
+        }
+        camera.up.set(0, 1, 0);
+        camera.position.copy(RETURN_ROOM_CAMERA_POSITION);
+        camera.lookAt(RETURN_ROOM_SCREEN_TARGET);
         if (!missionPlaybackStarted) {
-          missionPlaybackStarted = true;
-          audioDirector.setMissionVideoActive(true);
-          missionPlayback.start(
-            currentSettings.volumes.master,
-            currentSettings.volumes.voice,
-            currentSettings.voicesEnabled,
+          if (audioDirector.narrationActive) {
+            shell.dataset.missionAudioGate = 'waiting';
+          } else {
+            missionPlaybackStarted = true;
+            missionPlaybackStartedAtSeconds = ending.phaseElapsedSeconds;
+            delete shell.dataset.missionAudioGate;
+            audioDirector.setMissionVideoActive(true);
+            missionPlayback.start(
+              currentSettings.volumes.master,
+              currentSettings.volumes.voice,
+              currentSettings.voicesEnabled,
+            );
+          }
+        }
+        if (missionPlaybackStarted) {
+          missionPlayback.update(
+            ending.phaseElapsedSeconds - missionPlaybackStartedAtSeconds,
           );
         }
-        missionPlayback.update(ending.phaseElapsedSeconds);
+        returnRoom.update(elapsedSeconds, false);
       }
       if (ending.phase === 'COMPLETE' && !resultPresented) {
         resultPresented = true;
@@ -1629,6 +1687,7 @@ function bootstrapGame(
     briefing.dispose();
     objectivesAudio.pause();
     room?.dispose();
+    returnRoom?.dispose();
     superposition.dispose();
     fixedVisuals.dispose();
     wp5Visuals?.dispose();

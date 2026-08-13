@@ -7,6 +7,7 @@ import {
   SuperpositionRenderer,
   domainSuperpositionCandidates,
   hasFixedCardinalNeighbor,
+  isSuperpositionPhase,
   normalizeCandidatePercentages,
   prioritizeSuperpositionCells,
   selectSuperpositionProxy,
@@ -26,6 +27,15 @@ const cell: SuperpositionCell = {
 };
 
 describe('superposition proxy selection', () => {
+  it('never renders terminal fractured or already materialized cells', () => {
+    expect(isSuperpositionPhase('SUPERPOSED')).toBe(true);
+    expect(isSuperpositionPhase('DETERMINED')).toBe(true);
+    expect(isSuperpositionPhase('UNINITIALIZED')).toBe(true);
+    expect(isSuperpositionPhase('COLLAPSING')).toBe(false);
+    expect(isSuperpositionPhase('FIXED')).toBe(false);
+    expect(isSuperpositionPhase('FRACTURED')).toBe(false);
+  });
+
   it('derives every legal family from real terrain and feature domains', () => {
     const candidates = domainSuperpositionCandidates(
       { lo: 0xffff_ffff, hi: 0x7ff },

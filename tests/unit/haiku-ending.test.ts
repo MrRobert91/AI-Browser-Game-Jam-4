@@ -118,6 +118,17 @@ describe('local haiku and ending', () => {
     expect(ending.skipMissionVideo().phase).toBe('COMPLETE');
   });
 
+  it('waits for real mission media completion instead of cutting at 32 seconds', () => {
+    const ending = new EndingDirector();
+    ending.start('MISSION_COMPLETE');
+    ending.update(8);
+    expect(ending.update(40)).toMatchObject({
+      phase: 'MISSION_VIDEO',
+      phaseElapsedSeconds: 40,
+    });
+    expect(ending.finishMissionVideo().phase).toBe('COMPLETE');
+  });
+
   it('upgrades legacy stored results as STANDARD', () => {
     const normalized = normalizeRunResult({
       endReason: 'TIME_EXPIRED',

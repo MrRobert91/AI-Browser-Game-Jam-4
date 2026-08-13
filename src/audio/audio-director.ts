@@ -34,7 +34,6 @@ export interface AudioDirectorOptions {
 interface VoiceRequest {
   readonly id: string;
   readonly path: string;
-  readonly priority: number;
   readonly isContextValid: () => boolean;
 }
 
@@ -51,8 +50,6 @@ const AMBIENCE_PATHS: Readonly<Record<AmbienceScene, string>> = {
   ruin: '/assets/audio/ambience/ruin.mp3',
   storm: '/assets/audio/ambience/storm.mp3',
 };
-
-export const MAX_VOICE_QUEUE = 2;
 
 const DEFAULT_VOLUMES: AudioVolumes = {
   master: 0.75,
@@ -99,7 +96,6 @@ export class AudioDirector {
   private startPromise: Promise<boolean> | null = null;
   private voiceEnabled = true;
   private activeVoice: VoiceRequest | null = null;
-  private readonly voiceQueue: VoiceRequest[] = [];
   private playback: AudioPlaybackSnapshot = {
     status: 'idle',
     activeClipId: null,
@@ -135,6 +131,10 @@ export class AudioDirector {
 
   get snapshot(): AudioPlaybackSnapshot {
     return this.playback;
+  }
+
+  get narrationActive(): boolean {
+    return this.activeVoice !== null;
   }
 
   startFromGesture(): Promise<boolean> {
@@ -173,7 +173,6 @@ export class AudioDirector {
     if (!enabled) {
       this.voiceElement?.pause();
       this.activeVoice = null;
-      this.voiceQueue.length = 0;
       this.setPlayback('ready', null, null);
     }
   }
@@ -193,14 +192,6 @@ export class AudioDirector {
   setMissionVideoActive(active: boolean): void {
     this.ambienceAttenuation = active ? 0.18 : 1;
     this.setAmbienceScene(this.activeAmbience);
-    if (active) this.cancelNarration();
-  }
-
-  cancelNarration(): void {
-    this.voiceQueue.length = 0;
-    this.voiceElement?.pause();
-    this.activeVoice = null;
-    if (this.context) this.setPlayback('ready', null, null);
   }
 
   setPaused(paused: boolean): void {
@@ -228,28 +219,11 @@ export class AudioDirector {
   playNarrativeCue(
     cue?: ResolvedNarrativeCue,
     isContextValid: () => boolean = () => true,
-  ): void {
-    if (!cue) return;
-    this.enqueueVoice({
+  ): boolean {
+    if (!cue) return false;
+    return this.tryStartVoice({
       id: cue.id,
       path: narrativeVoicePath(cue.locale, cue.id),
-      priority: cue.priority,
-      isContextValid,
-    });
-  }
-
-  playExclusiveNarrativeCue(
-    cue?: ResolvedNarrativeCue,
-    isContextValid: () => boolean = () => true,
-  ): void {
-    if (!cue || !this.voiceEnabled || !this.voiceElement) return;
-    this.voiceQueue.length = 0;
-    this.voiceElement.pause();
-    this.activeVoice = null;
-    this.startVoice({
-      id: cue.id,
-      path: narrativeVoicePath(cue.locale, cue.id),
-      priority: cue.priority,
       isContextValid,
     });
   }
@@ -308,7 +282,6 @@ export class AudioDirector {
     this.voiceElement = null;
     this.voiceSource = null;
     this.activeVoice = null;
-    this.voiceQueue.length = 0;
     this.setPlayback('idle', null, null);
   }
 
@@ -373,11 +346,9 @@ export class AudioDirector {
     this.voiceElement.preload = 'auto';
     this.voiceElement.onended = () => this.finishVoice();
     this.voiceElement.onerror = () => {
-      this.setPlayback(
-        'error',
-        this.activeVoice?.id ?? null,
-        'Voice asset failed',
-      );
+      const failedId = this.activeVoice?.id ?? null;
+      this.activeVoice = null;
+      this.setPlayback('error', failedId, 'Voice asset failed');
     };
     this.voiceSource = context.createMediaElementSource(this.voiceElement);
     this.voiceSource.connect(this.voiceBus);
@@ -396,21 +367,13 @@ export class AudioDirector {
     this.setVolumes(this.volumes);
   }
 
-  private enqueueVoice(request: VoiceRequest): void {
-    if (!this.voiceEnabled || !this.voiceElement || !request.isContextValid())
-      return;
-    if (!this.activeVoice) {
-      this.startVoice(request);
-      return;
-    }
-    if (request.priority > this.activeVoice.priority) {
-      this.voiceElement.pause();
-      this.startVoice(request);
-      return;
-    }
-    if (this.voiceQueue.length >= MAX_VOICE_QUEUE) return;
-    this.voiceQueue.push(request);
-    this.voiceQueue.sort((left, right) => right.priority - left.priority);
+  private tryStartVoice(request: VoiceRequest): boolean {
+    if (!request.isContextValid()) return false;
+    // Disabled or unavailable voice must never suppress subtitles/narrative.
+    if (!this.voiceEnabled || !this.voiceElement) return true;
+    if (this.activeVoice) return false;
+    this.startVoice(request);
+    return true;
   }
 
   private startVoice(request: VoiceRequest): void {
@@ -441,10 +404,7 @@ export class AudioDirector {
 
   private finishVoice(): void {
     this.activeVoice = null;
-    let next = this.voiceQueue.shift();
-    while (next && !next.isContextValid()) next = this.voiceQueue.shift();
-    if (next) this.startVoice(next);
-    else this.setPlayback('ready', null, null);
+    this.setPlayback('ready', null, null);
   }
 
   private setPlayback(

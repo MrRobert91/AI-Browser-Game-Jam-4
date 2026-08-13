@@ -1,4 +1,5 @@
 import {
+  AmbientLight,
   BoxGeometry,
   CanvasTexture,
   Color,
@@ -34,6 +35,9 @@ export const PROLOGUE_BUTTON_POSITION = new Vector3(64, 1.05, 64);
 export const PROLOGUE_ROOM_SPAWN = { x: 64, y: 0.85, z: 68 } as const;
 export const PROLOGUE_PORTAL_CENTER = new Vector3(64, 1.35, 59.5);
 export const PROLOGUE_PORTAL_RADIUS = 1.1;
+export const RETURN_ROOM_CAMERA_POSITION = new Vector3(64, 1.7, 68.2);
+export const RETURN_ROOM_SCREEN_TARGET = new Vector3(64, 2.35, 58.17);
+export type AgencyRoomVariant = 'prologue' | 'return';
 
 function canvasTexture(
   title: string,
@@ -85,24 +89,28 @@ export class AgencyRoom {
     scene: Scene,
     locale: Locale,
     textures?: ProceduralTextureLibrary,
+    variant: AgencyRoomVariant = 'prologue',
   ) {
-    this.root.name = 'agency-prologue-room';
+    const returning = variant === 'return';
+    this.root.name = returning
+      ? 'agency-return-chamber'
+      : 'agency-prologue-room';
     const agedWhite = new MeshStandardMaterial({
-      color: 0xd7dcda,
-      roughness: 0.78,
-      metalness: 0.08,
+      color: returning ? 0xa9c4c8 : 0xd7dcda,
+      roughness: returning ? 0.38 : 0.78,
+      metalness: returning ? 0.52 : 0.08,
       map: textures?.stone ?? null,
     });
     const darkMetal = new MeshStandardMaterial({
-      color: 0x111920,
-      roughness: 0.45,
-      metalness: 0.75,
+      color: returning ? 0x07101a : 0x111920,
+      roughness: returning ? 0.24 : 0.45,
+      metalness: returning ? 0.9 : 0.75,
       map: textures?.stone ?? null,
     });
     const cyan = new MeshStandardMaterial({
-      color: 0x16363e,
-      emissive: 0x39d9e6,
-      emissiveIntensity: 1.6,
+      color: returning ? 0x092b3d : 0x16363e,
+      emissive: returning ? 0x3de8ff : 0x39d9e6,
+      emissiveIntensity: returning ? 2.4 : 1.6,
       roughness: 0.35,
       map: textures?.hazard ?? null,
     });
@@ -140,6 +148,7 @@ export class AgencyRoom {
     this.button = new Mesh(new CylinderGeometry(0.72, 0.8, 0.34, 32), coral);
     this.button.position.copy(PROLOGUE_BUTTON_POSITION);
     this.button.castShadow = true;
+    this.button.visible = !returning;
     this.root.add(this.button);
 
     const screenMaterial = new MeshBasicMaterial({
@@ -179,6 +188,29 @@ export class AgencyRoom {
     addBox([0.16, 4.4, 0.18], [59.7, 2.35, 58.12], cyan);
     addBox([0.16, 4.4, 0.18], [68.3, 2.35, 58.12], cyan);
 
+    if (returning) {
+      const violet = new MeshStandardMaterial({
+        color: 0x241548,
+        emissive: 0xa568ff,
+        emissiveIntensity: 2.2,
+        roughness: 0.22,
+        metalness: 0.76,
+        map: textures?.hazard ?? null,
+      });
+      for (const x of [58.1, 59.1, 68.9, 69.9]) {
+        for (const y of [0.75, 1.55, 2.35, 3.15, 3.95]) {
+          addBox([0.56, 0.08, 0.14], [x, y, 58.22], violet);
+        }
+      }
+      for (const z of [59.4, 61.1, 62.8, 64.5, 66.2, 67.9]) {
+        addBox([13.2, 0.035, 0.045], [64, 4.38, z], cyan);
+      }
+      for (const x of [58.2, 69.8]) {
+        addBox([0.7, 2.6, 1.35], [x, 1.3, 63.8], darkMetal);
+        addBox([0.73, 0.12, 1.38], [x, 2.64, 63.8], violet);
+      }
+    }
+
     this.portal = new Mesh(
       new SphereGeometry(PROLOGUE_PORTAL_RADIUS, 32, 20),
       new MeshStandardMaterial({
@@ -198,11 +230,21 @@ export class AgencyRoom {
     this.root.add(this.portal);
 
     const signTexture = canvasTexture(
-      locale === 'en' ? 'AGENCY NOTICE 7-C' : 'AVISO DE AGENCIA 7-C',
-      locale === 'en'
-        ? 'A field body is equipment. Equipment does not receive bereavement leave.'
-        : 'Un cuerpo de campo es equipamiento. El equipamiento no disfruta de permiso por duelo.',
-      '#ff806f',
+      returning
+        ? locale === 'en'
+          ? 'REINTEGRATION BAY 4'
+          : 'SALA DE REINTEGRACIÃ“N 4'
+        : locale === 'en'
+          ? 'AGENCY NOTICE 7-C'
+          : 'AVISO DE AGENCIA 7-C',
+      returning
+        ? locale === 'en'
+          ? 'Field body recovered. Attention record ready for institutional playback.'
+          : 'Cuerpo de campo recuperado. Expediente de atenciÃ³n listo para reproducciÃ³n institucional.'
+        : locale === 'en'
+          ? 'A field body is equipment. Equipment does not receive bereavement leave.'
+          : 'Un cuerpo de campo es equipamiento. El equipamiento no disfruta de permiso por duelo.',
+      returning ? '#73efff' : '#ff806f',
     );
     const sign = new Mesh(
       new PlaneGeometry(3.3, 1.85),
@@ -212,12 +254,23 @@ export class AgencyRoom {
     sign.rotation.y = Math.PI / 2;
     this.root.add(sign);
 
-    const ceilingLight = new RectAreaLight(0xb8ffff, 5.5, 8, 2.2);
+    const ceilingLight = new RectAreaLight(
+      returning ? 0x88eaff : 0xb8ffff,
+      returning ? 8.5 : 5.5,
+      8,
+      2.2,
+    );
     ceilingLight.position.set(64, 4.25, 64);
     ceilingLight.rotation.x = -Math.PI / 2;
     const buttonLight = new PointLight(0xff715d, 7, 5, 2);
     buttonLight.position.set(64, 2.2, 64);
     this.root.add(ceilingLight, buttonLight);
+    if (returning) {
+      this.root.add(new AmbientLight(0x83c8e8, 1.15));
+      const screenLight = new PointLight(0x6eeaff, 8, 13, 1.7);
+      screenLight.position.set(64, 2.6, 61.2);
+      this.root.add(screenLight);
+    }
     scene.add(this.root);
     this.setFallbackSlide(
       locale === 'en' ? 'MANDATORY ORIENTATION' : 'ORIENTACIÓN OBLIGATORIA',
