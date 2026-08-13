@@ -93,6 +93,7 @@ export class AudioDirector {
   private spatialPool: SpatialAudioPool | null = null;
   private readonly ambienceTracks = new Map<AmbienceScene, AmbienceTrack>();
   private activeAmbience: AmbienceScene = 'room';
+  private ambienceAttenuation = 1;
   private volumes: AudioVolumes = DEFAULT_VOLUMES;
   private lastCountdownPulse = Number.NEGATIVE_INFINITY;
   private startPromise: Promise<boolean> | null = null;
@@ -181,8 +182,25 @@ export class AudioDirector {
     this.activeAmbience = scene;
     const now = this.context?.currentTime ?? 0;
     for (const [candidate, track] of this.ambienceTracks) {
-      track.gain.gain.setTargetAtTime(candidate === scene ? 1 : 0, now, 0.8);
+      track.gain.gain.setTargetAtTime(
+        candidate === scene ? this.ambienceAttenuation : 0,
+        now,
+        0.8,
+      );
     }
+  }
+
+  setMissionVideoActive(active: boolean): void {
+    this.ambienceAttenuation = active ? 0.18 : 1;
+    this.setAmbienceScene(this.activeAmbience);
+    if (active) this.cancelNarration();
+  }
+
+  cancelNarration(): void {
+    this.voiceQueue.length = 0;
+    this.voiceElement?.pause();
+    this.activeVoice = null;
+    if (this.context) this.setPlayback('ready', null, null);
   }
 
   setPaused(paused: boolean): void {

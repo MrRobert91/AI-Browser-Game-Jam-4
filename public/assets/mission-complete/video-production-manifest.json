@@ -1,0 +1,152 @@
+{
+  "version": 1,
+  "generatedAt": "2026-08-12T21:59:38.388Z",
+  "provider": "OpenRouter",
+  "model": "google/veo-3.1-lite",
+  "generatedResolution": "720p",
+  "finalResolution": "1920x1080",
+  "codec": "vp9",
+  "frameRate": 30,
+  "pixelFormat": "yuv420p",
+  "audioTracks": 0,
+  "durationSeconds": 32,
+  "path": "/assets/mission-complete/agency-mission-complete.webm",
+  "bytes": 1302595,
+  "sha256": "f5ef51f31223d5b79c465d0f2dc504f3c658f94b88731a0d3789904d5dfd7ea7",
+  "estimatedCostUsd": 0.24,
+  "actualCostUsd": 2.16,
+  "generationRunCostUsd": 0.24,
+  "supersededGenerationCostUsd": 1.92,
+  "supersededGeneration": {
+    "generatedAt": "2026-08-12T21:46:26.007Z",
+    "chapters": [
+      {
+        "id": "chapter-1",
+        "durationSeconds": 8,
+        "prompt": "Retrofuturist 1970s corporate science documentary inside a vast white and dark-metal orbital laboratory. A replaceable field body calmly overlooks a fully materialized warm landscape while four distinct luminous Possibility Seeds are incorporated into elegant unmarked archival instruments around it. Cyan and violet light gradually turns gold, slow symmetrical precise camera, institutional melancholy and dry bureaucratic visual humor, no text, no letters, no numbers, no logos, no readable screens, no signs, no watermarks, no audio, no real people, no existing characters or performers.",
+        "seed": 1196379972,
+        "jobId": "NDpu20MVuW0MfU9C11ov",
+        "generationId": "gen-vid-1786570710-NMN8tiYgNAiK7KGWRarS",
+        "costUsd": 0.24,
+        "sourceBytes": 5164404,
+        "sourceSha256": "b270896b725c379b7a720da751877a2c1efa4c4bbc551bfb166c6b385566fe01"
+      },
+      {
+        "id": "chapter-2",
+        "durationSeconds": 8,
+        "prompt": "Retrofuturist 1970s institutional science documentary, macro view of unmarked analog Agency instruments converting cold cyan and violet layers of uncertain landscape into a warm stable golden physical record. White ceramic laboratory and dark metal, precise mechanical motion, slow controlled lateral camera, melancholy corporate ceremony and dry bureaucratic visual comedy, no text, no letters, no numbers, no logos, no readable screens, no gauges, no watermarks, no audio, no real people, no existing characters or performers.",
+        "seed": 1196379973,
+        "jobId": "EUjLDdkY8Q8jcEcicF9I",
+        "generationId": "gen-vid-1786570809-VBFJy3vMn0BEm3j8vjF3",
+        "costUsd": 0.24,
+        "sourceBytes": 3179554,
+        "sourceSha256": "ad715a1a462a9aef8b5b9b3260c4c19373a81e1a0e29ca87c175d525f42abc34"
+      },
+      {
+        "id": "chapter-3",
+        "durationSeconds": 8,
+        "prompt": "Retrofuturist 1970s corporate orbital laboratory observing several distant Probability Condensates appearing beyond a window in deep space while solemn unmarked institutional machinery catalogs them with absurdly careful mechanical filing motions. White and dark-metal architecture, cyan violet light shifting toward gold, slow symmetrical precise camera, institutional melancholy and restrained bureaucratic visual humor, no text, no letters, no numbers, no logos, no readable screens, no signs, no watermarks, no audio, no real people, no existing characters or performers.",
+        "seed": 1196379974,
+        "jobId": "UNmX0P7fNJa2tHNLyl0c",
+        "generationId": "gen-vid-1786570906-4HERUkj5uF25ODJ13BlG",
+        "costUsd": 0.24,
+        "sourceBytes": 3978002,
+        "sourceSha256": "34a33843ee819d0b463b4d29bbd369de2fdcc43871bc271c703f191da9367862"
+      },
+      {
+        "id": "chapter-4",
+        "durationSeconds": 8,
+        "prompt": "Retrofuturist corporate science documentary finale: a slow cosmic ascent from a complete warmly illuminated observed world toward a vast white and dark-metal orbital laboratory, while a solitary replaceable field body remains symbolically waiting beside unmarked Agency machinery. Cyan and violet remnants resolve into gold, majestic symmetrical precise camera, melancholy institutional stillness and dry bureaucratic visual humor, no text, no letters, no numbers, no logos, no readable screens, no signs, no watermarks, no audio, no real people, no existing characters or performers.",
+        "seed": 1196379975,
+        "jobId": "GhI5ne3GvYs2s4vYbDip",
+        "generationId": "gen-vid-1786571034-F896DxXFv5r8atH9A9LO",
+        "costUsd": 0.24,
+        "sourceBytes": 5686899,
+        "sourceSha256": "e90934a73e4db653bd5e2a3b06f31ef5a9489c07bcf45816b5f447a2f0ca487e"
+      }
+    ],
+    "rejectionReason": "Visual QA found prohibited readable text in chapter 1."
+  },
+  "priorProjectCostUsd": 2.4048369999999997,
+  "projectCumulativeCostUsd": 4.564837,
+  "transformations": "FFmpeg concat; Lanczos 1920x1080 upscale; pad; 30 fps; unsharp; VP9 constrained VBR at 240 kbps target / 280 kbps max; final local recompression after temporal visual QA; source clips removed after validation.",
+  "provenance": "Generated once through OpenRouter for local offline distribution; no runtime API dependency.",
+  "license": "Distribution subject to the selected provider and OpenRouter terms at generation time.",
+  "replacementHistory": [
+    {
+      "generatedAt": "2026-08-12T21:59:38.389Z",
+      "replacedChapters": [
+        2
+      ],
+      "rejectionReason": "Temporal visual QA found prohibited readable text in chapter 2."
+    }
+  ],
+  "chapters": [
+    {
+      "id": "chapter-1",
+      "durationSeconds": 8,
+      "prompt": "The image contains absolutely no writing, labels, typography, symbols, interfaces or screens. Retrofuturist 1970s corporate science documentary inside a vast white and dark-metal orbital laboratory. A replaceable field body calmly overlooks a fully materialized warm landscape while four distinct plain geometric luminous seed spheres without labels are incorporated into four elegant blank archival instruments. Cyan and violet light gradually turns gold, slow symmetrical precise camera, institutional melancholy and dry bureaucratic visual humor. Every surface is blank and unmarked: no text, no letterlike shapes, no numbers, no logos, no display panels, no readable screens, no signs, no watermarks, no audio, no real people, no existing characters or performers.",
+      "seed": 1196379972,
+      "jobId": "X2RTT0LeqJVB5AyMhS04",
+      "generationId": "gen-vid-1786571241-RnDufQgcg31W5eTxGYUg",
+      "costUsd": 0.24,
+      "sourceBytes": 3504633,
+      "sourceSha256": "33a93160c75d26c171152434a31d29ca3b5e2b8bb70aa9c2b2589781ad5d7acd"
+    },
+    {
+      "id": "chapter-2",
+      "durationSeconds": 8,
+      "prompt": "The image contains absolutely no writing, labels, typography, symbols, interfaces, screens, gauges, paper or records. Retrofuturist 1970s institutional science documentary, macro view of completely blank sculptural analog instruments converting cold cyan and violet layers of uncertain landscape into a warm stable golden physical form. White ceramic laboratory and dark metal, precise mechanical motion, slow controlled lateral camera, melancholy corporate ceremony and dry bureaucratic visual comedy. Every surface is smooth and unmarked: no text, no letterlike shapes, no numbers, no logos, no readable screens, no signage, no watermarks, no audio, no real people, no existing characters or performers.",
+      "seed": 1196379973,
+      "jobId": "xig3CgRbl5GF33m8AwZZ",
+      "generationId": "gen-vid-1786571834-kqbUJ4BZYoLSp20y0rX8",
+      "costUsd": 0.24,
+      "sourceBytes": 2669330,
+      "sourceSha256": "a26f630d8301485ddb58a6c264c43124c28e81ae14c7ac283da4df8ac51bf4bf"
+    },
+    {
+      "id": "chapter-3",
+      "durationSeconds": 8,
+      "prompt": "Retrofuturist 1970s corporate orbital laboratory observing several distant Probability Condensates appearing beyond a window in deep space while solemn unmarked institutional machinery catalogs them with absurdly careful mechanical filing motions. White and dark-metal architecture, cyan violet light shifting toward gold, slow symmetrical precise camera, institutional melancholy and restrained bureaucratic visual humor, no text, no letters, no numbers, no logos, no readable screens, no signs, no watermarks, no audio, no real people, no existing characters or performers.",
+      "seed": 1196379974,
+      "jobId": "ft1rrsJF1whMlfWbx8Y5",
+      "generationId": "gen-vid-1786571435-9nZQ536H5tbl7PVz586h",
+      "costUsd": 0.24,
+      "sourceBytes": 3980280,
+      "sourceSha256": "ed4bd1221bbd7459d36d6f17e6ea5cc9f23569babee4d7e442dac69db20d02e7"
+    },
+    {
+      "id": "chapter-4",
+      "durationSeconds": 8,
+      "prompt": "Retrofuturist corporate science documentary finale: a slow cosmic ascent from a complete warmly illuminated observed world toward a vast white and dark-metal orbital laboratory, while a solitary replaceable field body remains symbolically waiting beside unmarked Agency machinery. Cyan and violet remnants resolve into gold, majestic symmetrical precise camera, melancholy institutional stillness and dry bureaucratic visual humor, no text, no letters, no numbers, no logos, no readable screens, no signs, no watermarks, no audio, no real people, no existing characters or performers.",
+      "seed": 1196379975,
+      "jobId": "YlDPZ9y0aMSsnU6EAJg5",
+      "generationId": "gen-vid-1786571563-IloB3B5caPWQRwewzTmQ",
+      "costUsd": 0.24,
+      "sourceBytes": 6381088,
+      "sourceSha256": "2fdb51946205b132e9ddab1fba07aa5537077b51d0cf563a11e9049ea9c1c5ae"
+    }
+  ],
+  "fallbacks": [
+    {
+      "path": "/assets/mission-complete/mission-fallback-01.webp",
+      "bytes": 67872,
+      "sha256": "6fd526aae1fc9f6ef4ab6f20a9aafcb606cabd2fcc465ec53c43dfb5948f50a6"
+    },
+    {
+      "path": "/assets/mission-complete/mission-fallback-02.webp",
+      "bytes": 33216,
+      "sha256": "c5261e2aa901aa75043e8ee777b3773e32bcbd60387866f658f44b767f9a718e"
+    },
+    {
+      "path": "/assets/mission-complete/mission-fallback-03.webp",
+      "bytes": 68356,
+      "sha256": "dd968732bd3e8a427beb12beaf54ffe217f9a9aa447034d560d4ba64c3d018ec"
+    },
+    {
+      "path": "/assets/mission-complete/mission-fallback-04.webp",
+      "bytes": 98220,
+      "sha256": "bc5b5ecacae78b36199f4f588e32c029c14b8b03aa11a5cd51ca3b0a909be97a"
+    }
+  ]
+}

@@ -135,7 +135,7 @@ describe('generated local audio assets', () => {
           asset.locale === 'en' &&
           asset.id !== 'briefing',
       ),
-    ).toHaveLength(44);
+    ).toHaveLength(45);
     expect(
       manifest.assets.filter(
         (asset) =>
@@ -143,7 +143,12 @@ describe('generated local audio assets', () => {
           asset.locale === 'es' &&
           asset.id !== 'briefing',
       ),
-    ).toHaveLength(44);
+    ).toHaveLength(45);
+    expect(
+      manifest.assets.filter(
+        (asset) => asset.kind === 'voice' && asset.id === 'missionComplete',
+      ),
+    ).toHaveLength(2);
     expect(
       manifest.assets.filter((asset) => asset.kind === 'ambience'),
     ).toHaveLength(5);

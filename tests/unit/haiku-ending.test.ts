@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  classifyEnding,
   closureForSeedCount,
   EndingDirector,
   describeAgentUpdate,
   formatRunResult,
   formatSeed,
+  MISSION_COMPLETE_FIXED_CELLS,
+  normalizeRunResult,
 } from '../../src/gameplay/ending';
 import {
   approximateSpanishSyllables,
@@ -61,12 +64,84 @@ describe('local haiku and ending', () => {
     });
   });
 
+  it('classifies the exact mission-complete eligibility boundaries', () => {
+    const qualified = {
+      mode: 'standard' as const,
+      endingReason: 'TIME_EXPIRED' as const,
+      livesRemaining: 1,
+      collectedPacks: ['water', 'forest', 'ruin', 'storm'],
+      finalFixedCells: MISSION_COMPLETE_FIXED_CELLS,
+    };
+    expect(classifyEnding(qualified)).toBe('MISSION_COMPLETE');
+    expect(
+      classifyEnding({
+        ...qualified,
+        livesRemaining: 3,
+        finalFixedCells: MISSION_COMPLETE_FIXED_CELLS + 1,
+      }),
+    ).toBe('MISSION_COMPLETE');
+    expect(
+      classifyEnding({
+        ...qualified,
+        finalFixedCells: MISSION_COMPLETE_FIXED_CELLS - 1,
+      }),
+    ).toBe('STANDARD');
+    expect(
+      classifyEnding({
+        ...qualified,
+        collectedPacks: qualified.collectedPacks.slice(0, 3),
+      }),
+    ).toBe('STANDARD');
+    expect(classifyEnding({ ...qualified, livesRemaining: 0 })).toBe(
+      'STANDARD',
+    );
+    expect(
+      classifyEnding({ ...qualified, endingReason: 'LIVES_EXHAUSTED' }),
+    ).toBe('STANDARD');
+    expect(classifyEnding({ ...qualified, mode: 'brief' })).toBe('STANDARD');
+    expect(classifyEnding({ ...qualified, mode: 'contemplative' })).toBe(
+      'STANDARD',
+    );
+  });
+
+  it('places the mission video after ascent and only skips after three seconds', () => {
+    const ending = new EndingDirector();
+    ending.start('MISSION_COMPLETE');
+    expect(ending.update(8)).toMatchObject({
+      phase: 'MISSION_VIDEO',
+      phaseElapsedSeconds: 0,
+      canSkipMissionVideo: false,
+    });
+    expect(ending.update(2.99).canSkipMissionVideo).toBe(false);
+    expect(ending.skipMissionVideo().phase).toBe('MISSION_VIDEO');
+    expect(ending.update(0.01).canSkipMissionVideo).toBe(true);
+    expect(ending.skipMissionVideo().phase).toBe('COMPLETE');
+  });
+
+  it('upgrades legacy stored results as STANDARD', () => {
+    const normalized = normalizeRunResult({
+      endReason: 'TIME_EXPIRED',
+      seedLabel: 'A91F-42C0',
+      portrait: PORTRAIT,
+      haiku: generateHaiku(0xa91f42c0, PORTRAIT, 'Cartógrafo'),
+    });
+    expect(normalized).toMatchObject({
+      endingVariant: 'STANDARD',
+      endingReason: 'TIME_EXPIRED',
+      livesRemaining: 0,
+      finalFixedCells: 144,
+    });
+  });
+
   it('formats the seed, qualitative closure and copy payload', () => {
     const haiku = generateHaiku(0xa91f42c0, PORTRAIT, 'Cartógrafo');
     const closure = closureForSeedCount(3);
     expect(closure.closure).toBe('Mundo habitable');
     const text = formatRunResult({
-      endReason: 'TIME_EXPIRED',
+      endingVariant: 'STANDARD',
+      endingReason: 'TIME_EXPIRED',
+      livesRemaining: 2,
+      finalFixedCells: PORTRAIT.fixedCells,
       worldSeed: 0xa91f42c0,
       seedLabel: formatSeed(0xa91f42c0),
       profile: 'Cartógrafo',
@@ -83,7 +158,10 @@ describe('local haiku and ending', () => {
     expect(text).toContain('sin reconocimiento de causalidad cosmológica');
     expect(
       describeAgentUpdate({
-        endReason: 'TIME_EXPIRED',
+        endingVariant: 'STANDARD',
+        endingReason: 'TIME_EXPIRED',
+        livesRemaining: 2,
+        finalFixedCells: PORTRAIT.fixedCells,
         worldSeed: 0xa91f42c0,
         seedLabel: formatSeed(0xa91f42c0),
         profile: 'Cartógrafo',

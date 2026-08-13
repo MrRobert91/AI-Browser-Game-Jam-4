@@ -372,3 +372,36 @@ Al terminar, el botón coral queda apagado y no vuelve a aceptar interacción. L
 ![Portal esférico delante de la pantalla cerrada](./issue-105-visual-biomes-prologue/02-white-sphere-portal.png)
 
 [Ver prólogo, esfera y entrada al mundo](./issue-105-visual-biomes-prologue/prologue-portal-run.webm)
+
+## Cuando sobrevivir también cierra un expediente
+
+El final original interpretaba cualquier partida sin jerarquizarla. Ese gesto
+permanece: la nueva variante no asigna puntos ni degrada los demás retratos.
+Solo reconoce un caso operativo muy concreto. Al agotarse los diez minutos del
+modo estándar deben seguir vivas 1536 celdas, quedar al menos un cuerpo de campo
+y constar Agua, Bosque, Ruina y Tormenta. Una explosión importa hasta el último
+instante porque las cicatrices `FRACTURED` ya no cuentan como observación fija.
+
+![Ascensión previa al expediente especial](./issue-112-mission-complete/es-mission-ascent.png)
+
+La clasificación se calcula una vez sobre el estado final y se serializa en el
+resultado. Después de los ocho segundos de ascensión, la Agencia ocupa la
+pantalla con cuatro planos de archivo, condensados e instrumental absurdamente
+solemne. No sustituye el haiku ni el panorama: añade una despedida burocrática
+antes de devolver el control al mismo resultado copiable.
+
+![Las cuatro Semillas constan en el expediente](./issue-112-mission-complete/es-mission-1-recorded-seeds.png)
+
+Vídeo, Harper, Kore y cuatro imágenes de reserva viven dentro de la build. Los
+subtítulos marcan la línea temporal y siguen funcionando si falla cualquiera de
+los medios; la omisión se habilita a los tres segundos. Los manifiestos cuentan
+también los intentos rechazados: texto accidental en dos planos, dos mezclas EN
+fuera del objetivo y un coste acumulado de proyecto de 4,573846 USD.
+
+[Ver cierre completo en español](./issue-112-mission-complete/mission-complete-es.webm)
+
+El replay automatizado prueba el borde exacto sin hacerse pasar por una persona.
+La pregunta de balance queda abierta y explícita: hace falta una partida humana
+real de diez minutos para saber si 1536 es exigente pero alcanzable. Hasta
+entonces, #112 permanece NO-GO y ningún resultado humano se inventa para cerrar
+la historia.

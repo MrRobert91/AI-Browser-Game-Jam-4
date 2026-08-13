@@ -555,6 +555,28 @@ Hay tres vidas totales. El final anticipado conserva panorama, perfil, haiku y s
 
 Al llegar a cero: bloquear movimiento; apagar brillo de lo no fijado; ascender cámara ocho segundos; conservar color de lo observado; convertir el resto en cuadrícula oscura translúcida; mostrar haiku y seed copiable.
 
+El final tiene dos variantes jerárquicas. `MISSION_COMPLETE` solo se concede si
+una partida `standard` termina por `TIME_EXPIRED`, conserva al menos una vida,
+ha recogido Agua, Bosque, Ruina y Tormenta y mantiene al menos 1536 celdas en
+fase `FIXED` en el estado final del mundo. El recuento se toma al terminar: las
+celdas `FRACTURED` no cuentan aunque hubieran estado fijadas antes. Cualquier
+otra combinación usa `STANDARD`; el agotamiento de las tres vidas conserva el
+final anticipado y nunca concede la misión completada.
+
+La secuencia cualificada es `ASCENDING` durante ocho segundos,
+`MISSION_VIDEO` durante treinta y dos segundos y `COMPLETE`. El cierre normal
+pasa directamente de `ASCENDING` a `COMPLETE`. El vídeo, las voces y los cuatro
+fallbacks visuales se generan una vez, se distribuyen como assets locales y no
+pueden introducir llamadas de red durante la partida. La pieza es omitible a
+partir de tres segundos; un fallo de vídeo o voz nunca bloquea los resultados.
+Los subtítulos son obligatorios durante la pieza, con independencia de la
+preferencia general del jugador.
+
+La felicitación y las afirmaciones de que la Agencia pretende «acabar con la
+incertidumbre» o considerar provisionalmente real cuanto existe «para
+nosotros» son doctrina institucional satírica. No describen una conclusión
+científica de QBism ni una propiedad objetiva del mundo.
+
 ```ts
 export interface AttentionPortrait {
   fixedCells: number;

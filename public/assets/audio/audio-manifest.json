@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-12T17:46:26.268Z",
+  "generatedAt": "2026-08-12T22:05:58.711Z",
   "assets": [
     {
       "id": "start",
@@ -1861,7 +1861,47 @@
       "loudnessLufs": -24.48,
       "truePeakDbtp": -9.2,
       "costUsd": 0
+    },
+    {
+      "id": "missionComplete",
+      "locale": "en",
+      "path": "/assets/mission-complete/agency-mission-complete.en.mp3",
+      "kind": "voice",
+      "provider": "azure",
+      "model": "microsoft/mai-voice-2",
+      "voice": "en-US-Harper:MAI-Voice-2",
+      "style": "Mature female institutional voice, cold, precise and contained, with dry bureaucratic satire; never imitate an existing character or performer.",
+      "generationId": null,
+      "generatedAt": "2026-08-12T22:04:59.401Z",
+      "text": "Congratulations, Collapser. You survived the authorized window, and all four Seeds are now recorded in your file. Thanks to your intervention, the Agency is slightly closer to ending uncertainty in the world. Should new Probability Condensates appear requiring collapse, you will be duly notified. Until then, you may provisionally assume that everything in the universe is real for us. The Agency thanks you for your service.",
+      "textSha256": "a40c4ce2154ece6a2f79b0406c5389cf6ab30499a30ba49d3b76a967c12a14c2",
+      "sha256": "e44034bd03a5c2ebb976f21fde1e789c26ca22c37e3b018f8c2ded9c948c28f3",
+      "durationSeconds": 32,
+      "bytes": 256461,
+      "loudnessLufs": -15.98,
+      "truePeakDbtp": -1.54,
+      "costUsd": 0
+    },
+    {
+      "id": "missionComplete",
+      "locale": "es",
+      "path": "/assets/mission-complete/agency-mission-complete.es.mp3",
+      "kind": "voice",
+      "provider": "google",
+      "model": "google/gemini-3.1-flash-tts-preview",
+      "voice": "Kore",
+      "style": "Castellano peninsular, voz femenina madura, fría, precisa, institucional y contenida, con sátira burocrática seca.",
+      "generationId": null,
+      "generatedAt": "2026-08-12T22:05:58.708Z",
+      "text": "Enhorabuena, Colapsador. Ha sobrevivido a la ventana reglamentaria y las cuatro Semillas constan en su expediente. Gracias a su intervención, la Agencia está un poco más cerca de acabar con la incertidumbre del mundo. Si aparecen nuevos Condensados de Probabilidad pendientes de colapso, será debidamente avisado. Hasta entonces, puede asumir provisionalmente que todo cuanto existe en el universo es real para nosotros. La Agencia agradece su servicio.",
+      "textSha256": "56551a66859629fc2e866bcea44d825c9bd2300fc160f468ec36e5079a308e8a",
+      "sha256": "8d04dcc4f1a984d6d7e664262354b8c06224a2a6a88cbae581dee27222b46192",
+      "durationSeconds": 32,
+      "bytes": 256461,
+      "loudnessLufs": -16,
+      "truePeakDbtp": -1.83,
+      "costUsd": 0.005005
     }
   ],
-  "totalCostUsd": 0.24483700000000008
+  "totalCostUsd": 0.2498420000000001
 }
