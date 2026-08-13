@@ -429,3 +429,31 @@ La pregunta de balance queda abierta y explícita: hace falta una partida humana
 real de diez minutos para saber si 1536 es exigente pero alcanzable. Hasta
 entonces, #112 permanece NO-GO y ningún resultado humano se inventa para cerrar
 la historia.
+
+## El recuerdo no puede fotografiar la sala equivocada
+
+La sala de reintegración introdujo una transición correcta y una fotografía
+incorrecta. Para reproducir el expediente, el cierre oculta el mundo y coloca
+una nueva pantalla 3D en su lugar. El panorama se generaba después de ese
+cambio: en vez del planeta, el render cenital encontraba únicamente un pequeño
+rectángulo tecnológico en mitad del vacío.
+
+El cierre conserva ahora un negativo del mundo justo antes de entrar en la
+sala. Es una cámara ortográfica aislada, sin niebla y sin dependencia de la
+cámara de juego. Cuando llegan los resultados, otro canvas utiliza ese negativo
+para construir un recuerdo 1600 × 900: el paisaje sigue ocupando el fondo, el
+wordmark facetado se aísla de la propia carátula suministrada y una franja
+resume la proporción fijada, las Semillas y las muertes. La URL de itch.io y la
+seed convierten el archivo en algo compartible sin subir un solo byte.
+
+![Tarjeta descargable compuesta sobre el mundo real](./issue-120-final-panorama-card/final-world-card.png)
+
+El mismo repaso corrigió dos disonancias de lectura. El caption del expediente
+estaba centrado dentro de su caja, pero la caja seguía anclada a la izquierda;
+ahora toda la franja se centra a la altura original. Y la directiva inglesa
+muestra «thirteen metres», lo que el jugador escucha, aunque el radio mecánico
+permanezca en quince y no se regenere la voz.
+
+![Subtítulo centrado en la pantalla de reintegración](./issue-120-final-panorama-card/centered-final-subtitles.png)
+
+[Ver el cierre y la tarjeta descargada](./issue-120-final-panorama-card/mission-finale-and-card.webm)

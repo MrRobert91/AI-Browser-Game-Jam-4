@@ -60,6 +60,14 @@
       "license": "Original generated project content distributed with the game"
     },
     {
+      "path": "public/assets/branding/title-wordmark.png",
+      "kind": "crystalline game title wordmark",
+      "tool": "OpenAI image generation edit; local chroma-key removal",
+      "process": "isolated from the user-supplied game cover on a flat chroma background, converted to RGBA and packaged locally for the final panorama card",
+      "editing": "exact title spelling and faceted cyan, violet and gold cover lettering visually reviewed at original resolution",
+      "license": "Original project branding supplied by the project owner and edited for this game"
+    },
+    {
       "path": "public/favicon.svg",
       "kind": "interface icon",
       "tool": "manual SVG editing",

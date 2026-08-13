@@ -12,6 +12,13 @@ describe('mission-complete deterministic replay', () => {
     const world = new WorldState();
     const outcome = applyMissionCompleteReplayOutcome(world);
     expect(outcome.finalFixedCells).toBe(MISSION_COMPLETE_FIXED_CELLS);
+    expect(outcome.fixedCommits.length).toBe(MISSION_COMPLETE_FIXED_CELLS);
+    expect(
+      new Set(outcome.fixedCommits.map((commit) => commit.terrainTileId)).size,
+    ).toBeGreaterThan(10);
+    expect(
+      new Set(outcome.fixedCommits.map((commit) => commit.featureTileId)).size,
+    ).toBeGreaterThan(10);
     expect(
       classifyEnding({
         mode: 'standard',
@@ -31,5 +38,13 @@ describe('mission-complete deterministic replay', () => {
         finalFixedCells: world.countFixedCells(),
       }),
     ).toBe('STANDARD');
+  });
+
+  it('does not overwrite an in-flight visual collapse', () => {
+    const world = new WorldState();
+    world.initializeCell(2150);
+    world.setPhase(2150, 'COLLAPSING');
+    applyMissionCompleteReplayOutcome(world);
+    expect(world.getCell(2150).phase).toBe('COLLAPSING');
   });
 });

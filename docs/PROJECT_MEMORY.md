@@ -4,7 +4,7 @@ Este documento conserva la historia de implementación de **La Última Observaci
 
 ## Vista de pájaro
 
-Actualizado: 2026-08-13 (Europe/Madrid)
+Actualizado: 2026-08-14 (Europe/Madrid)
 
 | Fase | Issues | Estado | Gate o dependencia principal |
 |---|---:|---|---|
@@ -27,6 +27,7 @@ Actualizado: 2026-08-13 (Europe/Madrid)
 | POST — Biomas, detonación y portal | #105 | Implementada en rama | `codex/issue-105-visual-biomes-prologue` desde `origin/dev` `1f318b1` |
 | POST — Final «Misión completada» | #107–#112 | Implementada; gate humano pendiente | Rama `codex/issue-107-mission-complete`; #112 permanece NO-GO |
 | POST — Sala final, voz y fractura | #117 | Implementada en rama | `codex/issue-117-final-chamber-audio-fractures` desde `origin/dev` `e6553db` |
+| POST — Tarjeta final y subtítulos | #120 | Implementada en rama | Captura previa a sala, captions centrados y PNG 1600 × 900 con resumen |
 | POST — Expansiones | #52–#56 | En rama acumulativa salvo #54 | #54 ya estaba cerrada; #52, #53, #55 y #56 listas para revisión |
 
 ### Estado operativo actual
@@ -82,6 +83,27 @@ Actualizado: 2026-08-13 (Europe/Madrid)
 - `FRACTURED` queda excluido de la elegibilidad de superposición y la lista
   renderizada se purga en el mismo evento de fractura, sin esperar al muestreo
   visual de 10 Hz.
+
+### 2026-08-14 — Issue #120 — Subtítulos y recuerdo final
+
+- El caption del vídeo final conserva su franja inferior y añade centrado de
+  layout, no solo centrado tipográfico dentro de una caja desplazada.
+- La directiva inglesa visible cambia `fifteen metres` por `thirteen metres`
+  para coincidir con la voz existente; audio y radio mecánico no cambian.
+- La captura del mundo se congela al iniciar `ASCENDING`, mientras paisaje,
+  frontera y detalles siguen visibles. La sala de retorno puede ocultarlos
+  después sin aparecer como un cuadrado central en el resultado.
+- El render descargable recupera su cámara ortográfica independiente. Un
+  compositor Canvas 2D local añade el wordmark facetado aislado de la carátula,
+  URL de itch.io, seed, cobertura sobre 4096 celdas, Semillas y muertes al PNG
+  1600 × 900.
+- El replay de evidencia materializa su umbral sintético con 1536 instancias
+  repartidas por todos los biomas. La ruta normal no fabrica el paisaje: captura
+  las celdas y features reales de la partida.
+- Pruebas unitarias fijan el cálculo 1536/4096 = 37,5 %. La E2E Chromium mide
+  el centro del caption, inspecciona las métricas y descarga el PNG real. La
+  evidencia vive en
+  [`docs/progress/issue-120-final-panorama-card/`](./progress/issue-120-final-panorama-card/).
 
 ### 2026-08-12 — Issue #105 — Biomas legibles, detonación y portal esférico
 

@@ -1,8 +1,11 @@
+import { readFile } from 'node:fs/promises';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import {
   capturePanoramaPng,
   MAX_LOCAL_PANORAMAS,
+  panoramaCardMetrics,
   retainedPanoramaIds,
 } from '../../src/gameplay/panorama';
 import {
@@ -15,6 +18,10 @@ import { cellCoordinatesToId } from '../../src/world/world-state';
 const RESULT = {
   seedLabel: 'A91F-42C0',
   profile: 'Cartógrafo',
+  finalFixedCells: 1536,
+  livesRemaining: 1,
+  collectedPacks: ['water', 'forest', 'ruin', 'storm'],
+  portrait: { unlockedPacks: ['water', 'forest'], deaths: 2 },
   haiku: { lines: ['Uno', 'Dos', 'Tres'] },
 } as const;
 
@@ -24,6 +31,9 @@ describe('local panorama', () => {
     const canvas = {
       width: 1280,
       height: 720,
+      completionPercent: 37.5,
+      collectedSeeds: 4,
+      deaths: 2,
       toBlob: vi.fn((callback: BlobCallback) => callback(png)),
     } as unknown as HTMLCanvasElement;
     const record = await capturePanoramaPng(canvas, RESULT, 1234);
@@ -36,6 +46,33 @@ describe('local panorama', () => {
       height: 720,
     });
     expect(record.png).toBe(png);
+  });
+
+  it('summarizes bounded completion, collected Seeds and deaths', () => {
+    expect(panoramaCardMetrics(RESULT)).toEqual({
+      completionPercent: 37.5,
+      collectedSeeds: 4,
+      deaths: 2,
+    });
+    expect(
+      panoramaCardMetrics({
+        finalFixedCells: 99_999,
+        livesRemaining: 1,
+        portrait: RESULT.portrait,
+      }),
+    ).toEqual({
+      completionPercent: 100,
+      collectedSeeds: 2,
+      deaths: 2,
+    });
+  });
+
+  it('packages the transparent crystalline cover wordmark locally', async () => {
+    const png = await readFile('public/assets/branding/title-wordmark.png');
+    expect(png.subarray(1, 4).toString('ascii')).toBe('PNG');
+    expect(png.readUInt32BE(16)).toBe(1672);
+    expect(png.readUInt32BE(20)).toBe(941);
+    expect(png[25]).toBe(6);
   });
 
   it('retains only the newest bounded entries across distinct seeds', () => {

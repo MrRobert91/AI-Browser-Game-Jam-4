@@ -25,7 +25,11 @@ import {
   NarrativeDirector,
   type NarrativeCueId,
 } from '../gameplay/narrative';
-import { capturePanoramaPng, LocalPanoramaGallery } from '../gameplay/panorama';
+import {
+  capturePanoramaPng,
+  composePanoramaCard,
+  LocalPanoramaGallery,
+} from '../gameplay/panorama';
 import { configuredRemoteHaikuEndpoint } from '../gameplay/remote-haiku';
 import {
   AttentionPortraitTracker,
@@ -492,7 +496,7 @@ function bootstrapGame(
   let enterRun = (): void => undefined;
   const objectiveText =
     locale === 'en'
-      ? 'Agency operational directive. During the next ten minutes, collapse as much of the Condensate as possible. Recover the Possibility Seeds in the authorized order: Water, Forest, Ruin, and Storm. Avoid consciousness bombs; detonation revokes fifteen metres of approved reality. You have been allocated three lives. The loss of the third will close the record, regardless of your objections.'
+      ? 'Agency operational directive. During the next ten minutes, collapse as much of the Condensate as possible. Recover the Possibility Seeds in the authorized order: Water, Forest, Ruin, and Storm. Avoid consciousness bombs; detonation revokes thirteen metres of approved reality. You have been allocated three lives. The loss of the third will close the record, regardless of your objections.'
       : 'Directiva operativa de la Agencia. Durante los próximos diez minutos, colapsa la mayor superficie posible del Condensado. Recupera las Semillas de Posibilidad en el orden autorizado: Agua, Bosque, Ruina y Tormenta. Evita las bombas de consciencia; su detonación revoca quince metros de realidad aprobada. Se te han asignado tres vidas. La pérdida de la tercera cerrará el expediente, con independencia de tus objeciones.';
   const defeatText =
     locale === 'en'
@@ -598,6 +602,7 @@ function bootstrapGame(
   let finalCollectedPacks: readonly UnlockablePackId[] = [];
   let missionPlaybackStarted = false;
   let missionPlaybackStartedAtSeconds = 0;
+  let endingWorldPortraitCanvas: HTMLCanvasElement | null = null;
   const endingCameraStart = new Vector3();
   let endingCameraPose = finalWorldCameraPose(observedWorldBounds([]));
   let wp5Preview: Wp5PreviewRuntime | null = null;
@@ -797,6 +802,25 @@ function bootstrapGame(
         const replayOutcome = missionCompleteReplay
           ? applyMissionCompleteReplayOutcome(worldState)
           : null;
+        for (const commit of replayOutcome?.fixedCommits ?? []) {
+          fixedVisuals.begin(
+            {
+              type: 'COLLAPSE',
+              cellId: commit.cellId,
+              terrainTileId: commit.terrainTileId,
+              featureTileId: commit.featureTileId,
+              terrainRotationQuarterTurns:
+                commit.terrainRotationQuarterTurns ?? 0,
+              entropyBefore: 0,
+              durationMs: 225,
+              worldSeed,
+            },
+            cellCenterToWorld(commit.cellId, 0),
+          );
+          fixedVisuals.update(commit.cellId, 1);
+          fixedVisuals.complete(commit.cellId);
+        }
+        const visuallyFixedCellIds = worldState.fixedCellIds();
         finalFixedCells =
           replayOutcome?.finalFixedCells ?? worldState.countFixedCells();
         finalLivesRemaining =
@@ -830,6 +854,13 @@ function bootstrapGame(
         );
         camera.up.set(0, 0, -1);
         gameRenderer.setWorldFogEnabled(false);
+        endingWorldPortraitCanvas = renderObservedWorldMapCanvas(
+          gameRenderer.renderer,
+          gameRenderer.scene,
+          visuallyFixedCellIds,
+        );
+        shell.dataset.endingPortrait = 'captured-before-return-room';
+        shell.dataset.endingPortraitCells = String(visuallyFixedCellIds.length);
         endingDirector.start(endingVariant);
       },
     },
@@ -839,12 +870,17 @@ function bootstrapGame(
     sliceResult,
     () => window.location.reload(),
     {
-      capture: (result) =>
+      capture: async (result) =>
         capturePanoramaPng(
-          renderObservedWorldMapCanvas(
-            gameRenderer.renderer,
-            gameRenderer.scene,
-            worldState.fixedCellIds(),
+          await composePanoramaCard(
+            endingWorldPortraitCanvas ??
+              renderObservedWorldMapCanvas(
+                gameRenderer.renderer,
+                gameRenderer.scene,
+                worldState.fixedCellIds(),
+              ),
+            result,
+            locale,
           ),
           result,
         ),
@@ -1546,6 +1582,7 @@ function bootstrapGame(
           endingReason: runEndReason,
           livesRemaining: finalLivesRemaining,
           finalFixedCells,
+          collectedPacks: finalCollectedPacks,
           worldSeed,
           seedLabel: formatSeed(worldSeed),
           seedMode: seedSelection.mode,

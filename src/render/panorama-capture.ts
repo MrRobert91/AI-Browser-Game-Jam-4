@@ -1,5 +1,5 @@
 import {
-  PerspectiveCamera,
+  OrthographicCamera,
   SRGBColorSpace,
   WebGLRenderTarget,
   type Scene,
@@ -121,24 +121,25 @@ export function finalWorldCameraPose(
   };
 }
 
-/** Renders the same fog-free, complete-world portrait used by the final ascent. */
+/** Renders a fog-free top-down portrait without moving the gameplay camera. */
 export function renderObservedWorldMapCanvas(
   renderer: WebGLRenderer,
   scene: Scene,
   fixedCellIds: readonly CellId[],
 ): HTMLCanvasElement {
   const bounds = observedWorldBounds(fixedCellIds);
-  const aspect = PANORAMA_WIDTH / PANORAMA_HEIGHT;
-  const pose = finalWorldCameraPose(bounds, aspect);
-  const camera = new PerspectiveCamera(
-    FINAL_WORLD_PORTRAIT_FOV_DEGREES,
-    aspect,
+  const { halfWidth, halfHeight } = panoramaFrustum(bounds);
+  const camera = new OrthographicCamera(
+    -halfWidth,
+    halfWidth,
+    halfHeight,
+    -halfHeight,
     0.1,
-    300,
+    180,
   );
-  camera.position.set(...pose.position);
+  camera.position.set(bounds.centerX, 96, bounds.centerZ);
   camera.up.set(0, 0, -1);
-  camera.lookAt(...pose.target);
+  camera.lookAt(bounds.centerX, 0, bounds.centerZ);
   camera.updateProjectionMatrix();
 
   const target = new WebGLRenderTarget(PANORAMA_WIDTH, PANORAMA_HEIGHT, {

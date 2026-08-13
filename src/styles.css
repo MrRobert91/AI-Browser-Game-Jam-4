@@ -1171,6 +1171,7 @@ button {
 .mission-complete p {
   z-index: 2;
   align-self: end;
+  justify-self: center;
   width: min(62rem, calc(100% - 3rem));
   margin: 0 0 3rem;
   padding: 0.85rem 1rem;
@@ -1225,7 +1226,7 @@ button {
 
 .slice-result__panorama {
   display: grid;
-  width: min(760px, 92vw);
+  width: min(960px, 94vw);
   gap: 0.45rem;
   margin: 0;
 }
@@ -1237,7 +1238,7 @@ button {
 .slice-result__panorama img {
   display: block;
   width: 100%;
-  max-height: min(34vh, 360px);
+  max-height: min(46vh, 460px);
   border: 1px solid rgb(169 255 237 / 30%);
   object-fit: contain;
   background: #03090f;

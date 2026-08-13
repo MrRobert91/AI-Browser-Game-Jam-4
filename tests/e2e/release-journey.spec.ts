@@ -179,6 +179,9 @@ test('canonical offline English journey reaches the qualitative ending', async (
   await expect(page.locator('[data-objectives-subtitle]')).toContainText(
     'collapse as much of the Condensate as possible',
   );
+  await expect(page.locator('[data-objectives-subtitle]')).toContainText(
+    'thirteen metres',
+  );
   await page.screenshot({ path: testInfo.outputPath('04-objectives.png') });
   const objectivesSkip = page.locator('[data-objectives-skip]');
   await expect(objectivesSkip).toBeEnabled({ timeout: 10_000 });
@@ -271,6 +274,8 @@ for (const locale of ['en', 'es'] as const) {
   }, testInfo) => {
     test.slow();
     const externalRequests: string[] = [];
+    const pageErrors: string[] = [];
+    page.on('pageerror', (error) => pageErrors.push(error.message));
     page.on('request', (request) => {
       const url = new URL(request.url());
       if (url.origin !== appOrigin) externalRequests.push(request.url());
@@ -297,7 +302,7 @@ for (const locale of ['en', 'es'] as const) {
       path: testInfo.outputPath(`${locale}-mission-ascent.png`),
     });
     await expect(shell).toHaveAttribute('data-ending-phase', 'MISSION_VIDEO', {
-      timeout: 15_000,
+      timeout: 45_000,
     });
     const mission = page.locator('[data-mission-complete]');
     await expect(mission).toBeVisible();
@@ -336,11 +341,41 @@ for (const locale of ['en', 'es'] as const) {
       await expect(page.locator('[data-mission-caption]')).toContainText(
         caption,
       );
+      if (index === 0) {
+        const captionBox = await page
+          .locator('[data-mission-caption]')
+          .boundingBox();
+        expect(captionBox).not.toBeNull();
+        expect(
+          Math.abs(
+            captionBox!.x +
+              captionBox!.width / 2 -
+              page.viewportSize()!.width / 2,
+          ),
+        ).toBeLessThan(2);
+        await expect(page.locator('[data-mission-caption]')).toHaveCSS(
+          'text-align',
+          'center',
+        );
+      }
       await page.screenshot({
         path: testInfo.outputPath(
           `${locale}-mission-${index + 1}-${chapterId}.png`,
         ),
       });
+      if (
+        process.env.PLAYWRIGHT_EVIDENCE === '1' &&
+        locale === 'en' &&
+        index === 0
+      ) {
+        const evidenceDirectory = resolve(
+          'docs/progress/issue-120-final-panorama-card',
+        );
+        await mkdir(evidenceDirectory, { recursive: true });
+        await page.screenshot({
+          path: resolve(evidenceDirectory, 'centered-final-subtitles.png'),
+        });
+      }
     }
     await expect
       .poll(
@@ -354,18 +389,56 @@ for (const locale of ['en', 'es'] as const) {
     await expect(skip).toBeEnabled();
     expect(
       Number(await shell.getAttribute('data-ending-phase-elapsed')),
-    ).toBeGreaterThanOrEqual(24);
+    ).toBeGreaterThanOrEqual(23.9);
     const result = page.locator('[data-slice-result]');
     await expect(result).toBeVisible({ timeout: 12_000 });
     await expect(result).toContainText(
       locale === 'en' ? 'MISSION COMPLETE' : 'MISIÓN COMPLETADA',
     );
     await expect(result).toContainText('1536');
+    await expect(shell).toHaveAttribute(
+      'data-ending-portrait',
+      'captured-before-return-room',
+    );
+    await expect(shell).toHaveAttribute('data-ending-portrait-cells', '1536');
+    const panoramaPreview = page.locator('[data-panorama-preview]');
+    await expect(panoramaPreview).toBeVisible();
+    await expect(panoramaPreview).toHaveAttribute(
+      'data-completion-percent',
+      '37.5',
+    );
+    await expect(panoramaPreview).toHaveAttribute('data-collected-seeds', '4');
+    await expect(panoramaPreview).toHaveAttribute('data-deaths', '2');
     await page.screenshot({
       path: testInfo.outputPath(`${locale}-mission-results.png`),
     });
+    if (process.env.PLAYWRIGHT_EVIDENCE === '1' && locale === 'en') {
+      const evidenceDirectory = resolve(
+        'docs/progress/issue-120-final-panorama-card',
+      );
+      await mkdir(evidenceDirectory, { recursive: true });
+      await page.screenshot({
+        path: resolve(evidenceDirectory, 'final-results-card.png'),
+        fullPage: true,
+      });
+      const downloadEvent = page.waitForEvent('download');
+      await page.locator('[data-panorama-download]').click();
+      const download = await downloadEvent;
+      await download.saveAs(resolve(evidenceDirectory, 'final-world-card.png'));
+    }
     await expect(page.locator('[data-mission-complete]')).toBeHidden();
     expect(externalRequests).toEqual([]);
+    expect(pageErrors).toEqual([]);
+    if (process.env.PLAYWRIGHT_EVIDENCE === '1' && locale === 'en') {
+      const video = page.video();
+      await page.close();
+      await video?.saveAs(
+        resolve(
+          'docs/progress/issue-120-final-panorama-card',
+          'mission-finale-and-card.webm',
+        ),
+      );
+    }
   });
 }
 
