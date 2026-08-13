@@ -535,7 +535,7 @@ La bomba de consciencia es el único enemigo y la única causa de pérdida de vi
   completa. En movimiento reducido se sustituye por una cúpula y un anillo de
   fundido suave.
 - La explosión convierte en `FRACTURED` toda celda `FIXED` cuyo centro esté a 15 m o menos, salvo origen, Semillas, reservas y corredores.
-- `FRACTURED` conserva una superficie agrietada caminable, no participa en WFC, no cuenta como cobertura y nunca vuelve a colapsarse.
+- `FRACTURED` conserva una superficie agrietada caminable, no participa en WFC, no cuenta como cobertura, no muestra proxies de superposición y nunca vuelve a colapsarse.
 - Bombas alcanzadas por la explosión quedan fracturadas y desactivadas.
 
 Muerte:
@@ -564,8 +564,12 @@ otra combinación usa `STANDARD`; el agotamiento de las tres vidas conserva el
 final anticipado y nunca concede la misión completada.
 
 La secuencia cualificada es `ASCENDING` durante ocho segundos,
-`MISSION_VIDEO` durante treinta y dos segundos y `COMPLETE`. El cierre normal
-pasa directamente de `ASCENDING` a `COMPLETE`. El vídeo, las voces y los cuatro
+`MISSION_VIDEO` durante treinta y dos segundos y `COMPLETE`. Tras el ascenso,
+el cuerpo vuelve a una sala tecnológica de reintegración emparentada con la
+Cámara inicial y contempla la pieza en su pantalla física. La fase termina
+cuando vídeo y voz han concluido realmente, nunca porque un temporizador se
+adelante al medio. El cierre normal pasa directamente de `ASCENDING` a
+`COMPLETE`. El vídeo, las voces y los cuatro
 fallbacks visuales se generan una vez, se distribuyen como assets locales y no
 pueden introducir llamadas de red durante la partida. La pieza es omitible a
 partir de tres segundos; un fallo de vídeo o voz nunca bloquea los resultados.
@@ -699,6 +703,11 @@ Audio Web Audio API:
   depende de red.
 - No se usan osciladores continuos como ambiente o música; solo efectos breves
   y delimitados para colapso, Semillas, narrativa y cuenta atrás.
+- La voz narrativa es estrictamente monofónica: ningún comentario interrumpe o
+  se superpone al clip activo y no existe cola diferida. Un disparo ocurrido
+  mientras el canal está ocupado se descarta; solo puede sonar si la condición
+  o acción vuelve a producirse cuando el canal está libre. La misma regla se
+  aplica a colapsos, hitos de tiempo, Semillas, peligro y muerte.
 - Volumen maestro, voz, ambiente y efectos separados.
 
 HUD: tiempo arriba izquierda; cuatro iconos arriba derecha; retícula/carga centro; mensaje breve abajo. Sin minimapa. Monolito con columna de luz visible.

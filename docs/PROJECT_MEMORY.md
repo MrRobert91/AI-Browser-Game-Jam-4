@@ -26,6 +26,7 @@ Actualizado: 2026-08-13 (Europe/Madrid)
 | POST — WFC2 integral | #98–#103 | Implementada en `codex/epic-98-wfc2-gameplay` | Solver real, fractura, vidas, arte, objetivos y QA hacia `dev` |
 | POST — Biomas, detonación y portal | #105 | Implementada en rama | `codex/issue-105-visual-biomes-prologue` desde `origin/dev` `1f318b1` |
 | POST — Final «Misión completada» | #107–#112 | Implementada; gate humano pendiente | Rama `codex/issue-107-mission-complete`; #112 permanece NO-GO |
+| POST — Sala final, voz y fractura | #117 | Implementada en rama | `codex/issue-117-final-chamber-audio-fractures` desde `origin/dev` `e6553db` |
 | POST — Expansiones | #52–#56 | En rama acumulativa salvo #54 | #54 ya estaba cerrada; #52, #53, #55 y #56 listas para revisión |
 
 ### Estado operativo actual
@@ -64,6 +65,23 @@ Actualizado: 2026-08-13 (Europe/Madrid)
 - La automatización no sustituye calibración humana: #112 queda **NO-GO** hasta
   una partida real de diez minutos según
   [`docs/playtests/mission-complete/PROTOCOL.md`](./playtests/mission-complete/PROTOCOL.md).
+
+### 2026-08-13 — Issue #117 — Sala de retorno, voz monofónica y cicatrices terminales
+
+- `MISSION_VIDEO` deja de ser una capa a pantalla completa: tras el ascenso se
+  crea una sala 3D de reintegración más tecnológica que la Cámara inicial y el
+  VP9 local se reproduce en su pantalla física, con captions y omisión HTML.
+- El reloj de la fase ya no finaliza la pieza por sí solo ni corrige
+  continuamente `currentTime`. Vídeo y voz avanzan con sus relojes de medios y
+  el resultado espera a que ambos terminen; fallos reales conservan WebP,
+  captions y un watchdog acotado.
+- `AudioDirector` no mantiene cola ni prioridad interruptiva. Si una voz está
+  activa, el nuevo disparo se rechaza sin pausar ni encolar; `NarrativeDirector`
+  no lo consume y una ocurrencia posterior puede volver a intentarlo. Las voces
+  desactivadas siguen permitiendo subtítulos.
+- `FRACTURED` queda excluido de la elegibilidad de superposición y la lista
+  renderizada se purga en el mismo evento de fractura, sin esperar al muestreo
+  visual de 10 Hz.
 
 ### 2026-08-12 — Issue #105 — Biomas legibles, detonación y portal esférico
 

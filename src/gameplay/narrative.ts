@@ -102,7 +102,7 @@ export interface ResolvedNarrativeCue extends NarrativeCueDefinition {
 export interface NarrativeEvents {
   readonly onMessage: (message: string) => void;
   readonly onSubtitle: (message: string, durationMs: number) => void;
-  readonly onAudioCue?: (cue: ResolvedNarrativeCue) => void;
+  readonly onAudioCue?: (cue: ResolvedNarrativeCue) => boolean | void;
   readonly onCue?: (cue: ResolvedNarrativeCue) => void;
 }
 
@@ -220,19 +220,19 @@ export class NarrativeDirector {
     ) {
       return text;
     }
-    this.played.add(cueId);
-    this.history.push(cueId);
-    this.lastPlayedAtMs = nowMs;
     const cue: ResolvedNarrativeCue = {
       ...definition,
       id: cueId,
       locale: this.catalog.locale,
       text,
     };
+    if (this.events.onAudioCue?.(cue) === false) return text;
+    this.played.add(cueId);
+    this.history.push(cueId);
+    this.lastPlayedAtMs = nowMs;
     this.events.onMessage(text);
     this.events.onSubtitle(text, cue.durationMs);
     this.events.onCue?.(cue);
-    this.events.onAudioCue?.(cue);
     return text;
   }
 

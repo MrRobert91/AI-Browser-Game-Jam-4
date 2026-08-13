@@ -11,7 +11,7 @@ import {
   type BufferGeometry,
 } from 'three';
 
-import type { CellId, WorldVector3 } from '../contracts/world';
+import type { CellId, CellPhase, WorldVector3 } from '../contracts/world';
 import type { DomainMask } from '../contracts/world';
 import { COMPILED_GRAMMAR } from '../contracts/grammar-runtime';
 
@@ -48,6 +48,10 @@ export interface ProxySelection {
 
 export interface CandidatePercentage extends SuperpositionCandidate {
   readonly percentage: number;
+}
+
+export function isSuperpositionPhase(phase: CellPhase): boolean {
+  return phase !== 'FIXED' && phase !== 'FRACTURED' && phase !== 'COLLAPSING';
 }
 
 export function hasFixedCardinalNeighbor(

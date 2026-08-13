@@ -301,6 +301,7 @@ for (const locale of ['en', 'es'] as const) {
     });
     const mission = page.locator('[data-mission-complete]');
     await expect(mission).toBeVisible();
+    await expect(shell).toHaveAttribute('data-mission-chamber', 'return');
     await expect(mission).toHaveAttribute('data-media', 'video');
     await expect(mission).toHaveAttribute('data-voice', 'playing');
     await expect
@@ -341,6 +342,15 @@ for (const locale of ['en', 'es'] as const) {
         ),
       });
     }
+    await expect
+      .poll(
+        () =>
+          page
+            .locator('[data-mission-video]')
+            .evaluate((element) => (element as HTMLVideoElement).currentTime),
+        { timeout: 30_000 },
+      )
+      .toBeGreaterThanOrEqual(24);
     await expect(skip).toBeEnabled();
     expect(
       Number(await shell.getAttribute('data-ending-phase-elapsed')),
@@ -387,7 +397,11 @@ test('mission video and voice failures keep captions and reach results once', as
   const mission = page.locator('[data-mission-complete]');
   await expect(mission).toHaveAttribute('data-media', 'fallback');
   await expect(mission).toHaveAttribute('data-voice', 'fallback');
-  await expect(page.locator('[data-mission-fallback]')).toBeVisible();
+  await expect(shell).toHaveAttribute('data-mission-chamber', 'return');
+  await expect(page.locator('[data-mission-fallback]')).not.toHaveAttribute(
+    'hidden',
+    '',
+  );
   await expect(page.locator('[data-mission-caption]')).not.toBeEmpty();
   await page.screenshot({
     path: testInfo.outputPath('mission-fallback.png'),

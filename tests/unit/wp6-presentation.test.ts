@@ -123,7 +123,7 @@ describe('WP6 audio contracts', () => {
       locale: 'es-ES' as const,
       text: NARRATIVE_CATALOG.cues.start.text,
     };
-    director.playNarrativeCue(cue);
+    expect(director.playNarrativeCue(cue)).toBe(true);
     expect(voice.src).toContain('/assets/audio/voice/es/start.mp3');
     expect(voice.play).toHaveBeenCalledTimes(2);
     const terminalCue = {
@@ -132,8 +132,12 @@ describe('WP6 audio contracts', () => {
       locale: 'es-ES' as const,
       text: NARRATIVE_CATALOG.cues.livesExhausted.text,
     };
-    director.playExclusiveNarrativeCue(terminalCue);
-    expect(voice.pause).toHaveBeenCalled();
+    const pausesBeforeBusyCue = vi.mocked(voice.pause).mock.calls.length;
+    expect(director.playNarrativeCue(terminalCue)).toBe(false);
+    expect(voice.pause).toHaveBeenCalledTimes(pausesBeforeBusyCue);
+    expect(voice.src).toContain('/assets/audio/voice/es/start.mp3');
+    (voice.onended as (() => void) | null)?.();
+    expect(director.playNarrativeCue(terminalCue)).toBe(true);
     expect(voice.src).toContain('/assets/audio/voice/es/livesExhausted.mp3');
     expect(ambiencePlays.every((play) => play.mock.calls.length >= 1)).toBe(
       true,
@@ -145,6 +149,24 @@ describe('WP6 audio contracts', () => {
 });
 
 describe('WP6 accessible settings and narrative', () => {
+  it('retries a cue on a later trigger when the voice channel was busy', () => {
+    let voiceAvailable = false;
+    const onSubtitle = vi.fn();
+    const director = new NarrativeDirector({
+      onMessage: vi.fn(),
+      onSubtitle,
+      onAudioCue: () => voiceAvailable,
+    });
+    expect(director.tryPlay('firstCollapse')).toBe(false);
+    expect(director.playedCueIds()).toEqual([]);
+    expect(onSubtitle).not.toHaveBeenCalled();
+
+    voiceAvailable = true;
+    expect(director.tryPlay('firstCollapse')).toBe(true);
+    expect(director.playedCueIds()).toEqual(['firstCollapse']);
+    expect(onSubtitle).toHaveBeenCalledTimes(1);
+  });
+
   it('defaults subtitles and reduced flashes on and clamps persisted values', () => {
     expect(DEFAULT_GAME_SETTINGS).toMatchObject({
       subtitles: true,

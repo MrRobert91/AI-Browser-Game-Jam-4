@@ -213,13 +213,7 @@ export class EndingDirector {
       }
     }
     if (this.phase === 'MISSION_VIDEO' && remaining > 0) {
-      this.missionElapsedSeconds = Math.min(
-        MISSION_VIDEO_SECONDS,
-        this.missionElapsedSeconds + remaining,
-      );
-      if (this.missionElapsedSeconds >= MISSION_VIDEO_SECONDS) {
-        this.phase = 'COMPLETE';
-      }
+      this.missionElapsedSeconds += remaining;
     }
     return this.snapshot();
   }
