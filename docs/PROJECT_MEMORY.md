@@ -84,6 +84,14 @@ Actualizado: 2026-08-14 (Europe/Madrid)
   renderizada se purga en el mismo evento de fractura, sin esperar al muestreo
   visual de 10 Hz.
 
+### 2026-08-14 — Issue #122 — Distancia correcta en la directiva
+
+- Los subtítulos visibles de Alice Boole comunican una región revocada de
+  treinta metros tanto en inglés como en español, de acuerdo con las voces
+  locales y con el diámetro del radio mecánico de quince metros.
+- La fuente narrativa y el fallback directo de la UI permanecen sincronizados;
+  las pruebas unitarias y E2E fijan las dos frases bilingües completas.
+
 ### 2026-08-14 — Issue #120 — Subtítulos y recuerdo final
 
 - El caption del vídeo final conserva su franja inferior y añade centrado de

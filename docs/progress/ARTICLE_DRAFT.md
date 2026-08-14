@@ -331,7 +331,7 @@ La segunda versión del colapso elimina una incoherencia decisiva: antes el work
 
 El mismo cambio cierra los huecos aislados. Después de una observación, una celda visible rodeada por cuatro resultados fijados recibe una consecuencia forzada; esa consecuencia no busca nuevos huecos, por lo que la onda repara el defecto sin rellenar automáticamente recintos enteros.
 
-La bomba de consciencia convierte el riesgo en una decisión espacial. Es roja, negra y espinosa, aparece desde el vocabulario base con una curva del uno al diez por ciento y solo explota por contacto. Cada detonación revoca quince metros de celdas ya observadas: la cobertura baja, los objetos desaparecen y queda una cicatriz oscura caminable que no puede colapsarse otra vez. Dos cuerpos de campo regresan al origen; el tercero cierra el expediente y ofrece el mismo retrato final que el agotamiento del reloj.
+La bomba de consciencia convierte el riesgo en una decisión espacial. Es roja, negra y espinosa, aparece desde el vocabulario base con una curva del uno al diez por ciento y solo explota por contacto. Cada detonación revoca una región de treinta metros de diámetro de celdas ya observadas: la cobertura baja, los objetos desaparecen y queda una cicatriz oscura caminable que no puede colapsarse otra vez. Dos cuerpos de campo regresan al origen; el tercero cierra el expediente y ofrece el mismo retrato final que el agotamiento del reloj.
 
 Entre el briefing y el portal, Dr Alice Boole enuncia por fin la operación completa: observar la mayor superficie en diez minutos, recuperar Agua, Bosque, Ruina y Tormenta en orden y conservar tres vidas. El retrato es original, local y sin texto horneado; el nombre y los subtítulos siguen siendo HTML accesible. Harper y Kore reproducen directiva y derrota desde cuatro MP3 locales con hashes, loudness, transcripción, coste y procedencia registrados.
 
@@ -450,9 +450,10 @@ seed convierten el archivo en algo compartible sin subir un solo byte.
 
 El mismo repaso corrigió dos disonancias de lectura. El caption del expediente
 estaba centrado dentro de su caja, pero la caja seguía anclada a la izquierda;
-ahora toda la franja se centra a la altura original. Y la directiva inglesa
-muestra «thirteen metres», lo que el jugador escucha, aunque el radio mecánico
-permanezca en quince y no se regenere la voz.
+ahora toda la franja se centra a la altura original. Una corrección posterior
+sincronizó la directiva de Alice Boole con la voz local: «thirty meters» en
+inglés y «treinta metros» en español describen el diámetro de la región,
+mientras el radio mecánico permanece en quince metros.
 
 ![Subtítulo centrado en la pantalla de reintegración](./issue-120-final-panorama-card/centered-final-subtitles.png)
 

@@ -180,7 +180,7 @@ test('canonical offline English journey reaches the qualitative ending', async (
     'collapse as much of the Condensate as possible',
   );
   await expect(page.locator('[data-objectives-subtitle]')).toContainText(
-    'thirteen metres',
+    'detonation revokes thirty meters of approved reality',
   );
   await page.screenshot({ path: testInfo.outputPath('04-objectives.png') });
   const objectivesSkip = page.locator('[data-objectives-skip]');
@@ -503,7 +503,10 @@ test('Spanish fallback briefing keeps captions and reaches RUN', async ({
     'data-briefing-media',
     'fallback',
   );
-  await skipBriefingAndCrossPortal(page, 'colapsa la mayor superficie posible');
+  await skipBriefingAndCrossPortal(
+    page,
+    'su detonación revoca treinta metros de realidad aprobada',
+  );
   await expect(page.locator('[data-seed-mode-label]')).toHaveText('SEED');
 });
 
