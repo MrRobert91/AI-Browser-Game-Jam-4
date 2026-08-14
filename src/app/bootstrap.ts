@@ -496,8 +496,8 @@ function bootstrapGame(
   let enterRun = (): void => undefined;
   const objectiveText =
     locale === 'en'
-      ? 'Agency operational directive. During the next ten minutes, collapse as much of the Condensate as possible. Recover the Possibility Seeds in the authorized order: Water, Forest, Ruin, and Storm. Avoid consciousness bombs; detonation revokes thirteen metres of approved reality. You have been allocated three lives. The loss of the third will close the record, regardless of your objections.'
-      : 'Directiva operativa de la Agencia. Durante los próximos diez minutos, colapsa la mayor superficie posible del Condensado. Recupera las Semillas de Posibilidad en el orden autorizado: Agua, Bosque, Ruina y Tormenta. Evita las bombas de consciencia; su detonación revoca quince metros de realidad aprobada. Se te han asignado tres vidas. La pérdida de la tercera cerrará el expediente, con independencia de tus objeciones.';
+      ? 'Agency operational directive. During the next ten minutes, collapse as much of the Condensate as possible. Recover the Possibility Seeds in the authorized order: Water, Forest, Ruin, and Storm. Avoid consciousness bombs; detonation revokes thirty meters of approved reality. You have been allocated three lives. The loss of the third will close the record, regardless of your objections.'
+      : 'Directiva operativa de la Agencia. Durante los próximos diez minutos, colapsa la mayor superficie posible del Condensado. Recupera las Semillas de Posibilidad en el orden autorizado: Agua, Bosque, Ruina y Tormenta. Evita las bombas de consciencia; su detonación revoca treinta metros de realidad aprobada. Se te han asignado tres vidas. La pérdida de la tercera cerrará el expediente, con independencia de tus objeciones.';
   const defeatText =
     locale === 'en'
       ? 'Third life exhausted. You are dead. The Agency regrets to inform you that no further field body has been authorized. It was not in vain: part of the Condensate was collapsed by your attention and will remain in the record. Your absence has been classified as a conclusive contribution.'

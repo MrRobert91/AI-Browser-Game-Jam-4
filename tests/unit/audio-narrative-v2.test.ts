@@ -80,6 +80,12 @@ describe('bounded bilingual Measure narration', () => {
     );
     expect(NARRATIVE_CATALOGS.en.cues.start.text).toContain('Look.');
     expect(NARRATIVE_CATALOGS.es.cues.start.text).toContain('Mira.');
+    expect(NARRATIVE_CATALOGS.en.cues.objectivesDirective.text).toContain(
+      'detonation revokes thirty meters of approved reality',
+    );
+    expect(NARRATIVE_CATALOGS.es.cues.objectivesDirective.text).toContain(
+      'su detonación revoca treinta metros de realidad aprobada',
+    );
   });
 
   it('enforces cooldown, deterministic pools and the intervention ceiling', () => {
