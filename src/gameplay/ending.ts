@@ -27,6 +27,7 @@ export interface RunResult {
   readonly endingReason: RunEndReason;
   readonly livesRemaining: number;
   readonly finalFixedCells: number;
+  readonly collectedPacks?: readonly string[];
   readonly worldSeed: number;
   readonly seedLabel: string;
   readonly seedMode?: WorldSeedMode;

@@ -186,6 +186,11 @@ export class ResultsPanel {
           }
           this.#panoramaPreviewUrl = URL.createObjectURL(record.png);
           panoramaImage.src = this.#panoramaPreviewUrl;
+          panoramaImage.dataset.completionPercent = String(
+            record.completionPercent,
+          );
+          panoramaImage.dataset.collectedSeeds = String(record.collectedSeeds);
+          panoramaImage.dataset.deaths = String(record.deaths);
           panoramaPreview.hidden = false;
           download.disabled = false;
           download.textContent = uiCopy(this.locale).downloadPanorama;

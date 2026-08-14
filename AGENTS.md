@@ -636,7 +636,12 @@ Perfil: Cartógrafo
 Haiku: ...
 ```
 
-Panorama PNG descargable es post-MVP.
+El panorama PNG descargable es una tarjeta local de 1600 × 900. Debe conservar
+el mundo observado completo como elemento principal e incluir el wordmark
+cristalino de la carátula, `rustyroboz.itch.io/the-last-observation`, porcentaje
+de mundo fijado, Semillas recogidas y muertes. La composición se genera en el
+navegador sin red y nunca puede sustituir el mapa por la sala o pantalla del
+vídeo final.
 
 ## 10. Dirección visual y render
 
